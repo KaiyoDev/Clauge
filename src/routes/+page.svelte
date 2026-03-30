@@ -438,22 +438,10 @@
       const update = await check();
       if (!update) return;
 
-      // Check if we already downloaded this version
-      const downloaded = typeof localStorage !== 'undefined' ? localStorage.getItem('clauge-downloaded-update') : null;
-      if (downloaded === update.version) {
-        // Already downloaded but user chose "Later" — just show the hint
-        updateReady = { version: update.version, body: update.body || '' };
-        pendingUpdate = update;
-        return;
-      }
-
-      // Download silently in background
+      // Always download — Tauri updater doesn't persist downloads across restarts
       await update.download();
       pendingUpdate = update;
       updateReady = { version: update.version, body: update.body || '' };
-
-      // Mark as downloaded so we don't re-download on next restart
-      if (typeof localStorage !== 'undefined') localStorage.setItem('clauge-downloaded-update', update.version);
     } catch(e) {
       // Silently ignore — no update or network issue
     }
@@ -461,17 +449,23 @@
 
   async function restartToUpdate() {
     if (!pendingUpdate) {
-      // No real update — in production this won't happen
-      statusMsg = "Restarting...";
-      return;
+      // Re-check and download if pendingUpdate was lost
+      try {
+        const { check } = await import("@tauri-apps/plugin-updater");
+        const update = await check();
+        if (update) {
+          await update.download();
+          pendingUpdate = update;
+        }
+      } catch(_) {}
     }
+    if (!pendingUpdate) return;
     try {
       await pendingUpdate.install();
-      if (typeof localStorage !== 'undefined') localStorage.removeItem('clauge-downloaded-update');
       const { relaunch } = await import("@tauri-apps/plugin-process");
       await relaunch();
     } catch(e) {
-      statusMsg = "Restart failed: " + e;
+      console.error("Update restart failed:", e);
     }
   }
 
