@@ -658,6 +658,24 @@ fn update_tray_title(app_handle: tauri::AppHandle, title: String) -> Result<(), 
 }
 
 
+/// Resolve the full path to the `claude` binary by asking the user's login shell.
+/// Falls back to just "claude" if resolution fails.
+fn resolve_claude_path() -> String {
+    let user_shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
+    if let Ok(output) = std::process::Command::new(&user_shell)
+        .args(["-l", "-i", "-c", "which claude"])
+        .output()
+    {
+        if output.status.success() {
+            let path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+            if !path.is_empty() {
+                return path;
+            }
+        }
+    }
+    "claude".to_string()
+}
+
 /// Spawn a terminal using Tauri's Channel API for streaming PTY output to the frontend.
 /// The `on_output` channel sends TerminalOutputPayload messages directly to JS callback.
 #[tauri::command]
@@ -681,30 +699,26 @@ fn spawn_terminal(
         })
         .map_err(|e| format!("Failed to open PTY: {}", e))?;
 
-    let mut claude_cmd = String::from("claude");
+    let claude_path = resolve_claude_path();
+    eprintln!("[Clauge] Resolved claude binary: {}", claude_path);
+    eprintln!("[Clauge] CWD: {}", project_path);
+
+    let mut cmd = CommandBuilder::new(&claude_path);
+
     if let Some(ref sid) = session_id {
-        claude_cmd.push_str(&format!(" --resume \"{}\"", sid));
+        cmd.arg("--resume");
+        cmd.arg(sid);
     }
     if skip_permissions.unwrap_or(false) {
-        claude_cmd.push_str(" --dangerously-skip-permissions");
+        cmd.arg("--dangerously-skip-permissions");
     }
-    // Inject purpose prompt via --append-system-prompt (persists every turn)
     if let Some(ref prompt) = context_prompt {
         if !prompt.is_empty() {
-            let escaped = prompt.replace('\\', "\\\\").replace('"', "\\\"");
-            claude_cmd.push_str(&format!(" --append-system-prompt \"{}\"", escaped));
+            cmd.arg("--append-system-prompt");
+            cmd.arg(prompt);
         }
     }
 
-    eprintln!("[Clauge] Spawning command (truncated): {}", &claude_cmd[..claude_cmd.len().min(120)]);
-    eprintln!("[Clauge] CWD: {}", project_path);
-
-    let user_shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
-    let mut cmd = CommandBuilder::new(&user_shell);
-    cmd.arg("-l");
-    cmd.arg("-i");
-    cmd.arg("-c");
-    cmd.arg(&claude_cmd);
     cmd.cwd(&project_path);
 
     if let Some(home) = dirs::home_dir() {
@@ -887,6 +901,19 @@ fn resize_terminal(
     Ok(())
 }
 
+#[tauri::command]
+fn kill_terminal(
+    state: State<'_, TerminalState>,
+    terminal_id: String,
+) -> Result<(), String> {
+    let mut terminals = state.terminals.lock();
+    if let Some(mut entry) = terminals.remove(&terminal_id) {
+        let _ = entry.child.kill();
+        eprintln!("[Clauge] Killed terminal {}", terminal_id);
+    }
+    Ok(())
+}
+
 // ---------------------------------------------------------------------------
 // Entry point
 // ---------------------------------------------------------------------------
@@ -926,7 +953,8 @@ pub fn run() {
             spawn_terminal,
             spawn_shell,
             write_to_terminal,
-            resize_terminal
+            resize_terminal,
+            kill_terminal
         ])
         .setup(|app| {
             let setup_start = std::time::Instant::now();
@@ -1023,11 +1051,23 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application")
         .run(|app, event| {
-            if let tauri::RunEvent::Reopen { .. } = event {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.show();
-                    let _ = window.set_focus();
+            match event {
+                tauri::RunEvent::Reopen { .. } => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        let _ = window.show();
+                        let _ = window.set_focus();
+                    }
                 }
+                tauri::RunEvent::ExitRequested { .. } => {
+                    if let Some(state) = app.try_state::<TerminalState>() {
+                        let mut terminals = state.terminals.lock();
+                        for (id, mut entry) in terminals.drain() {
+                            let _ = entry.child.kill();
+                            eprintln!("[Clauge] Cleaned up terminal {} on exit", id);
+                        }
+                    }
+                }
+                _ => {}
             }
         });
 }

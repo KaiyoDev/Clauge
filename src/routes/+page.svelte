@@ -527,17 +527,23 @@
 
     await invoke("delete_profile", { id: deletedId });
 
-    // Clean up terminal
+    // Clean up terminal (backend PTY + child process)
     const entry = terminalMap.get(deletedId);
     if (entry) {
+      if (entry.terminalId) {
+        try { await invoke("kill_terminal", { terminalId: entry.terminalId }); } catch(e) {}
+      }
       entry.container.style.display = "none";
       if (entry.term) entry.term.dispose();
       terminalMap.delete(deletedId);
     }
 
-    // Clean up shell
+    // Clean up shell (backend PTY + child process)
     const sEntry = shellMap.get(deletedId);
     if (sEntry) {
+      if (sEntry.terminalId) {
+        try { await invoke("kill_terminal", { terminalId: sEntry.terminalId }); } catch(e) {}
+      }
       sEntry.container.style.display = "none";
       if (sEntry.term) sEntry.term.dispose();
       shellMap.delete(deletedId);
