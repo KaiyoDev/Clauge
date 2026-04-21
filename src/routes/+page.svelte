@@ -6,6 +6,7 @@
   import "@xterm/xterm/css/xterm.css";
   import { theme } from "$lib/stores/theme.svelte";
   import { notifications } from "$lib/stores/notifications.svelte";
+  import { updater } from "$lib/stores/updater.svelte";
 
   let profiles = $state([]);
   let activeProfile = $state(null);
@@ -36,11 +37,6 @@
   let sessionKeyInput = $state('');
   let appVersion = $state('');
   let claudePlan = $state('');
-  let updateReady = $state(null); // { version, body } — only set after download complete
-  let updateDismissed = $state(false);
-  let showUpdateModal = $state(false);
-  let showWhatsNew = $state(false);
-  let whatsNewBody = $state('');
   let sessionKeyConfigured = $state(false);
   let usageError = $state('');
   let showKeyEdit = $state(false);
@@ -954,61 +950,6 @@
     });
   }
 
-  let pendingUpdate = null; // holds the downloaded update object
-
-  async function checkAndDownloadUpdate() {
-    try {
-      const { check } = await import("@tauri-apps/plugin-updater");
-      const update = await check();
-      if (!update) return;
-
-      // Always download — Tauri updater doesn't persist downloads across restarts
-      await update.download();
-      pendingUpdate = update;
-      updateReady = { version: update.version, body: update.body || '' };
-    } catch(e) {
-      // Silently ignore — no update or network issue
-    }
-  }
-
-  async function restartToUpdate() {
-    if (!pendingUpdate) {
-      // Re-check and download if pendingUpdate was lost
-      try {
-        const { check } = await import("@tauri-apps/plugin-updater");
-        const update = await check();
-        if (update) {
-          await update.download();
-          pendingUpdate = update;
-        }
-      } catch(_) {}
-    }
-    if (!pendingUpdate) return;
-    try {
-      await pendingUpdate.install();
-      const { relaunch } = await import("@tauri-apps/plugin-process");
-      await relaunch();
-    } catch(e) {
-      console.error("Update restart failed:", e);
-    }
-  }
-
-  function checkWhatsNew(version) {
-    const lastSeen = typeof localStorage !== 'undefined' ? localStorage.getItem('clauge-last-seen-version') : null;
-    if (lastSeen && lastSeen !== version) {
-      // Version changed since last launch — fetch release notes
-      fetch(`https://api.github.com/repos/ansxuman/Clauge/releases/tags/v${version}`)
-        .then(r => r.ok ? r.json() : null)
-        .then(data => {
-          if (data?.body) {
-            whatsNewBody = data.body;
-            showWhatsNew = true;
-          }
-        })
-        .catch(() => {});
-    }
-    if (typeof localStorage !== 'undefined') localStorage.setItem('clauge-last-seen-version', version);
-  }
 
   function getPurposePrompt(purpose) {
     const prompts = {
@@ -1241,8 +1182,8 @@ Anti-patterns to avoid:
     applyTheme(theme.currentTheme);
     invoke("get_app_version").then(v => {
       appVersion = v;
-      checkWhatsNew(v);
-      checkAndDownloadUpdate();
+      updater.checkWhatsNew(v);
+      updater.checkAndDownloadUpdate();
     }).catch(() => {});
     invoke("get_claude_plan").then(p => { if (p) claudePlan = p; }).catch(() => {});
 
@@ -1581,18 +1522,18 @@ Anti-patterns to avoid:
   </div>
 </div>
 
-{#if updateReady && !updateDismissed}
+{#if updater.updateReady && !updater.updateDismissed}
   <div class="update-notif">
     <div class="un-header">
       <svg class="un-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
       <div class="un-text">
-        <span class="un-title">Clauge v{updateReady.version} is available</span>
+        <span class="un-title">Clauge v{updater.updateReady.version} is available</span>
         <span class="un-desc">A new version has been downloaded. Restart to apply.</span>
       </div>
-      <button class="un-close" onclick={() => updateDismissed = true}>&times;</button>
+      <button class="un-close" onclick={() => updater.updateDismissed = true}>&times;</button>
     </div>
     <div class="un-actions">
-      <button class="un-btn primary" onclick={() => { restartToUpdate(); }}>Restart to Update</button>
+      <button class="un-btn primary" onclick={() => { updater.restartToUpdate(); }}>Restart to Update</button>
       <button class="un-btn secondary" onclick={() => openExternal('https://clauge.ssh-i.in/changelog.html')}>
         What's New
         <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -1980,12 +1921,12 @@ Anti-patterns to avoid:
 </div>
 {/if}
 
-{#if showWhatsNew}
+{#if updater.showWhatsNew}
 <div class="modal-backdrop">
   <div class="modal whats-new-modal">
-    {#if updateReady}
-      <h2>v{updateReady.version}</h2>
-      <div class="whats-new-body">{@html (updateReady.body || '')
+    {#if updater.updateReady}
+      <h2>v{updater.updateReady.version}</h2>
+      <div class="whats-new-body">{@html (updater.updateReady.body || '')
         .replace(/\r\n/g, '\n')
         .replace(/^### (.+)$/gm, '<h4>$1</h4>')
         .replace(/^## (.+)$/gm, '<h3>$1</h3>')
@@ -1997,12 +1938,12 @@ Anti-patterns to avoid:
         .replace(/\n/g, '<br>')
       }</div>
       <div class="modal-actions">
-        <button onclick={() => showWhatsNew = false}>Later</button>
-        <button class="create-btn" onclick={() => { showWhatsNew = false; restartToUpdate(); }}>Restart</button>
+        <button onclick={() => updater.showWhatsNew = false}>Later</button>
+        <button class="create-btn" onclick={() => { updater.showWhatsNew = false; updater.restartToUpdate(); }}>Restart</button>
       </div>
     {:else}
       <h2>What's New in v{appVersion}</h2>
-      <div class="whats-new-body">{@html whatsNewBody
+      <div class="whats-new-body">{@html updater.whatsNewBody
         .replace(/\r\n/g, '\n')
         .replace(/^### (.+)$/gm, '<h4>$1</h4>')
         .replace(/^## (.+)$/gm, '<h3>$1</h3>')
@@ -2014,7 +1955,7 @@ Anti-patterns to avoid:
         .replace(/\n/g, '<br>')
       }</div>
       <div class="modal-actions">
-        <button onclick={() => showWhatsNew = false}>Got it</button>
+        <button onclick={() => updater.showWhatsNew = false}>Got it</button>
       </div>
     {/if}
   </div>
