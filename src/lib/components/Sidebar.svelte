@@ -12,9 +12,11 @@
     onNewSession,
     onDeleteProfile,
     onRefitTerminals,
+    onNewSessionForProfile,
   } = $props();
 
   let editingProfile = $state(null);
+  let newSessionConfirm = $state(null);
 
   let sidebarCollapsed = $state(
     typeof localStorage !== 'undefined' ? localStorage.getItem('clauge-sidebar-collapsed') === 'true' : false
@@ -93,6 +95,23 @@
 
 <EditSessionModal profile={editingProfile} onSave={handleEditSave} onClose={() => editingProfile = null} />
 
+{#if newSessionConfirm}
+<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+<div class="modal-backdrop" onclick={() => newSessionConfirm = null}>
+  <div class="confirm-modal" onclick={(e) => e.stopPropagation()}>
+    <div class="confirm-icon">
+      <svg width="24" height="24" viewBox="0 0 16 16" fill="#d29922"><path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0114.082 15H1.918a1.75 1.75 0 01-1.543-2.575zM8 5a.75.75 0 00-.75.75v2.5a.75.75 0 001.5 0v-2.5A.75.75 0 008 5zm1 6a1 1 0 11-2 0 1 1 0 012 0z"/></svg>
+    </div>
+    <h4>Reset Session?</h4>
+    <p>This will end the current Claude session for <strong>{newSessionConfirm.title}</strong>. The conversation context will be lost and a fresh session will start.</p>
+    <div class="confirm-actions">
+      <button class="btn-cancel" onclick={() => newSessionConfirm = null}>Cancel</button>
+      <button class="btn-confirm" onclick={() => { const p = newSessionConfirm; newSessionConfirm = null; onNewSessionForProfile?.(p); }}>Reset</button>
+    </div>
+  </div>
+</div>
+{/if}
+
 <aside class="sidebar" class:collapsed={sidebarCollapsed}>
   <div class="sidebar-header">
     <span class="app-title">Clauge {#if claudePlan}<span class="plan-badge">{claudePlan}</span>{/if}</span>
@@ -122,7 +141,18 @@
               >
                 <div class="profile-title">
                   <span class="status-dot" class:active={activeProfile?.id === profile.id} class:bg-active={terminalStore.sessionActivity[profile.id] === 'active'} class:bg-done={terminalStore.sessionActivity[profile.id] === 'done'}></span>
-                  {profile.title}
+                  <span class="title-text">{profile.title}</span>
+                  {#if terminalStore.contextUsage[profile.id]}
+                    {@const cu = terminalStore.contextUsage[profile.id]}
+                    <span
+                      class="ctx-usage"
+                      class:ctx-warn={cu.fillPercent >= 70 && cu.fillPercent < 85}
+                      class:ctx-danger={cu.fillPercent >= 85}
+                      title="{terminalStore.formatContextTokens(cu.totalContextTokens)} / {terminalStore.formatContextTokens(cu.contextWindow)} tokens ({cu.model}){cu.fillPercent >= 80 ? ' — Consider starting a new session' : ''}"
+                    >
+                      {Math.round(cu.fillPercent)}%
+                    </span>
+                  {/if}
                 </div>
                 <div class="profile-meta">
                   <span class="badge" style="color:{purposeColors[profile.purpose] || '#8b949e'}; background:{purposeColors[profile.purpose] || '#8b949e'}22">{profile.purpose}</span>
@@ -142,6 +172,11 @@
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M11.013 1.427a1.75 1.75 0 012.474 0l1.086 1.086a1.75 1.75 0 010 2.474l-8.61 8.61c-.21.21-.47.364-.756.445l-3.251.93a.75.75 0 01-.927-.928l.929-3.25a1.75 1.75 0 01.445-.758l8.61-8.61zm1.414 1.06a.25.25 0 00-.354 0L3.463 11.1a.25.25 0 00-.064.108l-.563 1.97 1.971-.564a.25.25 0 00.108-.064l8.61-8.61a.25.25 0 000-.353L12.427 2.488z"/></svg>
                       Edit
                     </button>
+                    <button class="session-menu-item" onclick={() => { newSessionConfirm = profile; menuProfile = null; }}>
+                      <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M1.705 8.005a.75.75 0 01.834.656 5.5 5.5 0 009.592 2.97l-1.204-1.204a.25.25 0 01.177-.427h3.646a.25.25 0 01.25.25v3.646a.25.25 0 01-.427.177l-1.38-1.38A7.001 7.001 0 011.05 8.84a.75.75 0 01.656-.834zM8 2.5a5.487 5.487 0 00-4.131 1.869l1.204 1.204A.25.25 0 014.896 6H1.25A.25.25 0 011 5.75V2.104a.25.25 0 01.427-.177l1.38 1.38A7.001 7.001 0 0114.95 7.16a.75.75 0 11-1.49.178A5.5 5.5 0 008 2.5z"/></svg>
+                      Reset Session
+                    </button>
+                    <div class="menu-separator"></div>
                     <button class="session-menu-item danger" onclick={() => { menuProfile = null; onDeleteProfile?.(null, profile); }}>
                       <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M6.5 1.75a.25.25 0 01.25-.25h2.5a.25.25 0 01.25.25V3h-3V1.75zM11 3V1.75A1.75 1.75 0 009.25 0h-2.5A1.75 1.75 0 005 1.75V3H2.75a.75.75 0 000 1.5h.928l.747 10.218A1.75 1.75 0 006.172 16h3.656a1.75 1.75 0 001.747-1.282L12.322 4.5h.928a.75.75 0 000-1.5H11zm-5.522 1.5l.735 10.06a.25.25 0 00.249.19h3.076a.25.25 0 00.249-.19l.735-10.06H5.478z"/></svg>
                       Delete
@@ -195,7 +230,8 @@
   .profile-item { width: 100%; display: block; text-align: left; padding: 8px 14px; padding-right: 28px; border: none; background: transparent; cursor: pointer; border-left: 3px solid transparent; font-family: inherit; -webkit-app-region: no-drag; position: relative; }
   .profile-item:hover { background: var(--hover-bg, rgba(255,255,255,0.06)); }
   .profile-item.active { background: rgba(31,111,235,0.15); border-left-color: var(--accent); box-shadow: inset 0 0 20px rgba(88, 166, 255, 0.08); }
-  .profile-title { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; }
+  .profile-title { font-size: 13px; font-weight: 500; color: var(--text-primary); margin-bottom: 3px; display: flex; align-items: center; }
+  .title-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .profile-meta { display: flex; align-items: center; justify-content: space-between; }
   .badge { font-size: 10px; font-weight: 600; padding: 1px 6px; border-radius: 10px; }
   .wt-badge { font-size: 8px; font-weight: 700; padding: 1px 4px; border-radius: 3px; background: rgba(210, 168, 255, 0.2); color: #d2a8ff; letter-spacing: 0.5px; }
@@ -206,11 +242,29 @@
   .session-menu-item { display: flex; align-items: center; gap: 6px; width: 100%; padding: 6px 10px; border: none; background: transparent; color: var(--text-secondary); font-size: 12px; font-family: inherit; cursor: pointer; border-radius: 5px; transition: background 0.12s; }
   .session-menu-item:hover { background: rgba(255,255,255,0.06); }
   .session-menu-item.danger:hover { background: rgba(248,81,73,0.12); color: #f85149; }
+  .menu-separator { height: 1px; background: var(--border, #30363d); margin: 3px 6px; }
   .time { font-size: 11px; color: var(--text-secondary); }
+  .ctx-usage { font-size: 10px; font-weight: 600; color: #3fb950; padding: 1px 5px; border-radius: 4px; background: rgba(63,185,80,0.1); flex-shrink: 0; }
+  .ctx-usage.ctx-warn { color: #d29922; background: rgba(210,153,34,0.1); }
+  .ctx-usage.ctx-danger { color: #f85149; background: rgba(248,81,73,0.15); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
   .status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #484f58; margin-right: 6px; vertical-align: middle; transition: background 0.3s; }
   .status-dot.active { background: #3fb950; box-shadow: 0 0 6px rgba(63, 185, 80, 0.5); }
   .status-dot.bg-active { background: var(--accent); box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 50%, transparent); animation: bgPulse 0.8s ease-in-out infinite; }
   .status-dot.bg-done { background: #d29922; box-shadow: 0 0 6px rgba(210, 153, 34, 0.5); }
   @keyframes bgPulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(0.7); } }
   @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  .confirm-modal { background: var(--bg-primary, #0d1117); border: 1px solid var(--border, #30363d); border-radius: 12px; padding: 24px; width: 360px; text-align: center; box-shadow: 0 16px 48px rgba(0,0,0,0.5); animation: modalUp 0.15s ease-out; }
+  @keyframes modalUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .confirm-icon { margin-bottom: 12px; }
+  .confirm-modal h4 { margin: 0 0 8px; font-size: 15px; font-weight: 600; color: var(--text-primary, #e6edf3); }
+  .confirm-modal p { margin: 0 0 18px; font-size: 13px; color: var(--text-secondary, #8b949e); line-height: 1.5; }
+  .confirm-modal strong { color: var(--text-primary, #e6edf3); }
+  .confirm-actions { display: flex; gap: 8px; justify-content: center; }
+  .btn-cancel, .btn-confirm { padding: 7px 16px; border-radius: 6px; font-size: 13px; font-family: inherit; cursor: pointer; border: none; }
+  .btn-cancel { background: transparent; color: var(--text-secondary, #8b949e); border: 1px solid var(--border, #30363d); }
+  .btn-cancel:hover { background: rgba(255,255,255,0.04); }
+  .btn-confirm { background: #d29922; color: #fff; font-weight: 500; }
+  .btn-confirm:hover { filter: brightness(1.1); }
 </style>

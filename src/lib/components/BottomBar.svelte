@@ -29,6 +29,18 @@
   function switchBranch(branchName) { if (activeProfile) gitStore.switchBranch(gitPath(), gitProfileId(), branchName); }
   function doGitStash() { if (activeProfile) gitStore.doGitStash(gitPath(), gitProfileId()); }
   function doGitStashPop() { if (activeProfile) gitStore.doGitStashPop(gitPath(), gitProfileId()); }
+
+  // Confirmation state for destructive git actions
+  let confirmAction = $state(null); // { label, description, action }
+
+  function confirmGitAction(label, description, action) {
+    confirmAction = { label, description, action };
+  }
+
+  function executeConfirmed() {
+    if (confirmAction?.action) confirmAction.action();
+    confirmAction = null;
+  }
 </script>
 
 <div class="bottom-bar">
@@ -99,20 +111,20 @@
             <button class="git-popup-tab" class:active={gitStore.gitTab === 'history'} onclick={() => { gitStore.gitTab = 'history'; loadGitHistory(); }}>History</button>
             <button class="git-popup-tab" class:active={gitStore.gitTab === 'branches'} onclick={() => { gitStore.gitTab = 'branches'; loadGitBranches(); }}>Branches</button>
             <div class="git-popup-tab-actions">
-              <button class="git-action-btn has-tooltip" onclick={doGitStash}>
+              <button class="git-action-btn has-tooltip" onclick={() => confirmGitAction('Stash', 'Stash all uncommitted changes? You can restore them later with Pop Stash.', doGitStash)}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
                 <span class="btn-tooltip">Stash</span>
               </button>
-              <button class="git-action-btn has-tooltip" onclick={doGitStashPop}>
+              <button class="git-action-btn has-tooltip" onclick={() => confirmGitAction('Pop Stash', 'Restore previously stashed changes? This will apply them to your working directory.', doGitStashPop)}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2z"/><polyline points="12 8 12 16"/><polyline points="8 12 12 8 16 12"/></svg>
                 <span class="btn-tooltip">Pop Stash</span>
               </button>
-              <button class="git-action-btn has-tooltip" disabled={gitStore.gitLoading === 'pull'} onclick={doGitPull}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+              <button class="git-action-btn has-tooltip" disabled={gitStore.gitLoading === 'pull'} onclick={() => confirmGitAction('Pull', 'Pull latest changes from remote? This may introduce merge conflicts.', doGitPull)}>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12a.75.75 0 01-.75-.75V4.56L5.03 6.78a.75.75 0 01-1.06-1.06l3.5-3.5a.75.75 0 011.06 0l3.5 3.5a.75.75 0 01-1.06 1.06L8.75 4.56v6.69A.75.75 0 018 12z"/><path d="M2.75 13a.75.75 0 000 1.5h10.5a.75.75 0 000-1.5H2.75z"/></svg>
                 <span class="btn-tooltip">{gitStore.gitLoading === 'pull' ? 'Pulling...' : 'Pull'}</span>
               </button>
-              <button class="git-action-btn has-tooltip" disabled={gitStore.gitLoading === 'push'} onclick={doGitPush}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+              <button class="git-action-btn has-tooltip" disabled={gitStore.gitLoading === 'push'} onclick={() => confirmGitAction('Push', 'Push local commits to remote?', doGitPush)}>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 4a.75.75 0 01.75.75v6.69l2.22-2.22a.75.75 0 011.06 1.06l-3.5 3.5a.75.75 0 01-1.06 0l-3.5-3.5a.75.75 0 011.06-1.06l2.22 2.22V4.75A.75.75 0 018 4z"/><path d="M2.75 1.5a.75.75 0 000 1.5h10.5a.75.75 0 000-1.5H2.75z"/></svg>
                 <span class="btn-tooltip">{gitStore.gitLoading === 'push' ? 'Pushing...' : 'Push'}</span>
               </button>
             </div>
@@ -225,6 +237,19 @@
   </div>
 </div>
 
+{#if confirmAction}
+<!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+<div class="git-confirm-overlay" onclick={() => confirmAction = null}>
+  <div class="git-confirm" onclick={(e) => e.stopPropagation()}>
+    <p class="git-confirm-text">{confirmAction.description}</p>
+    <div class="git-confirm-actions">
+      <button class="git-confirm-cancel" onclick={() => confirmAction = null}>Cancel</button>
+      <button class="git-confirm-ok" onclick={executeConfirmed}>{confirmAction.label}</button>
+    </div>
+  </div>
+</div>
+{/if}
+
 <style>
   .bottom-bar { display: flex; align-items: center; padding: 3px 16px; background: var(--sidebar-bg); border-top: 1px solid var(--border); flex-shrink: 0; position: relative; }
   .bottom-left { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
@@ -329,4 +354,15 @@
   .git-commit-btn { padding: 5px 12px; border-radius: 4px; border: none; background: var(--accent); color: #fff; font-size: 11px; font-weight: 600; font-family: inherit; cursor: pointer; transition: opacity 0.1s; flex-shrink: 0; }
   .git-commit-btn:hover:not(:disabled) { opacity: 0.85; }
   .git-commit-btn:disabled { opacity: 0.4; cursor: default; }
+
+  .git-confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 500; display: flex; align-items: center; justify-content: center; animation: fadeIn 0.1s ease-out; }
+  .git-confirm { background: var(--bg-primary, #0d1117); border: 1px solid var(--border, #30363d); border-radius: 10px; padding: 16px 20px; width: 320px; box-shadow: 0 12px 36px rgba(0,0,0,0.5); animation: modalUp 0.12s ease-out; }
+  @keyframes modalUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  .git-confirm-text { font-size: 13px; color: var(--text-secondary, #8b949e); line-height: 1.5; margin: 0 0 14px; }
+  .git-confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .git-confirm-cancel, .git-confirm-ok { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-family: inherit; cursor: pointer; border: none; font-weight: 500; }
+  .git-confirm-cancel { background: transparent; color: var(--text-secondary, #8b949e); border: 1px solid var(--border, #30363d); }
+  .git-confirm-cancel:hover { background: rgba(255,255,255,0.04); }
+  .git-confirm-ok { background: var(--accent, #58a6ff); color: #fff; }
+  .git-confirm-ok:hover { filter: brightness(1.1); }
 </style>

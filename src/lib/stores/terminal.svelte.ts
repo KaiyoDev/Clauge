@@ -1,3 +1,4 @@
+import { invoke } from "@tauri-apps/api/core";
 import { theme } from './theme.svelte';
 
 class TerminalStore {
@@ -6,6 +7,8 @@ class TerminalStore {
   currentTerminalId = $state<string | null>(null);
   termFontSize = $state(13);
   sessionActivity = $state<Record<string, string | null>>({});
+  // Per-profile context usage: profileId -> { fillPercent, totalTokens, contextWindow, model, compacted }
+  contextUsage = $state<Record<string, any>>({});
 
   constructor() {
     if (typeof localStorage !== 'undefined') {
@@ -23,6 +26,25 @@ class TerminalStore {
       cursorStyle: 'bar' as const,
       scrollback: 10000,
     };
+  }
+
+  async refreshContextUsage(profileId: string, projectPath: string, sessionId: string) {
+    try {
+      const usage = await invoke("get_session_context_usage", {
+        projectPath,
+        sessionId,
+      });
+      this.contextUsage[profileId] = usage;
+      this.contextUsage = { ...this.contextUsage };
+    } catch (_) {
+      // Session file might not exist yet
+    }
+  }
+
+  formatContextTokens(tokens: number): string {
+    if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(1)}M`;
+    if (tokens >= 1_000) return `${(tokens / 1_000).toFixed(0)}k`;
+    return String(tokens);
   }
 }
 

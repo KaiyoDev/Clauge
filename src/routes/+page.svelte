@@ -387,7 +387,7 @@
             // Strip ANSI codes for matching
             const clean = entry._exitBuffer.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '').replace(/\x1b\][^\x07]*\x07/g, '');
 
-            if (/Resume this session with:/.test(clean) || /claude --resume [a-f0-9-]+/.test(clean)) {
+            if (!entry._suppressExit && (/Resume this session with:/.test(clean) || /claude --resume [a-f0-9-]+/.test(clean))) {
               entry.terminalId = null;
               entry._exitBuffer = '';
               const resumeMatch = clean.match(/claude --resume ([a-f0-9-]+)/);
@@ -619,6 +619,46 @@
     }
     if (e.metaKey && e.key === 'b') { e.preventDefault(); sidebarRef?.toggleSidebar(); }
     if (e.metaKey && e.key === 'l') { e.preventDefault(); toggleShell(); }
+    if (e.metaKey && e.key === 'w') {
+      e.preventDefault();
+      if (activeProfile) {
+        const closingId = activeProfile.id;
+
+        // Kill terminal PTY
+        const entry = terminalStore.terminalMap.get(closingId);
+        if (entry) {
+          entry._suppressExit = true;
+          if (entry.terminalId) {
+            invoke("kill_terminal", { terminalId: entry.terminalId }).catch(() => {});
+          }
+          entry.term?.dispose();
+          entry.container?.remove();
+          terminalStore.terminalMap.delete(closingId);
+        }
+
+        // Kill shell PTY
+        const sEntry = shellStore.shellMap.get(closingId);
+        if (sEntry) {
+          if (sEntry.terminalId) {
+            invoke("kill_terminal", { terminalId: sEntry.terminalId }).catch(() => {});
+          }
+          sEntry.term?.dispose();
+          sEntry.container?.remove();
+          shellStore.shellMap.delete(closingId);
+        }
+
+        // Switch to another active session or show empty state
+        const otherProfile = profiles.find(p => p.id !== closingId && terminalStore.terminalMap.get(p.id)?.terminalId);
+        if (otherProfile) {
+          selectProfile(otherProfile);
+        } else {
+          activeProfile = null;
+          terminalStore.activeTermEntry = null;
+          terminalStore.currentTerminalId = null;
+          shellStore.activeShellEntry = null;
+        }
+      }
+    }
     if (e.key === 'Escape') { showModal = false; showSettings = false; }
   }
 
@@ -702,6 +742,14 @@
     // Poll git status every 5 seconds when a session is active
     setInterval(() => { if (activeProfile) refreshGitStatus(); }, 5000);
 
+    // Poll context usage every 5 seconds for active session
+    setInterval(() => {
+      if (activeProfile?.claudeSessionId) {
+        const path = activeProfile.worktreePath || activeProfile.projectPath;
+        terminalStore.refreshContextUsage(activeProfile.id, path, activeProfile.claudeSessionId);
+      }
+    }, 5000);
+
   });
 </script>
 
@@ -720,6 +768,55 @@
     onNewSession={() => showModal = true}
     onDeleteProfile={deleteProfile}
     onRefitTerminals={handleWindowResize}
+    onNewSessionForProfile={async (profile) => {
+      try {
+        // Kill existing terminal if running
+        const entry = terminalStore.terminalMap.get(profile.id);
+        if (entry) {
+          // Suppress exit detection so it doesn't auto-switch to another session
+          entry._suppressExit = true;
+          if (entry.terminalId) {
+            await invoke("kill_terminal", { terminalId: entry.terminalId }).catch(() => {});
+          }
+          // Dispose xterm instance and remove from map entirely
+          entry.term?.dispose();
+          entry.container?.remove();
+          terminalStore.terminalMap.delete(profile.id);
+        }
+        // Also kill shell if running
+        const shellEntry = shellStore.shellMap.get(profile.id);
+        if (shellEntry?.terminalId) {
+          await invoke("kill_terminal", { terminalId: shellEntry.terminalId }).catch(() => {});
+          shellEntry.term?.dispose();
+          shellEntry.container?.remove();
+          shellStore.shellMap.delete(profile.id);
+          shellStore.activeShellEntry = null;
+        }
+
+        // Clear session ID in backend (set to empty so it's treated as new)
+        await invoke("update_session_id", { id: profile.id, claudeSessionId: "" });
+
+        // Clear frontend state
+        terminalStore.activeTermEntry = null;
+        terminalStore.currentTerminalId = null;
+        terminalStore.contextUsage[profile.id] = null;
+        terminalStore.contextUsage = { ...terminalStore.contextUsage };
+
+        // Reload profiles to get the cleared session ID
+        await loadProfiles();
+
+        // Find the updated profile (with claudeSessionId cleared)
+        const updated = profiles.find(p => p.id === profile.id);
+        if (updated) {
+          // Force claudeSessionId to null so selectProfile spawns fresh
+          updated.claudeSessionId = null;
+          activeProfile = null; // Reset so selectProfile doesn't short-circuit
+          await selectProfile(updated);
+        }
+      } catch (e) {
+        console.error("Failed to start new session:", e);
+      }
+    }}
   />
 
   <div class="terminal-wrapper" bind:this={wrapperEl}>

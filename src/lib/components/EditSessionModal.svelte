@@ -18,7 +18,6 @@
   let selectedContexts = $state([]);
   let showContextDropdown = $state(false);
   let saving = $state(false);
-  let addBtnEl;
 
   // Available contexts not yet selected
   let availableContexts = $derived(
@@ -170,9 +169,21 @@
         {/if}
         <div class="ctx-add-row">
           {#if availableContexts.length > 0}
-            <button class="ctx-add-btn" bind:this={addBtnEl} onclick={(e) => { e.stopPropagation(); showContextDropdown = !showContextDropdown; }}>
+            <button class="ctx-add-btn" onclick={(e) => { e.stopPropagation(); showContextDropdown = !showContextDropdown; }}>
               + Add context
             </button>
+            {#if showContextDropdown}
+              <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+              <div class="ctx-dropdown-overlay" onclick={() => showContextDropdown = false}></div>
+              <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
+              <div class="ctx-dropdown" onclick={(e) => e.stopPropagation()}>
+                {#each availableContexts as snippet}
+                  <button class="ctx-dropdown-item" onclick={() => addContext(snippet.name)}>
+                    {snippet.name}
+                  </button>
+                {/each}
+              </div>
+            {/if}
           {:else if selectedContexts.length === 0}
             <div class="field-hint">No context snippets available. Create them in Settings.</div>
           {/if}
@@ -188,19 +199,6 @@
     </div>
   </div>
 </div>
-
-{#if showContextDropdown && addBtnEl}
-  <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-  <div class="ctx-dropdown-overlay" onclick={() => showContextDropdown = false}></div>
-  <!-- svelte-ignore a11y_no_static_element_interactions a11y_click_events_have_key_events -->
-  <div class="ctx-dropdown" style="top:{addBtnEl.getBoundingClientRect().bottom + 4}px;left:{addBtnEl.getBoundingClientRect().left}px;" onclick={(e) => e.stopPropagation()}>
-    {#each availableContexts as snippet}
-      <button class="ctx-dropdown-item" onclick={() => addContext(snippet.name)}>
-        {snippet.name}
-      </button>
-    {/each}
-  </div>
-{/if}
 {/if}
 
 <style>
@@ -374,11 +372,13 @@
   .ctx-dropdown-overlay {
     position: fixed;
     inset: 0;
-    z-index: 99;
+    z-index: 19;
   }
   .ctx-dropdown {
-    position: fixed;
-    z-index: 100;
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 0;
+    z-index: 20;
     background: #1c2128;
     border: 1px solid var(--border, #30363d);
     border-radius: 8px;

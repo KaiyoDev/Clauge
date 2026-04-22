@@ -1,4 +1,4 @@
-use crate::models::{DiscoveredSession, SessionProfile, TokenUsage};
+use crate::models::{ContextUsage, DiscoveredSession, SessionProfile, TokenUsage};
 use crate::storage::{encode_project_path, load_profiles, save_profiles};
 use std::fs;
 use std::path::PathBuf;
@@ -17,7 +17,11 @@ pub fn refresh_session_ids() -> Result<Vec<SessionProfile>, String> {
 pub fn update_session_id(id: String, claude_session_id: String) -> Result<(), String> {
     let mut profiles = load_profiles();
     if let Some(profile) = profiles.iter_mut().find(|p| p.id == id) {
-        profile.claude_session_id = Some(claude_session_id);
+        if claude_session_id.is_empty() {
+            profile.claude_session_id = None;
+        } else {
+            profile.claude_session_id = Some(claude_session_id);
+        }
     } else {
         return Err("Profile not found".to_string());
     }
@@ -166,6 +170,109 @@ pub fn get_session_tokens(
         cache_read_tokens,
         cache_creation_tokens,
         total_tokens,
+    })
+}
+
+/// Get the context window usage for a session by reading the last assistant entry
+/// from the .jsonl file. Returns fill percentage and compaction detection.
+#[tauri::command]
+pub fn get_session_context_usage(
+    project_path: String,
+    session_id: String,
+) -> Result<ContextUsage, String> {
+    let home = dirs::home_dir().ok_or("Cannot determine home directory")?;
+    let encoded = encode_project_path(&project_path);
+    let file_path = home
+        .join(".claude")
+        .join("projects")
+        .join(&encoded)
+        .join(format!("{}.jsonl", session_id));
+
+    if !file_path.exists() {
+        return Err("Session file not found".to_string());
+    }
+
+    // Read from the end for efficiency — find last two assistant entries
+    let contents = fs::read_to_string(&file_path).map_err(|e| e.to_string())?;
+    let lines: Vec<&str> = contents.lines().collect();
+
+    let mut last_usage: Option<(u64, u64, u64, String)> = None; // (input, cache_read, cache_create, model)
+    let mut prev_total: Option<u64> = None;
+    let mut found_last = false;
+
+    // Iterate from the end to find the last two assistant entries
+    for line in lines.iter().rev() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        if let Ok(val) = serde_json::from_str::<serde_json::Value>(line) {
+            let is_assistant = val.get("type").and_then(|t| t.as_str()) == Some("assistant");
+            if !is_assistant {
+                continue;
+            }
+
+            let usage = val.get("message").and_then(|m| m.get("usage"));
+            if let Some(u) = usage {
+                let input = u.get("input_tokens").and_then(|v| v.as_u64()).unwrap_or(0);
+                let cache_read = u.get("cache_read_input_tokens").and_then(|v| v.as_u64()).unwrap_or(0);
+                let cache_create = u.get("cache_creation_input_tokens").and_then(|v| v.as_u64()).unwrap_or(0);
+                let total = input + cache_read + cache_create;
+
+                let model = val.get("message")
+                    .and_then(|m| m.get("model"))
+                    .and_then(|m| m.as_str())
+                    .unwrap_or("unknown")
+                    .to_string();
+
+                if !found_last {
+                    last_usage = Some((input, cache_read, cache_create, model));
+                    found_last = true;
+                } else {
+                    prev_total = Some(total);
+                    break;
+                }
+            }
+        }
+    }
+
+    let (input_tokens, cache_read_tokens, cache_creation_tokens, model) =
+        last_usage.unwrap_or((0, 0, 0, "unknown".to_string()));
+
+    let total_context_tokens = input_tokens + cache_read_tokens + cache_creation_tokens;
+
+    // Determine context window size from model name
+    let context_window: u64 = if model.contains("opus") {
+        1_000_000
+    } else if model.contains("sonnet") {
+        200_000
+    } else if model.contains("haiku") {
+        200_000
+    } else {
+        200_000 // safe default
+    };
+
+    let fill_percent = if context_window > 0 {
+        (total_context_tokens as f64 / context_window as f64) * 100.0
+    } else {
+        0.0
+    };
+
+    // Detect compaction: previous total was >50% higher than current
+    let compacted = if let Some(prev) = prev_total {
+        prev > 0 && total_context_tokens < prev / 2
+    } else {
+        false
+    };
+
+    Ok(ContextUsage {
+        input_tokens,
+        cache_read_tokens,
+        cache_creation_tokens,
+        total_context_tokens,
+        context_window,
+        fill_percent,
+        model,
+        compacted,
     })
 }
 

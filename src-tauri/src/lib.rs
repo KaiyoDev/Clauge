@@ -60,6 +60,7 @@ pub fn run() {
             sessions::count_project_sessions,
             sessions::discover_sessions,
             sessions::get_session_tokens,
+            sessions::get_session_context_usage,
             usage::fetch_usage_limits,
             usage::get_usage_analytics,
             system::get_app_version,
@@ -122,8 +123,6 @@ pub fn run() {
             let window_menu = Submenu::with_items(app, "Window", true, &[
                 &PredefinedMenuItem::minimize(app, None)?,
                 &PredefinedMenuItem::maximize(app, None)?,
-                &PredefinedMenuItem::separator(app)?,
-                &PredefinedMenuItem::close_window(app, None)?,
             ])?;
             let menu_bar = Menu::with_items(app, &[&app_menu, &edit_menu, &window_menu])?;
             app.set_menu(menu_bar)?;

@@ -60,6 +60,19 @@ pub struct TokenUsage {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct ContextUsage {
+    pub input_tokens: u64,
+    pub cache_read_tokens: u64,
+    pub cache_creation_tokens: u64,
+    pub total_context_tokens: u64,
+    pub context_window: u64,
+    pub fill_percent: f64,
+    pub model: String,
+    pub compacted: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ClaudePlugin {
     pub name: String,
     pub marketplace: String,
