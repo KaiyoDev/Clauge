@@ -3,14 +3,16 @@
   import RestNav from './RestNav.svelte';
   import SqlNav from './SqlNav.svelte';
   import NoSqlNav from './NoSqlNav.svelte';
+  import AgentNav from '$lib/components/agent/AgentNav.svelte';
   import HistoryPanel from './HistoryPanel.svelte';
   import ImportExportModal from '$lib/components/shared/ImportExportModal.svelte';
 
-  let searchPerMode = $state<Record<string, string>>({ rest: '', sql: '', nosql: '' });
+  let searchPerMode = $state<Record<string, string>>({ rest: '', sql: '', nosql: '', agent: '' });
   let searchQuery = $derived(searchPerMode[$mode] ?? '');
   let restNavRef: ReturnType<typeof RestNav> | undefined = $state();
   let sqlNavRef: ReturnType<typeof SqlNav> | undefined = $state();
   let nosqlNavRef: ReturnType<typeof NoSqlNav> | undefined = $state();
+  let agentNavRef: ReturnType<typeof AgentNav> | undefined = $state();
   let showImportExport = $state(false);
 
   function setSearch(val: string) {
@@ -21,18 +23,21 @@
     rest: 'REST Collections',
     sql: 'SQL Connections',
     nosql: 'NoSQL Connections',
+    agent: 'Agent Sessions',
   } as const;
 
   const modeColors = {
     rest: 'var(--rest)',
     sql: 'var(--sql)',
     nosql: 'var(--nosql)',
+    agent: 'var(--agent, var(--acc))',
   } as const;
 
   const searchPlaceholders = {
     rest: 'Search requests...',
     sql: 'Search tables...',
     nosql: 'Search collections...',
+    agent: 'Search sessions...',
   } as const;
 
   function handleAddClick() {
@@ -42,6 +47,8 @@
       sqlNavRef?.showAddConnection();
     } else if ($mode === 'nosql') {
       nosqlNavRef?.showAddConnection();
+    } else if ($mode === 'agent') {
+      window.dispatchEvent(new CustomEvent('agent:new-session'));
     }
   }
 </script>
@@ -80,6 +87,8 @@
         <RestNav bind:this={restNavRef} {searchQuery} />
       {:else if $mode === 'sql'}
         <SqlNav bind:this={sqlNavRef} {searchQuery} />
+      {:else if $mode === 'agent'}
+        <AgentNav bind:this={agentNavRef} {searchQuery} />
       {:else}
         <NoSqlNav bind:this={nosqlNavRef} {searchQuery} />
       {/if}
