@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import type { AIMessage } from '$lib/types/ai';
 
-export type AppMode = 'rest' | 'sql' | 'nosql' | 'history';
+export type AppMode = 'agent' | 'rest' | 'sql' | 'nosql' | 'history';
 
 export const mode = writable<AppMode>('rest');
 export const navOpen = writable<boolean>(true);
