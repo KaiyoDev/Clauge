@@ -23,6 +23,14 @@ export interface AgentContext {
   updatedAt: string;
 }
 
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheCreationTokens: number;
+  totalTokens: number;
+}
+
 export interface DiscoveredSession {
   sessionId: string;
   modifiedAt: string;

@@ -38,14 +38,10 @@
         title: title.trim(),
         purpose,
         projectPath: projectPath.trim(),
-        projectName: projectPath.trim().split('/').pop() || title.trim(),
-        claudeSessionId: null,
-        contextPrompt: purpose === 'Custom' && customPrompt.trim() ? customPrompt.trim() : '',
-        worktreePath: null,
-        worktreeBranch: null,
-        skipPermissions: skipPermissions ? 1 : 0,
-        gitName: gitName.trim() || null,
-        gitEmail: gitEmail.trim() || null,
+        skipPermissions: skipPermissions || undefined,
+        customPrompt: purpose === 'Custom' && customPrompt.trim() ? customPrompt.trim() : undefined,
+        gitName: gitName.trim() || undefined,
+        gitEmail: gitEmail.trim() || undefined,
       });
       await loadAgentSessions();
       show = false;
