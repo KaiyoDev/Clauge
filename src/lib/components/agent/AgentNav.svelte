@@ -175,19 +175,19 @@
             onclick={() => handleSelectSession(session)}
             oncontextmenu={(e) => showSessionMenu(e, session)}
           >
-            <span class="purpose-dot" style="background:{purposeColor(session.purpose)}"></span>
+            <span class="status-dot" class:active={$activeAgentSession?.id === session.id} class:bg-running={activity === 'running'}></span>
             <div class="session-info">
               <span class="session-title">{session.title}</span>
-              <span class="session-time">{relativeTime(session.lastUsedAt)}</span>
+              <div class="session-meta">
+                <span class="purpose-badge" style="color:{purposeColor(session.purpose)};background:{purposeColor(session.purpose)}22">{session.purpose}</span>
+                {#if session.worktreePath}
+                  <span class="wt-badge" title="Isolated worktree: {session.worktreeBranch}">WT</span>
+                {/if}
+                <span class="session-time">{relativeTime(session.lastUsedAt)}</span>
+              </div>
             </div>
-            {#if session.worktreePath}
-              <span class="wt-badge">WT</span>
-            {/if}
             {#if pct !== null}
               <span class="ctx-badge {contextClass(pct)}">{pct}%</span>
-            {/if}
-            {#if activity}
-              <span class="activity-dot" class:running={activity === 'running'}></span>
             {/if}
             <span
               class="session-ellipsis"
@@ -320,9 +320,32 @@
   .session-item:hover { background: var(--c); }
   .session-item.active { background: color-mix(in srgb, var(--agent, var(--acc)) 10%, transparent); }
 
-  .purpose-dot {
+  .status-dot {
     width: 6px; height: 6px; border-radius: 50%;
     flex-shrink: 0;
+    background: var(--t4);
+  }
+  .status-dot.active {
+    background: var(--acc);
+  }
+  .status-dot.bg-running {
+    background: #3fb950;
+    box-shadow: 0 0 4px rgba(63, 185, 80, 0.4);
+  }
+
+  .purpose-badge {
+    font-size: 10px;
+    font-family: var(--ui);
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .session-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
   }
 
   .session-info {

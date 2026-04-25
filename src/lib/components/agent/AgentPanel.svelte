@@ -38,7 +38,7 @@
     agentRemoveWorktree,
     agentDeleteSession,
   } from '$lib/commands/agent';
-  import { refreshAgentGitStatus, refreshAgentContextUsage, loadAgentSessions } from '$lib/stores/agent';
+  import { refreshAgentGitStatus, refreshAgentContextUsage, loadAgentSessions, agentGitBranchName, agentGitFiles, agentGitAhead, agentGitBehind } from '$lib/stores/agent';
   import { getTerminalTheme } from '$lib/utils/theme';
   import { appearance } from '$lib/stores/settings';
   import { getPurposePrompt } from '$lib/prompts/agent';
@@ -53,7 +53,7 @@
 
   // Divider drag state
   let dragging = false;
-  let mainHeight = 65; // percentage
+  let mainWidth = 55; // percentage (left terminal width)
   let fitTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Track current session to detect changes
@@ -583,14 +583,14 @@
     e.preventDefault();
     dragging = true;
 
-    const startY = e.clientY;
-    const startHeight = mainHeight;
+    const startX = e.clientX;
+    const startW = mainWidth;
     const rect = wrapperEl.getBoundingClientRect();
 
     function onMove(ev: MouseEvent) {
-      const deltaY = ev.clientY - startY;
-      const pct = startHeight + (deltaY / rect.height) * 100;
-      mainHeight = Math.max(20, Math.min(80, pct));
+      const deltaX = ev.clientX - startX;
+      const pct = startW + (deltaX / rect.width) * 100;
+      mainWidth = Math.max(25, Math.min(80, pct));
 
       if (!fitTimer) {
         fitTimer = setTimeout(() => {
@@ -611,7 +611,7 @@
       refitAll();
     }
 
-    document.body.style.cursor = 'row-resize';
+    document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
     document.addEventListener('mousemove', onMove);
     document.addEventListener('mouseup', onUp);
@@ -645,6 +645,15 @@
       if (activeShellEntry) {
         activeShellEntry.container.style.display = 'none';
         activeShellEntry = null;
+      }
+      // Clear git state and usage polling when no session
+      agentGitBranchName.set('');
+      agentGitFiles.set([]);
+      agentGitAhead.set(0);
+      agentGitBehind.set(0);
+      if (contextUsageInterval) {
+        clearInterval(contextUsageInterval);
+        contextUsageInterval = null;
       }
     }
   });
@@ -834,7 +843,7 @@
 
 {#if $activeAgentSession}
   <div class="agent-panel" bind:this={wrapperEl}>
-    <div class="agent-terminal-main" style="height:{$agentShellOpen ? mainHeight + '%' : '100%'}">
+    <div class="agent-terminal-main" style="width:{$agentShellOpen ? mainWidth + '%' : '100%'}">
       <div class="agent-terminal-container" bind:this={terminalEl}></div>
     </div>
 
@@ -846,7 +855,7 @@
         onmousedown={handleDividerMousedown}
       ></div>
 
-      <div class="agent-shell-panel" style="height:{100 - mainHeight}%">
+      <div class="agent-shell-panel" style="width:{100 - mainWidth}%">
         <div class="agent-shell-container" bind:this={shellEl}></div>
       </div>
     {/if}
@@ -865,7 +874,7 @@
   .agent-panel {
     flex: 1;
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     min-height: 0;
     overflow: hidden;
   }
@@ -874,7 +883,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    min-height: 60px;
+    min-width: 200px;
   }
 
   .agent-terminal-container {
@@ -884,10 +893,10 @@
   }
 
   .agent-divider {
-    height: 4px;
+    width: 4px;
     flex-shrink: 0;
     background: var(--b1);
-    cursor: row-resize;
+    cursor: col-resize;
     position: relative;
     transition: background 0.12s;
   }
@@ -900,7 +909,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    min-height: 60px;
+    min-width: 200px;
   }
 
   .agent-shell-container {

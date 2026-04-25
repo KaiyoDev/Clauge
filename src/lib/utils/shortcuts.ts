@@ -90,22 +90,17 @@ function handleKeydown(e: KeyboardEvent) {
     e.preventDefault();
   }
 
-  // Cmd+Shift+L: toggle agent shell panel
-  if (meta && e.shiftKey && e.key === 'l') {
+  // Cmd+L: toggle AI panel (or shell in agent mode)
+  if (meta && e.key === 'l' && !e.shiftKey) {
     const currentMode = get(mode);
     if (currentMode === 'agent') {
-      // Dynamic import to avoid circular dependency
+      // In agent mode, Cmd+L toggles the shell panel
       import('$lib/stores/agent').then(({ agentShellOpen }) => {
         agentShellOpen.update(v => !v);
       });
+      e.preventDefault();
+      return;
     }
-    e.preventDefault();
-  }
-
-  // Cmd+L: toggle AI panel
-  if (meta && e.key === 'l' && !e.shiftKey) {
-    const currentMode = get(mode);
-    if (currentMode === 'agent') { e.preventDefault(); return; }
     aiPanelOpen.update(v => {
       const next = !v;
       aiPanelOpenPerMode.update(m => ({ ...m, [currentMode]: next }));
