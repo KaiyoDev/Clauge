@@ -9,6 +9,9 @@ export interface NoSqlConnectionConfig {
   password?: string;
   ssl: boolean;
   directConnection?: boolean;
+  /** Optional SSH profile ID — when set, the runtime opens a tunnel through
+   * that profile and routes the DB connection through it. NULL = direct. */
+  sshProfileId?: string | null;
 }
 
 export interface NoSqlConnection {
@@ -26,6 +29,7 @@ export interface NoSqlConnection {
   sortOrder: number;
   createdAt: string;
   updatedAt: string;
+  sshProfileId?: string | null;
 }
 
 export interface NoSqlQueryResult {
