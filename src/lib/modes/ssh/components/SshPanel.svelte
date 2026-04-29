@@ -683,6 +683,30 @@
     void $activeSshProfile;
     if (searchOpen) closeSearch();
   });
+
+  // Window-level capture-phase Cmd+F (Ctrl+F on non-Mac). Fires before xterm's
+  // hidden textarea or the webview's default find-in-page can swallow the key.
+  // Scoped to "active SSH profile + active terminal" — runs only while the
+  // user is actually in an SSH tab.
+  $effect(() => {
+    if (!$activeSshProfile) return;
+    const handler = (e: KeyboardEvent) => {
+      const meta = isMac ? e.metaKey : e.ctrlKey;
+      if (!meta || e.shiftKey || e.altKey) return;
+      if (e.key.toLowerCase() !== 'f') return;
+      if (!activeEntry) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (searchOpen) {
+        searchInputEl?.focus();
+        searchInputEl?.select();
+      } else {
+        openSearch();
+      }
+    };
+    window.addEventListener('keydown', handler, { capture: true });
+    return () => window.removeEventListener('keydown', handler, { capture: true });
+  });
 </script>
 
 {#if $activeSshProfile}
