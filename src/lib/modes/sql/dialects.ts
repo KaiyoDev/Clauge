@@ -4,7 +4,7 @@
 // ports, abbreviations, parser profiles, capability flags) consumed by the
 // SQL UI. Keep the entries here in lockstep with the Rust descriptor list.
 
-export type SqlDialectKey = 'postgresql' | 'mysql' | 'sqlite';
+export type SqlDialectKey = 'postgresql' | 'mysql' | 'sqlite' | 'clickhouse';
 
 export interface SqlDialectDescriptor {
   key: SqlDialectKey;
@@ -25,6 +25,10 @@ export const SQL_DIALECTS: readonly SqlDialectDescriptor[] = [
   { key: 'postgresql', displayName: 'PostgreSQL', abbreviation: 'PG', defaultPort: 5432, usesHostPort: true,  usesCredentials: true,  parserProfile: 'PostgreSQL', identifierQuote: '"' },
   { key: 'mysql',      displayName: 'MySQL',      abbreviation: 'MY', defaultPort: 3306, usesHostPort: true,  usesCredentials: true,  parserProfile: 'MySQL',      identifierQuote: '`' },
   { key: 'sqlite',     displayName: 'SQLite',     abbreviation: 'SL', defaultPort: 0,    usesHostPort: false, usesCredentials: false, parserProfile: 'SQLite',     identifierQuote: '"' },
+  // ClickHouse is HTTP-based (default 8123). node-sql-parser has no
+  // dedicated profile, so we pin PostgreSQL as the closest fallback;
+  // ClickHouse uses backticks for identifier quoting in DDL.
+  { key: 'clickhouse', displayName: 'ClickHouse', abbreviation: 'CH', defaultPort: 8123, usesHostPort: true,  usesCredentials: true,  parserProfile: 'PostgreSQL', identifierQuote: '`' },
 ] as const;
 
 export function descriptorFor(key: string): SqlDialectDescriptor | undefined {

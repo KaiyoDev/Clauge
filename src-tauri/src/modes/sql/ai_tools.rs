@@ -144,6 +144,21 @@ pub async fn execute_sql_tool(
                 DatabasePool::Sqlite(_) => {
                     Ok(vec![("main".to_string(),)])
                 }
+                DatabasePool::Clickhouse(c) => {
+                    match c.query("SELECT name FROM system.databases ORDER BY name").await {
+                        Ok(r) => {
+                            let dbs: Vec<(String,)> = r
+                                .rows
+                                .into_iter()
+                                .filter_map(|row| {
+                                    row.into_iter().next().and_then(|v| v.as_str().map(|s| (s.to_string(),)))
+                                })
+                                .collect();
+                            Ok(dbs)
+                        }
+                        Err(e) => Err(sqlx::Error::Protocol(e)),
+                    }
+                }
             };
 
             match result {
@@ -181,6 +196,9 @@ pub async fn execute_sql_tool(
                 }
                 DatabasePool::MySql(_) => Ok(vec![("default".to_string(),)]),
                 DatabasePool::Sqlite(_) => Ok(vec![("main".to_string(),)]),
+                // ClickHouse has no separate schema concept; surface the
+                // active database name as the only schema.
+                DatabasePool::Clickhouse(c) => Ok(vec![(c.database.clone(),)]),
             };
 
             match result {
@@ -243,6 +261,35 @@ pub async fn execute_sql_tool(
                     .fetch_all(p)
                     .await
                     .map_err(|e| e.to_string())
+                }
+                DatabasePool::Clickhouse(c) => {
+                    let db_name = database.clone().unwrap_or_else(|| c.database.clone());
+                    let safe_db = db_name.replace('\'', "''");
+                    let stmt = format!(
+                        "SELECT name, engine FROM system.tables WHERE database = '{}' ORDER BY name",
+                        safe_db
+                    );
+                    match c.query(&stmt).await {
+                        Ok(r) => Ok(r
+                            .rows
+                            .into_iter()
+                            .filter_map(|row| {
+                                let mut it = row.into_iter();
+                                let name = it.next()?.as_str().map(|s| s.to_string())?;
+                                let engine = it
+                                    .next()
+                                    .and_then(|v| v.as_str().map(|s| s.to_string()))
+                                    .unwrap_or_default();
+                                let tt = if engine.to_lowercase().contains("view") {
+                                    "VIEW".to_string()
+                                } else {
+                                    "TABLE".to_string()
+                                };
+                                Some((name, tt))
+                            })
+                            .collect()),
+                        Err(e) => Err(e),
+                    }
                 }
             };
 
@@ -353,6 +400,57 @@ pub async fn execute_sql_tool(
                             .collect()
                     })
                     .map_err(|e| e.to_string())
+                }
+                DatabasePool::Clickhouse(c) => {
+                    let db_name = schema.clone().unwrap_or_else(|| c.database.clone());
+                    let safe_db = db_name.replace('\'', "''");
+                    let safe_table = table.replace('\'', "''");
+                    let stmt = format!(
+                        "SELECT name, type, default_expression, is_in_primary_key \
+                         FROM system.columns \
+                         WHERE database = '{}' AND table = '{}' \
+                         ORDER BY position",
+                        safe_db, safe_table
+                    );
+                    match c.query(&stmt).await {
+                        Ok(r) => {
+                            let cols: Vec<serde_json::Value> = r
+                                .rows
+                                .into_iter()
+                                .filter_map(|row| {
+                                    let mut it = row.into_iter();
+                                    let name = it.next()?.as_str().map(|s| s.to_string())?;
+                                    let dtype = it
+                                        .next()
+                                        .and_then(|v| v.as_str().map(|s| s.to_string()))
+                                        .unwrap_or_default();
+                                    let default = it
+                                        .next()
+                                        .and_then(|v| v.as_str().map(|s| s.to_string()))
+                                        .filter(|s| !s.is_empty());
+                                    let is_pk = it
+                                        .next()
+                                        .map(|v| match v {
+                                            serde_json::Value::Number(n) => n.as_u64().unwrap_or(0) > 0,
+                                            serde_json::Value::String(s) => s == "1" || s.eq_ignore_ascii_case("true"),
+                                            serde_json::Value::Bool(b) => b,
+                                            _ => false,
+                                        })
+                                        .unwrap_or(false);
+                                    let nullable = dtype.starts_with("Nullable(");
+                                    Some(serde_json::json!({
+                                        "name": name,
+                                        "type": dtype,
+                                        "nullable": nullable,
+                                        "primaryKey": is_pk,
+                                        "default": default,
+                                    }))
+                                })
+                                .collect();
+                            Ok(cols)
+                        }
+                        Err(e) => Err(e),
+                    }
                 }
                 DatabasePool::Sqlite(p) => {
                     #[derive(sqlx::FromRow)]
@@ -540,6 +638,9 @@ pub async fn execute_sql_tool(
                         })
                         .map_err(|e| e.to_string())
                 }
+                DatabasePool::Clickhouse(c) => {
+                    c.query(query).await.map(|r| (r.columns, r.rows))
+                }
             };
             let duration_ms = start.elapsed().as_millis() as u64;
 
@@ -642,6 +743,35 @@ pub async fn execute_sql_tool(
                     .fetch_all(p)
                     .await
                 }
+                crate::modes::sql::client::DatabasePool::Clickhouse(c) => {
+                    let db_name = if database.is_empty() { c.database.clone() } else { database.to_string() };
+                    let safe_db = db_name.replace('\'', "''");
+                    let stmt = format!(
+                        "SELECT name, engine FROM system.tables WHERE database = '{}' ORDER BY name",
+                        safe_db
+                    );
+                    match c.query(&stmt).await {
+                        Ok(r) => Ok(r
+                            .rows
+                            .into_iter()
+                            .filter_map(|row| {
+                                let mut it = row.into_iter();
+                                let name = it.next()?.as_str().map(|s| s.to_string())?;
+                                let engine = it
+                                    .next()
+                                    .and_then(|v| v.as_str().map(|s| s.to_string()))
+                                    .unwrap_or_default();
+                                let tt = if engine.to_lowercase().contains("view") {
+                                    "VIEW".to_string()
+                                } else {
+                                    "TABLE".to_string()
+                                };
+                                Some((name, tt))
+                            })
+                            .collect()),
+                        Err(e) => Err(sqlx::Error::Protocol(e)),
+                    }
+                }
             };
 
             match tables_result {
@@ -690,6 +820,41 @@ pub async fn execute_sql_tool(
                                     (name.clone(), dtype.clone(), if *notnull == 1 { "NO".to_string() } else { "YES".to_string() })
                                 }).collect())
                             }
+                            crate::modes::sql::client::DatabasePool::Clickhouse(c) => {
+                                let db_name = if database.is_empty() { c.database.clone() } else { database.to_string() };
+                                let safe_db = db_name.replace('\'', "''");
+                                let safe_table = table_name.replace('\'', "''");
+                                let stmt = format!(
+                                    "SELECT name, type FROM system.columns \
+                                     WHERE database = '{}' AND table = '{}' \
+                                     ORDER BY position",
+                                    safe_db, safe_table
+                                );
+                                match c.query(&stmt).await {
+                                    Ok(r) => {
+                                        let cols: Vec<(String, String, String)> = r
+                                            .rows
+                                            .into_iter()
+                                            .filter_map(|row| {
+                                                let mut it = row.into_iter();
+                                                let name = it.next()?.as_str().map(|s| s.to_string())?;
+                                                let dtype = it
+                                                    .next()
+                                                    .and_then(|v| v.as_str().map(|s| s.to_string()))
+                                                    .unwrap_or_default();
+                                                let nullable = if dtype.starts_with("Nullable(") {
+                                                    "YES".to_string()
+                                                } else {
+                                                    "NO".to_string()
+                                                };
+                                                Some((name, dtype, nullable))
+                                            })
+                                            .collect();
+                                        Ok(cols)
+                                    }
+                                    Err(e) => Err(sqlx::Error::Protocol(e)),
+                                }
+                            }
                         };
                         let cols_str = match cols {
                             Ok(c) => c.iter().map(|(name, dtype, nullable)| {
@@ -727,6 +892,9 @@ pub async fn execute_sql_tool(
                 crate::modes::sql::client::DatabasePool::Postgres(_) => format!("EXPLAIN ANALYZE {}", query),
                 crate::modes::sql::client::DatabasePool::MySql(_) => format!("EXPLAIN {}", query),
                 crate::modes::sql::client::DatabasePool::Sqlite(_) => format!("EXPLAIN QUERY PLAN {}", query),
+                // ClickHouse uses plain `EXPLAIN <query>` (defaults to
+                // EXPLAIN PLAN). Older versions accept the same syntax.
+                crate::modes::sql::client::DatabasePool::Clickhouse(_) => format!("EXPLAIN {}", query),
             };
 
             let result = match pool_entry {
@@ -759,6 +927,26 @@ pub async fn execute_sql_tool(
                                 (0..ncols).map(|i| r.try_get::<String, _>(i).unwrap_or_default()).collect::<Vec<_>>().join(" | ")
                             }).collect::<Vec<_>>().join("\n")
                         })
+                }
+                crate::modes::sql::client::DatabasePool::Clickhouse(c) => {
+                    match c.query(&explain_sql).await {
+                        Ok(r) => Ok(r
+                            .rows
+                            .iter()
+                            .map(|row| {
+                                row.iter()
+                                    .map(|v| match v {
+                                        serde_json::Value::String(s) => s.clone(),
+                                        serde_json::Value::Null => String::new(),
+                                        other => other.to_string(),
+                                    })
+                                    .collect::<Vec<_>>()
+                                    .join(" | ")
+                            })
+                            .collect::<Vec<_>>()
+                            .join("\n")),
+                        Err(e) => Err(sqlx::Error::Protocol(e)),
+                    }
                 }
             };
 

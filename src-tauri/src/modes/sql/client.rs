@@ -8,6 +8,7 @@ use tauri::State;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
+use super::clickhouse_client::ClickhouseClient;
 use super::dialects::{descriptor_for_key, SqlDialect};
 
 // --- Types ---
@@ -88,6 +89,10 @@ pub enum DatabasePool {
     Postgres(sqlx::PgPool),
     MySql(sqlx::MySqlPool),
     Sqlite(sqlx::SqlitePool),
+    /// ClickHouse is HTTP-based and not sqlx-compatible; the variant holds
+    /// a stateless `ClickhouseClient` that issues `FORMAT JSON` requests
+    /// per query. There is no pool to close — `close()` is a no-op.
+    Clickhouse(ClickhouseClient),
 }
 
 pub struct SqlConnectionManager {
@@ -127,6 +132,16 @@ fn build_sqlite_url(config: &SqlConnectionConfig) -> String {
     format!("sqlite:{}?mode=rwc", config.database)
 }
 
+fn build_clickhouse_url(config: &SqlConnectionConfig) -> String {
+    // ClickHouse uses an HTTP endpoint, not a libpq-style URL — this is
+    // surfaced for diagnostics only; `create_pool` constructs the
+    // `ClickhouseClient` directly from the config.
+    let scheme = if config.ssl { "https" } else { "http" };
+    let host = if config.host.is_empty() { "localhost" } else { config.host.as_str() };
+    let port = if config.port == 0 { 8123 } else { config.port };
+    format!("{}://{}:{}/?database={}", scheme, host, port, config.database)
+}
+
 fn build_connection_url(config: &SqlConnectionConfig) -> Result<String, String> {
     let descriptor = descriptor_for_key(&config.driver)
         .ok_or_else(|| format!("Unsupported driver: {}", config.driver))?;
@@ -134,6 +149,7 @@ fn build_connection_url(config: &SqlConnectionConfig) -> Result<String, String> 
         SqlDialect::Postgres => build_postgres_url(config),
         SqlDialect::MySql => build_mysql_url(config),
         SqlDialect::Sqlite => build_sqlite_url(config),
+        SqlDialect::Clickhouse => build_clickhouse_url(config),
     })
 }
 
@@ -180,6 +196,17 @@ pub async fn create_pool(config: &SqlConnectionConfig) -> Result<DatabasePool, S
                 .await
                 .map_err(|e| format!("SQLite connection failed: {}", e))?;
             Ok(DatabasePool::Sqlite(pool))
+        }
+        SqlDialect::Clickhouse => {
+            let client = ClickhouseClient::new(config)?;
+            // Verify reachability + credentials before handing the client
+            // back; mirrors the connect-then-test contract sqlx pools have.
+            client
+                .ping()
+                .await
+                .map_err(|e| format!("ClickHouse connection failed: {}", e))?;
+            eprintln!("[Clauge SQL] ClickHouse connected OK");
+            Ok(DatabasePool::Clickhouse(client))
         }
     }
 }
@@ -421,6 +448,8 @@ pub async fn sql_connect_database(
             DatabasePool::Postgres(p) => p.close().await,
             DatabasePool::MySql(p) => p.close().await,
             DatabasePool::Sqlite(p) => p.close().await,
+            // ClickHouse client is stateless HTTP — nothing to close.
+            DatabasePool::Clickhouse(_) => {}
         }
     }
     connections.insert(key.clone(), pool);
@@ -438,6 +467,7 @@ pub async fn sql_disconnect(
             DatabasePool::Postgres(p) => p.close().await,
             DatabasePool::MySql(p) => p.close().await,
             DatabasePool::Sqlite(p) => p.close().await,
+            DatabasePool::Clickhouse(_) => {}
         }
         Ok(())
     } else {
@@ -453,6 +483,7 @@ pub async fn sql_test_connection(config: SqlConnectionConfig) -> Result<(), Stri
         DatabasePool::Postgres(p) => p.close().await,
         DatabasePool::MySql(p) => p.close().await,
         DatabasePool::Sqlite(p) => p.close().await,
+        DatabasePool::Clickhouse(_) => {}
     }
     Ok(())
 }
@@ -534,6 +565,16 @@ pub async fn sql_execute_query(
                 duration_ms,
             })
         }
+        DatabasePool::Clickhouse(c) => {
+            let result = c.query(&query).await?;
+            let duration_ms = start.elapsed().as_millis() as u64;
+            Ok(SqlQueryResult {
+                columns: result.columns,
+                rows: result.rows,
+                affected_rows: result.affected,
+                duration_ms,
+            })
+        }
     }
 }
 
@@ -567,6 +608,17 @@ pub async fn sql_list_databases(
         DatabasePool::Sqlite(_) => {
             // SQLite has only one database per file
             Ok(vec!["main".to_string()])
+        }
+        DatabasePool::Clickhouse(c) => {
+            let result = c
+                .query("SELECT name FROM system.databases ORDER BY name")
+                .await?;
+            Ok(result
+                .rows
+                .into_iter()
+                .filter_map(|row| row.into_iter().next())
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect())
         }
     }
 }
@@ -606,6 +658,11 @@ pub async fn sql_create_database(
         DatabasePool::Sqlite(_) => {
             return Err("SQLite does not support creating databases".to_string());
         }
+        DatabasePool::Clickhouse(c) => {
+            // ClickHouse uses CREATE DATABASE; identifier quoted with backticks.
+            let stmt = format!("CREATE DATABASE `{}`", name.replace('`', "``"));
+            c.query(&stmt).await?;
+        }
     }
 
     Ok(())
@@ -636,6 +693,11 @@ pub async fn sql_list_schemas(
         }
         DatabasePool::Sqlite(_) => {
             Ok(vec!["main".to_string()])
+        }
+        DatabasePool::Clickhouse(c) => {
+            // ClickHouse has no separate "schema" concept — surface the
+            // active database name as the only schema, mirroring SQLite.
+            Ok(vec![c.database.clone()])
         }
     }
 }
@@ -724,6 +786,35 @@ pub async fn sql_list_tables(
                     name,
                     table_type: table_type.to_uppercase(),
                     row_count: None,
+                })
+                .collect())
+        }
+        DatabasePool::Clickhouse(c) => {
+            // Pull both regular tables and views so the UI surfaces views
+            // alongside tables — matches the other drivers' behaviour.
+            let db_name = database.unwrap_or_else(|| c.database.clone());
+            let safe_db = db_name.replace('\'', "''");
+            let stmt = format!(
+                "SELECT name, engine FROM system.tables WHERE database = '{}' ORDER BY name",
+                safe_db
+            );
+            let result = c.query(&stmt).await?;
+            Ok(result
+                .rows
+                .into_iter()
+                .filter_map(|row| {
+                    let mut it = row.into_iter();
+                    let name = it.next()?.as_str().map(|s| s.to_string())?;
+                    let engine = it
+                        .next()
+                        .and_then(|v| v.as_str().map(|s| s.to_string()))
+                        .unwrap_or_default();
+                    let table_type = if engine.to_lowercase().contains("view") {
+                        "VIEW".to_string()
+                    } else {
+                        "TABLE".to_string()
+                    };
+                    Some(TableInfo { name, table_type, row_count: None })
                 })
                 .collect())
         }
@@ -843,6 +934,55 @@ pub async fn sql_describe_table(
                     is_nullable: r.notnull == 0,
                     is_primary_key: r.pk > 0,
                     default_value: r.dflt_value,
+                })
+                .collect())
+        }
+        DatabasePool::Clickhouse(c) => {
+            // ClickHouse exposes column metadata via `system.columns`.
+            // Nullability is encoded in the type string (`Nullable(T)`),
+            // and primary-key columns are listed in `is_in_primary_key`.
+            let db_name = schema.unwrap_or_else(|| c.database.clone());
+            let safe_db = db_name.replace('\'', "''");
+            let safe_table = table.replace('\'', "''");
+            let stmt = format!(
+                "SELECT name, type, default_expression, is_in_primary_key \
+                 FROM system.columns \
+                 WHERE database = '{}' AND table = '{}' \
+                 ORDER BY position",
+                safe_db, safe_table
+            );
+            let result = c.query(&stmt).await?;
+            Ok(result
+                .rows
+                .into_iter()
+                .filter_map(|row| {
+                    let mut it = row.into_iter();
+                    let name = it.next()?.as_str().map(|s| s.to_string())?;
+                    let data_type = it
+                        .next()
+                        .and_then(|v| v.as_str().map(|s| s.to_string()))
+                        .unwrap_or_default();
+                    let default_expr = it
+                        .next()
+                        .and_then(|v| v.as_str().map(|s| s.to_string()))
+                        .filter(|s| !s.is_empty());
+                    let is_pk = it
+                        .next()
+                        .map(|v| match v {
+                            serde_json::Value::Number(n) => n.as_u64().unwrap_or(0) > 0,
+                            serde_json::Value::String(s) => s == "1" || s.eq_ignore_ascii_case("true"),
+                            serde_json::Value::Bool(b) => b,
+                            _ => false,
+                        })
+                        .unwrap_or(false);
+                    let is_nullable = data_type.starts_with("Nullable(");
+                    Some(ColumnInfo {
+                        name,
+                        data_type,
+                        is_nullable,
+                        is_primary_key: is_pk,
+                        default_value: default_expr,
+                    })
                 })
                 .collect())
         }

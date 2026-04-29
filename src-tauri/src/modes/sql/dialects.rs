@@ -14,6 +14,7 @@ pub enum SqlDialect {
     Postgres,
     MySql,
     Sqlite,
+    Clickhouse,
 }
 
 /// Registry record; some metadata fields are consumed only by the
@@ -65,6 +66,20 @@ const DIALECTS: &[SqlDialectDescriptor] = &[
         uses_host_port: false,
         uses_credentials: false,
         frontend_parser_profile: Some("SQLite"),
+    },
+    SqlDialectDescriptor {
+        dialect: SqlDialect::Clickhouse,
+        key: "clickhouse",
+        display_name: "ClickHouse",
+        abbreviation: "CH",
+        default_port: 8123,
+        uses_host_port: true,
+        uses_credentials: true,
+        // node-sql-parser has no ClickHouse profile; PostgreSQL is the
+        // closest fallback (similar quoting/casting). The editor falls
+        // back to PostgreSQL anyway for unknown profiles, but we make it
+        // explicit here so the registry stays the source of truth.
+        frontend_parser_profile: Some("PostgreSQL"),
     },
 ];
 
