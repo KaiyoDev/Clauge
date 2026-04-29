@@ -6,13 +6,13 @@
     showSqlConnectionDialog, editingSqlConnection, getLiveId, loadTablesForDb,
     insertQueryText, connectToDatabase, getDbLiveId, dbLiveConnections,
     showSqlDisconnectConfirm, sqlDisconnectTarget
-  } from '$lib/stores/sql';
-  import { sqlListSchemas, sqlDescribeTable, sqlExecuteQuery, sqlCreateDatabase } from '$lib/commands/sql_client';
+  } from '../stores';
+  import { sqlListSchemas, sqlDescribeTable, sqlExecuteQuery, sqlCreateDatabase } from '../commands';
   import { showToast } from '$lib/components/shared/toast';
   import { friendlyError } from '$lib/utils/errors';
   import { writeText } from '@tauri-apps/plugin-clipboard-manager';
   import { showContextMenu } from '$lib/components/shared/contextmenu';
-  import type { SqlConnectionConfig, SqlConnection, TableInfo, ColumnInfo } from '$lib/types/sql';
+  import type { SqlConnectionConfig, SqlConnection, TableInfo, ColumnInfo } from '../types';
   import { tabs, activeTabId } from '$lib/stores/tabs';
   import { get } from 'svelte/store';
 
@@ -73,7 +73,7 @@
       createDbShow = false;
       // Refresh connection's database list from server
       clearConnectionCaches(createDbConnId);
-      const dbs = await (await import('$lib/commands/sql_client')).sqlListDatabases(lid);
+      const dbs = await (await import('../commands')).sqlListDatabases(lid);
       connectionDatabases.update(m => {
         const next = new Map(m);
         next.set(createDbConnId, dbs);
@@ -207,7 +207,7 @@
       for (const schema of schemas) {
         const sKey = `${dbKey}:${schema}`;
         if (expandedSchemas.has(sKey)) {
-          const tables = await (await import('$lib/commands/sql_client')).sqlListTables(dbLiveId, db, schema);
+          const tables = await (await import('../commands')).sqlListTables(dbLiveId, db, schema);
           tableCache = new Map([...tableCache, [sKey, tables]]);
         }
       }
@@ -235,7 +235,7 @@
       try {
         const dbLiveId = getDbLiveId(connId, db) ?? getLiveId(connId);
         if (dbLiveId) {
-          const tables = await (await import('$lib/commands/sql_client')).sqlListTables(dbLiveId, db, schema);
+          const tables = await (await import('../commands')).sqlListTables(dbLiveId, db, schema);
           tableCache = new Map([...tableCache, [key, tables]]);
         }
       } catch {
@@ -351,7 +351,7 @@ ORDER BY ordinal_position;`);
           try {
             const lid = getLiveId(conn.id);
             if (lid) {
-              const dbs = await (await import('$lib/commands/sql_client')).sqlListDatabases(lid);
+              const dbs = await (await import('../commands')).sqlListDatabases(lid);
               connectionDatabases.update(m => {
                 const next = new Map(m);
                 next.set(conn.id, dbs);
@@ -473,7 +473,7 @@ ORDER BY ordinal_position;`);
             showToast(`Dropped database "${db}"`, 'success');
             // Refresh connection's database list from server
             clearConnectionCaches(connId);
-            const dbs = await (await import('$lib/commands/sql_client')).sqlListDatabases(lid);
+            const dbs = await (await import('../commands')).sqlListDatabases(lid);
             connectionDatabases.update(m => {
               const next = new Map(m);
               next.set(connId, dbs);
@@ -553,7 +553,7 @@ ORDER BY ordinal_position;`);
               // Refresh the schema to remove the table from nav
               const sKey = `${connId}:${db}:${schema}`;
               tableCache = new Map([...tableCache].filter(([k]) => k !== sKey));
-              const tables = await (await import('$lib/commands/sql_client')).sqlListTables(lid, db, schema);
+              const tables = await (await import('../commands')).sqlListTables(lid, db, schema);
               tableCache = new Map([...tableCache, [sKey, tables]]);
               showToast(`Dropped ${table}`, 'success');
             }

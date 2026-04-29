@@ -1,6 +1,6 @@
 import { get } from 'svelte/store';
 import { activeTabId } from '$lib/stores/tabs';
-import { activeConnectionId, getSqlTabData, connections as sqlConnections, databaseTables, getLiveId, connectedIds, dbLiveConnections } from '$lib/stores/sql';
+import { activeConnectionId, getSqlTabData, connections as sqlConnections, databaseTables, getLiveId, connectedIds, dbLiveConnections } from '../stores';
 import type { ChatContext, ContextRequest, ContextResponse, ContextEnvVar } from '$lib/types/ai';
 
 export async function gatherSqlContext(): Promise<ChatContext> {

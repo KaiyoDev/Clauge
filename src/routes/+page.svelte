@@ -3,7 +3,7 @@
   import { activeHistoryEntry } from '$lib/stores/history';
   import AgentPanel from '$lib/components/agent/AgentPanel.svelte';
   import RestPanel from '$lib/components/rest/RestPanel.svelte';
-  import SqlPanel from '$lib/components/sql/SqlPanel.svelte';
+  import SqlPanel from '$lib/modes/sql/components/SqlPanel.svelte';
   import NoSqlPanel from '$lib/modes/nosql/components/NoSqlPanel.svelte';
   import SshPanel from '$lib/modes/ssh/components/SshPanel.svelte';
   import HistoryViewer from '$lib/components/rest/HistoryViewer.svelte';

@@ -1,6 +1,6 @@
 import { writable, derived, get } from 'svelte/store';
-import type { SqlConnection, SqlConnectionConfig, TableInfo, SqlQueryResult, SqlResultEntry, SqlScript } from '$lib/types/sql';
-import * as sqlCmd from '$lib/commands/sql_client';
+import type { SqlConnection, SqlConnectionConfig, TableInfo, SqlQueryResult, SqlResultEntry, SqlScript } from './types';
+import * as sqlCmd from './commands';
 import { getSqlRowLimit, setSqlRowLimit } from '$lib/shared/constants/storage';
 
 export const connections = writable<SqlConnection[]>([]);

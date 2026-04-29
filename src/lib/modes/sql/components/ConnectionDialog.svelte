@@ -1,7 +1,7 @@
 <script lang="ts">
   import Modal from '$lib/components/shared/Modal.svelte';
-  import type { SqlConnectionConfig, SqlDriver, SqlConnection } from '$lib/types/sql';
-  import { sqlTestConnection } from '$lib/commands/sql_client';
+  import type { SqlConnectionConfig, SqlDriver, SqlConnection } from '../types';
+  import { sqlTestConnection } from '../commands';
   import { showToast } from '$lib/components/shared/toast';
 
   interface Props {

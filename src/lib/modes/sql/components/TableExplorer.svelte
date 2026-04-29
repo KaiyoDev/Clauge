@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { TableInfo, ColumnInfo } from '$lib/types/sql';
-  import { sqlListTables, sqlDescribeTable, sqlListDatabases } from '$lib/commands/sql_client';
-  import { activeConnection, connectedIds, getLiveId } from '$lib/stores/sql';
+  import type { TableInfo, ColumnInfo } from '../types';
+  import { sqlListTables, sqlDescribeTable, sqlListDatabases } from '../commands';
+  import { activeConnection, connectedIds, getLiveId } from '../stores';
   import { showToast } from '$lib/components/shared/toast';
 
   interface Props {

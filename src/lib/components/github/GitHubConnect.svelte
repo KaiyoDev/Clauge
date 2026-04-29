@@ -5,14 +5,14 @@
   import { githubConnected, githubUsername, setConnected, setDisconnected, syncing, setSyncing, setLastSynced, markSynced, showSyncRestorePrompt } from '$lib/stores/github';
   import { githubDisconnect, githubGetOauthUrl, githubConnectWithToken, gistSyncPull, gistCheckExists } from '$lib/commands/github';
   import { collections } from '$lib/stores/collections';
-  import { connections as sqlConnections } from '$lib/stores/sql';
+  import { connections as sqlConnections } from '$lib/modes/sql/stores';
   import { nosqlConnections } from '$lib/modes/nosql/stores';
   import { get } from 'svelte/store';
   import { showToast } from '$lib/components/shared/toast';
   import { friendlyError } from '$lib/utils/errors';
   import { loadCollections } from '$lib/stores/collections';
   import { loadEnvironments } from '$lib/stores/environments';
-  import { loadConnections as loadSqlConnections, loadSqlScripts } from '$lib/stores/sql';
+  import { loadConnections as loadSqlConnections, loadSqlScripts } from '$lib/modes/sql/stores';
   import { loadNoSqlConnections } from '$lib/modes/nosql/stores';
 
   let show = $state(false);

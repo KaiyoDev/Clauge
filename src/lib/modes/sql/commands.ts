@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { SqlConnectionConfig, SqlConnection, SqlQueryResult, TableInfo, ColumnInfo, SqlScript } from '$lib/types/sql';
+import type { SqlConnectionConfig, SqlConnection, SqlQueryResult, TableInfo, ColumnInfo, SqlScript } from './types';
 
 export async function sqlConnect(config: SqlConnectionConfig): Promise<string> {
   return invoke('sql_connect', { config });

@@ -7,7 +7,7 @@
   import { gistSyncPush, gistSyncPull, githubDisconnect } from '$lib/commands/github';
   import { loadCollections } from '$lib/stores/collections';
   import { loadEnvironments } from '$lib/stores/environments';
-  import { loadConnections as loadSqlConnections, loadSqlScripts } from '$lib/stores/sql';
+  import { loadConnections as loadSqlConnections, loadSqlScripts } from '$lib/modes/sql/stores';
   import { loadNoSqlConnections } from '$lib/modes/nosql/stores';
   import { friendlyError } from '$lib/utils/errors';
   import SidebarButton from './SidebarButton.svelte';

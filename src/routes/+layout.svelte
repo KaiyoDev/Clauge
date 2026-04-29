@@ -18,11 +18,11 @@
   import { onMount, onDestroy } from 'svelte';
   import { loadCollections, clearActiveRequest, collections } from '$lib/stores/collections';
   import { loadEnvironments } from '$lib/stores/environments';
-  import { loadConnections as loadSqlConnections, loadSqlScripts, showSqlConnectionDialog, editingSqlConnection, handleSqlConnectionSave, showSqlDisconnectConfirm, sqlDisconnectTarget, disconnectFromDb, connections as sqlConnections } from '$lib/stores/sql';
+  import { loadConnections as loadSqlConnections, loadSqlScripts, showSqlConnectionDialog, editingSqlConnection, handleSqlConnectionSave, showSqlDisconnectConfirm, sqlDisconnectTarget, disconnectFromDb, connections as sqlConnections } from '$lib/modes/sql/stores';
   import { showToast } from '$lib/components/shared/toast';
   import ConfirmDialog from '$lib/components/shared/ConfirmDialog.svelte';
   import { loadNoSqlConnections, showNoSqlConnectionDialog, editingNoSqlConnection, handleNoSqlConnectionSave, nosqlConnections } from '$lib/modes/nosql/stores';
-  import SqlConnectionDialog from '$lib/components/sql/ConnectionDialog.svelte';
+  import SqlConnectionDialog from '$lib/modes/sql/components/ConnectionDialog.svelte';
   import NoSqlConnectionDialog from '$lib/modes/nosql/components/ConnectionDialog.svelte';
   import { loadSettings, loadAppearance, appearance } from '$lib/stores/settings';
   import { setConnected, setLastSynced, hasSyncedOnce, markSynced, showSyncRestorePrompt } from '$lib/stores/github';

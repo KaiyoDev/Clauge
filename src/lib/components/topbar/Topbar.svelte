@@ -2,7 +2,7 @@
   import { navOpen, aiPanelOpen, aiPanelOpenPerMode, mode } from '$lib/stores/app';
   import { tabs, activeTabId, addTab, closeTab, activateTab, getDraft, markClean, clearDraft } from '$lib/stores/tabs';
   import { activeRequestId, loadRequest, clearActiveRequest, commitRequest } from '$lib/stores/collections';
-  import { sqlIsConnected, activeConnection, disconnectFromDb, initSqlTab, clearSqlTabData, setSqlTabData, sqlScripts, saveSqlScript, updateSqlScript, deleteSqlScript, getSqlTabData, activeConnectionId, selectedDatabase, connectToDatabase, sqlPendingChanges, connectToDb, connectedIds } from '$lib/stores/sql';
+  import { sqlIsConnected, activeConnection, disconnectFromDb, initSqlTab, clearSqlTabData, setSqlTabData, sqlScripts, saveSqlScript, updateSqlScript, deleteSqlScript, getSqlTabData, activeConnectionId, selectedDatabase, connectToDatabase, sqlPendingChanges, connectToDb, connectedIds } from '$lib/modes/sql/stores';
   import { clearNoSqlTabData, initNoSqlTab, openNoSqlCollection, setNoSqlTabData, activeNoSqlConnectionId } from '$lib/modes/nosql/stores';
   import { showToast } from '$lib/components/shared/toast';
   import { friendlyError } from '$lib/utils/errors';
@@ -243,7 +243,7 @@
     sqlScriptName = '';
   }
 
-  async function handleOpenScript(script: import('$lib/types/sql').SqlScript) {
+  async function handleOpenScript(script: import('$lib/modes/sql/types').SqlScript) {
     // Check if already open in a tab
     const allTabs = get(tabs);
     const existing = allTabs.find(t => t.mode === 'sql' && t.key === script.id);

@@ -35,7 +35,7 @@ export type {
   SqlQueryResult,
   TableInfo,
   ColumnInfo,
-} from './sql';
+} from '$lib/modes/sql/types';
 
 export type {
   NoSqlConnectionConfig,

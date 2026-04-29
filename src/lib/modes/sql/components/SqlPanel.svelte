@@ -9,16 +9,16 @@
     sqlTabState, getSqlTabData, setSqlTabData,
     getDbLiveId, connectToDatabase, updateSqlScript,
     sqlRowLimit
-  } from '$lib/stores/sql';
+  } from '../stores';
   import { tabs, activeTabId, addTab } from '$lib/stores/tabs';
-  import { sqlExecuteQuery, sqlDescribeTable, sqlListSchemas } from '$lib/commands/sql_client';
-  import type { TableInfo, SqlResultEntry, ColumnInfo } from '$lib/types/sql';
+  import { sqlExecuteQuery, sqlDescribeTable, sqlListSchemas } from '../commands';
+  import type { TableInfo, SqlResultEntry, ColumnInfo } from '../types';
   import { showToast } from '$lib/components/shared/toast';
   import { friendlyError } from '$lib/utils/errors';
   import { mode } from '$lib/stores/app';
-  import type { SqlQueryResult, SqlConnectionConfig } from '$lib/types/sql';
+  import type { SqlQueryResult, SqlConnectionConfig } from '../types';
   import { get } from 'svelte/store';
-  import { splitSqlStatements } from '$lib/utils/sql-splitter';
+  import { splitSqlStatements } from '../utils/splitter';
 
   let editorHeight = $state(45);
   let dragging = $state(false);

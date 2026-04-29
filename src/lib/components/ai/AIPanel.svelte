@@ -5,7 +5,7 @@
   import { activeTabId, draftRequests } from '$lib/stores/tabs';
   import { sendChatMessage, generateSessionId } from '$lib/services/ai-chat';
   import { REST_SYSTEM_PROMPT, REST_TOOLS } from '$lib/prompts/rest';
-  import { SQL_SYSTEM_PROMPT, SQL_TOOLS } from '$lib/prompts/sql';
+  import { SQL_SYSTEM_PROMPT, SQL_TOOLS } from '$lib/modes/sql/ai/prompt';
   import { NOSQL_SYSTEM_PROMPT, NOSQL_TOOLS } from '$lib/modes/nosql/ai/prompt';
   import { buildSshSystemPrompt, SSH_TOOLS } from '$lib/modes/ssh/ai/prompt';
   import { activeSshProfile } from '$lib/modes/ssh/stores';
@@ -396,7 +396,7 @@
   async function gatherContext(): Promise<ChatContext> {
     const currentMode = get(mode);
     if (currentMode === 'sql') {
-      const { gatherSqlContext } = await import('$lib/services/ai-context-sql');
+      const { gatherSqlContext } = await import('$lib/modes/sql/ai/context');
       return gatherSqlContext();
     }
     if (currentMode === 'nosql') {
@@ -523,7 +523,7 @@
           }
           // SQL: apply_query — write query to the active SQL editor via store
           if (action === 'apply_query' && data.query) {
-            import('$lib/stores/sql').then(({ applyAiQuery }) => {
+            import('$lib/modes/sql/stores').then(({ applyAiQuery }) => {
               if (typeof applyAiQuery === 'function') {
                 applyAiQuery(data.query);
               }
@@ -532,7 +532,7 @@
           // SQL: ai_execute_sql — switch to SQL mode, ensure tab, trigger execution
           if (action === 'ai_execute_sql' && data.query) {
             Promise.all([
-              import('$lib/stores/sql'),
+              import('$lib/modes/sql/stores'),
               import('$lib/stores/tabs'),
               import('$lib/stores/app'),
             ]).then(([{ triggerAiSqlExecution }, { addTab, tabs: tabStore, activeTabId: activeTabStore }, { mode: modeStore }]) => {

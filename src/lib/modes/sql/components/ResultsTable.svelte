@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import type { SqlQueryResult } from '$lib/types/sql';
+  import type { SqlQueryResult } from '../types';
   import { writeText } from '@tauri-apps/plugin-clipboard-manager';
   import { showToast } from '$lib/components/shared/toast';
-  import { setSqlPending, sqlRowLimit } from '$lib/stores/sql';
-  import { sqlExecuteQuery } from '$lib/commands/sql_client';
+  import { setSqlPending, sqlRowLimit } from '../stores';
+  import { sqlExecuteQuery } from '../commands';
   import { friendlyError } from '$lib/utils/errors';
   import { APP_EVENT } from '$lib/shared/constants/events';
 

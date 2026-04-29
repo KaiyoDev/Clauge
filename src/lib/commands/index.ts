@@ -79,7 +79,7 @@ export {
   sqlListSavedConnections,
   sqlDeleteSavedConnection,
   sqlUpdateSavedConnection,
-} from './sql_client';
+} from '$lib/modes/sql/commands';
 
 export {
   nosqlConnect,

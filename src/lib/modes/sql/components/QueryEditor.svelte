@@ -8,10 +8,10 @@
   import { syntaxHighlighting } from '@codemirror/language';
   import { defaultKeymap, historyKeymap, indentWithTab } from '@codemirror/commands';
   import { history } from '@codemirror/commands';
-  import { activeConnection } from '$lib/stores/sql';
-  import type { TableInfo } from '$lib/types/sql';
+  import { activeConnection } from '../stores';
+  import type { TableInfo } from '../types';
   import { Parser as SqlParser } from 'node-sql-parser';
-  import { splitSqlStatements } from '$lib/utils/sql-splitter';
+  import { splitSqlStatements } from '../utils/splitter';
   import { showToast } from '$lib/components/shared/toast';
 
   interface Props {
