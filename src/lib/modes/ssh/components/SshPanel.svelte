@@ -134,6 +134,25 @@
       searchMatchTotal = resultCount;
     });
 
+    // xterm captures keydowns on its hidden textarea when the terminal has
+    // focus, so the panel-level onkeydown never sees Cmd+F. Intercept here
+    // and return false to prevent xterm from also processing the key.
+    term.attachCustomKeyEventHandler((e) => {
+      if (e.type !== 'keydown') return true;
+      const meta = isMac ? e.metaKey : e.ctrlKey;
+      if (meta && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'f') {
+        e.preventDefault();
+        if (searchOpen) {
+          searchInputEl?.focus();
+          searchInputEl?.select();
+        } else {
+          openSearch();
+        }
+        return false;
+      }
+      return true;
+    });
+
     const container = document.createElement('div');
     container.style.cssText = 'width:100%;height:100%;display:none;';
     terminalEl.appendChild(container);
