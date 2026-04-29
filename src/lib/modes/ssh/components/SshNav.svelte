@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { sshProfiles, activeSshProfile, loadSshProfiles, sshTerminalIds, sshConnStates } from '$lib/stores/ssh';
-  import { sshTouchProfile, sshDeleteProfile, sshCreateProfile } from '$lib/commands/ssh';
+  import { sshProfiles, activeSshProfile, loadSshProfiles, sshTerminalIds, sshConnStates } from '../stores';
+  import { sshTouchProfile, sshDeleteProfile, sshCreateProfile } from '../commands';
   import { showContextMenu } from '$lib/components/shared/contextmenu';
   import { showToast } from '$lib/components/shared/toast';
   import NewSshProfileModal from './NewSshProfileModal.svelte';
   import EditSshProfileModal from './EditSshProfileModal.svelte';
-  import type { SshProfile } from '$lib/types/ssh';
+  import type { SshProfile } from '../types';
   import { SSH_EVENT } from '$lib/shared/constants/events';
 
   // Teleport: lift modals/confirm dialog to body, escapes nav stacking context.

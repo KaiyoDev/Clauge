@@ -5,7 +5,7 @@
   import RestPanel from '$lib/components/rest/RestPanel.svelte';
   import SqlPanel from '$lib/components/sql/SqlPanel.svelte';
   import NoSqlPanel from '$lib/components/nosql/NoSqlPanel.svelte';
-  import SshPanel from '$lib/components/ssh/SshPanel.svelte';
+  import SshPanel from '$lib/modes/ssh/components/SshPanel.svelte';
   import HistoryViewer from '$lib/components/rest/HistoryViewer.svelte';
 </script>
 

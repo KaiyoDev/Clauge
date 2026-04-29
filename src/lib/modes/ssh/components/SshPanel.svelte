@@ -11,20 +11,20 @@
     sshTerminalIds,
     sshConnStates,
     loadSshProfiles,
-  } from '$lib/stores/ssh';
+  } from '../stores';
   import {
     sshSpawnTerminal,
     sshWriteToTerminal,
     sshResizeTerminal,
     sshKillTerminal,
     sshTouchProfile,
-  } from '$lib/commands/ssh';
+  } from '../commands';
   import { tabs as tabsStore, addTab, activateTab, closeTab } from '$lib/stores/tabs';
   import { getTerminalTheme } from '$lib/utils/theme';
   import { appearance } from '$lib/stores/settings';
   import { showToast } from '$lib/components/shared/toast';
-  import { resolveSshCapture, rejectAllSshCaptures, type SshCaptureRequest } from '$lib/services/ssh-execute';
-  import type { SshProfile, SshTerminalPayload } from '$lib/types/ssh';
+  import { resolveSshCapture, rejectAllSshCaptures, type SshCaptureRequest } from '../ai/execute';
+  import type { SshProfile, SshTerminalPayload } from '../types';
   import { SSH_EVENT } from '$lib/shared/constants/events';
   import { RESIZE_DEBOUNCE_MS, SSH_CAPTURE_TIMEOUT_MS } from '$lib/shared/constants/timings';
 

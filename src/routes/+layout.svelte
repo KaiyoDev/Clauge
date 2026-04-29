@@ -29,8 +29,8 @@
   import { githubGetStatus, gistCheckExists, gistSyncPush, gistSyncPull } from '$lib/commands/github';
   import { activeModal, aiPanelOpen, mode } from '$lib/stores/app';
   import { agentSessionKey, loadAgentUsageLimits, loadAgentClaudePlan, agentSessions, activeAgentSession } from '$lib/stores/agent';
-  import { sshProfiles, activeSshProfile, loadSshProfiles } from '$lib/stores/ssh';
-  import type { SshProfile } from '$lib/types/ssh';
+  import { sshProfiles, activeSshProfile, loadSshProfiles } from '$lib/modes/ssh/stores';
+  import type { SshProfile } from '$lib/modes/ssh/types';
   import { getSetting } from '$lib/commands/settings';
   import AIPanel from '$lib/components/ai/AIPanel.svelte';
   import { tabs, addTab, activeTabId, activateTab } from '$lib/stores/tabs';

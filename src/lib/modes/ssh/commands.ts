@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import type { SshProfile, SshCreateProfileArgs, SshUpdateProfileArgs } from '$lib/types/ssh';
+import type { SshProfile, SshCreateProfileArgs, SshUpdateProfileArgs } from './types';
 
 // ── Profile CRUD ─────────────────────────────────────────────────────────────
 

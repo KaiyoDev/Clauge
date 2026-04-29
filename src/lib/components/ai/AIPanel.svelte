@@ -7,9 +7,9 @@
   import { REST_SYSTEM_PROMPT, REST_TOOLS } from '$lib/prompts/rest';
   import { SQL_SYSTEM_PROMPT, SQL_TOOLS } from '$lib/prompts/sql';
   import { NOSQL_SYSTEM_PROMPT, NOSQL_TOOLS } from '$lib/prompts/nosql';
-  import { buildSshSystemPrompt, SSH_TOOLS } from '$lib/prompts/ssh';
-  import { activeSshProfile } from '$lib/stores/ssh';
-  import { redactSecrets } from '$lib/utils/ssh-safety';
+  import { buildSshSystemPrompt, SSH_TOOLS } from '$lib/modes/ssh/ai/prompt';
+  import { activeSshProfile } from '$lib/modes/ssh/stores';
+  import { redactSecrets } from '$lib/modes/ssh/ai/safety';
   import { showToast } from '$lib/components/shared/toast';
   import { invoke } from '@tauri-apps/api/core';
   import { listen, type UnlistenFn } from '@tauri-apps/api/event';
@@ -19,8 +19,8 @@
   import { marked } from 'marked';
   import DOMPurify from 'dompurify';
   import { highlightJSON } from '$lib/utils/json-highlight';
-  import SshExecuteConfirmModal from '$lib/components/ssh/SshExecuteConfirmModal.svelte';
-  import { executeAndCaptureOnSsh } from '$lib/services/ssh-execute';
+  import SshExecuteConfirmModal from '$lib/modes/ssh/components/SshExecuteConfirmModal.svelte';
+  import { executeAndCaptureOnSsh } from '$lib/modes/ssh/ai/execute';
   import { getSshAutoRun, setSshAutoRun, getAiPanelWidth, setAiPanelWidth } from '$lib/shared/constants/storage';
   import { aiEvent } from '$lib/shared/constants/events';
   import { COPY_FEEDBACK_MS } from '$lib/shared/constants/timings';

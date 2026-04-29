@@ -4,7 +4,7 @@
   import SqlNav from './SqlNav.svelte';
   import NoSqlNav from './NoSqlNav.svelte';
   import AgentNav from '$lib/components/agent/AgentNav.svelte';
-  import SshNav from '$lib/components/ssh/SshNav.svelte';
+  import SshNav from '$lib/modes/ssh/components/SshNav.svelte';
   import HistoryPanel from './HistoryPanel.svelte';
   import ImportExportModal from '$lib/components/shared/ImportExportModal.svelte';
   import { getNavPinned, setNavPinned } from '$lib/shared/constants/storage';

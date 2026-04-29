@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store';
-import type { SshProfile } from '$lib/types/ssh';
-import { sshListProfiles } from '$lib/commands/ssh';
+import type { SshProfile } from './types';
+import { sshListProfiles } from './commands';
 
 // Profiles registered by the user (DB-backed).
 export const sshProfiles = writable<SshProfile[]>([]);

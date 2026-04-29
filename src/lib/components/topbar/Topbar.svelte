@@ -11,8 +11,8 @@
   import EnvPill from './EnvPill.svelte';
   import { agentSessions, activeAgentSession, agentShellOpen, agentTerminalIds, agentShellIds } from '$lib/stores/agent';
   import { agentKillTerminal } from '$lib/commands/agent';
-  import { sshProfiles, activeSshProfile, sshTerminalIds } from '$lib/stores/ssh';
-  import { sshKillTerminal } from '$lib/commands/ssh';
+  import { sshProfiles, activeSshProfile, sshTerminalIds } from '$lib/modes/ssh/stores';
+  import { sshKillTerminal } from '$lib/modes/ssh/commands';
   import { SSH_EVENT, AGENT_EVENT, APP_EVENT } from '$lib/shared/constants/events';
 
   // SQL disconnect
