@@ -1,8 +1,9 @@
 name: Test Bundle
 
 # Manually-triggered bundle build. Produces installers as 14-day workflow
-# artifacts without creating a GitHub release. Use this to verify the bundle
-# pipeline (or test a build on a real OS) before committing to a tagged release.
+# artifacts without creating a GitHub release. Use this to verify the
+# bundle pipeline (or test a build on a real OS) before committing to a
+# tagged release.
 #
 # Trigger from Actions tab → Test Bundle → Run workflow.
 # Or via CLI: gh workflow run test-bundle.yml --ref <branch> -f platforms=all
@@ -21,34 +22,39 @@ on:
         default: all
 
 jobs:
+  # GitHub Actions doesn't let you reference `matrix.*` in a job-level
+  # `if:`. So we generate the matrix dynamically here based on the
+  # selected platforms input — only the chosen runners spin up.
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      includes: ${{ steps.set.outputs.includes }}
+    steps:
+      - id: set
+        shell: bash
+        run: |
+          MAC_AARCH64='{"platform":"macos-latest","args":"--target aarch64-apple-darwin","rust-targets":"aarch64-apple-darwin","label":"macos-aarch64"}'
+          MAC_X86='{"platform":"macos-latest","args":"--target x86_64-apple-darwin","rust-targets":"x86_64-apple-darwin","label":"macos-x86_64"}'
+          WIN='{"platform":"windows-latest","args":"","rust-targets":"","label":"windows-x64"}'
+          LINUX='{"platform":"ubuntu-22.04","args":"","rust-targets":"","label":"linux-x64"}'
+
+          case "${{ inputs.platforms }}" in
+            macos)   INCLUDES="[$MAC_AARCH64,$MAC_X86]" ;;
+            windows) INCLUDES="[$WIN]" ;;
+            linux)   INCLUDES="[$LINUX]" ;;
+            *)       INCLUDES="[$MAC_AARCH64,$MAC_X86,$WIN,$LINUX]" ;;
+          esac
+
+          echo "includes=$INCLUDES" >> "$GITHUB_OUTPUT"
+
   build:
+    needs: plan
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - platform: 'macos-latest'
-            args: '--target aarch64-apple-darwin'
-            rust-targets: 'aarch64-apple-darwin'
-            label: 'macos-aarch64'
-            tag: 'macos'
-          - platform: 'macos-latest'
-            args: '--target x86_64-apple-darwin'
-            rust-targets: 'x86_64-apple-darwin'
-            label: 'macos-x86_64'
-            tag: 'macos'
-          - platform: 'windows-latest'
-            args: ''
-            rust-targets: ''
-            label: 'windows-x64'
-            tag: 'windows'
-          - platform: 'ubuntu-22.04'
-            args: ''
-            rust-targets: ''
-            label: 'linux-x64'
-            tag: 'linux'
+        include: ${{ fromJson(needs.plan.outputs.includes) }}
 
     runs-on: ${{ matrix.platform }}
-    if: ${{ inputs.platforms == 'all' || inputs.platforms == matrix.tag }}
 
     steps:
       - uses: actions/checkout@v4
