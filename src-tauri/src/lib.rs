@@ -67,6 +67,18 @@ pub fn run() {
                 }
             }
 
+            // Win/Linux: enable native window decorations so the window has a
+            // working close button. The macOS build keeps decorations:false
+            // (configured in tauri.conf.json) and renders the custom traffic
+            // lights via the onboarding/topbar component. A cross-OS custom
+            // chrome is deferred — this gets us a usable Win/Linux window today.
+            #[cfg(not(target_os = "macos"))]
+            {
+                if let Some(win) = app.get_webview_window("main") {
+                    let _ = win.set_decorations(true);
+                }
+            }
+
             // Initialize sqlx connection pool for Rust commands
             let app_data_dir = app
                 .path()
