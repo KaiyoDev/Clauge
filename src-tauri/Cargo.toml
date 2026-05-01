@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "3.0.0-alpha.2"
+version = "3.0.0-alpha.3"
 description = "Clauge — A modern REST API client"
 authors = ["ansxuman"]
 license = "BUSL-1.1"
