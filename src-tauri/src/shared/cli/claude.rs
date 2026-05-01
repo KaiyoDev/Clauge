@@ -7,6 +7,7 @@
 use std::path::{Path, PathBuf};
 
 use super::runner::{CliRunner, SpawnOpts};
+use crate::shared::platform::shell::default_user_shell;
 
 pub struct ClaudeRunner;
 
@@ -41,7 +42,11 @@ impl CliRunner for ClaudeRunner {
     }
 
     fn resolve_binary_path(&self) -> String {
-        let user_shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
+        let user_shell = default_user_shell();
+        // bash/zsh-only flags. PowerShell on Windows ignores these and silently
+        // succeeds, but the `which` command does not exist there — Windows
+        // runtime parity is tracked separately. For now this fallthrough leaves
+        // BINARY ("claude") as-is, which is correct if the user has it on PATH.
         if let Ok(output) = std::process::Command::new(&user_shell)
             .args(["-l", "-i", "-c", &format!("which {}", BINARY)])
             .output()

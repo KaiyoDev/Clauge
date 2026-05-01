@@ -1,5 +1,6 @@
 use crate::modes::agent::models::{TerminalEntry, TerminalOutputPayload, TerminalState};
 use crate::shared::cli::{claude::CLAUDE, runner::{CliRunner, SpawnOpts}};
+use crate::shared::platform::shell::default_user_shell;
 use base64::Engine;
 use portable_pty::{native_pty_system, CommandBuilder, PtySize};
 use std::io::{Read, Write};
@@ -31,7 +32,7 @@ pub fn agent_spawn_terminal(
         skip_permissions: skip_permissions.unwrap_or(false),
     });
 
-    let user_shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
+    let user_shell = default_user_shell();
     let mut cmd = CommandBuilder::new(&user_shell);
     // -l (login) sources ~/.zprofile, but nvm/fnm/asdf set up node on PATH inside
     // ~/.zshrc which only loads under -i (interactive). Without -i, the CLI's
@@ -82,7 +83,7 @@ pub fn agent_spawn_shell(
         .openpty(PtySize { rows: 24, cols: 80, pixel_width: 0, pixel_height: 0 })
         .map_err(|e| format!("Failed to open PTY: {}", e))?;
 
-    let user_shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/zsh".to_string());
+    let user_shell = default_user_shell();
     let mut cmd = CommandBuilder::new(&user_shell);
     cmd.arg("-l"); cmd.arg("-i"); cmd.cwd(&project_path);
     if let Some(home) = dirs::home_dir() { cmd.env("HOME", home.to_string_lossy().to_string()); }
