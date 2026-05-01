@@ -2,6 +2,7 @@
   import Modal from '$lib/shared/primitives/Modal.svelte';
   import { getVersion } from '@tauri-apps/api/app';
   import { activeModal } from '$lib/stores/app';
+  import { getUpdateChannel, setUpdateChannel, type UpdateChannel } from '$lib/utils/updater';
   import { settings, setSetting, appearance, saveAppearance } from '$lib/stores/settings';
   import { applyTheme, getThemes, getTheme } from '$lib/utils/theme';
   import { showToast } from '$lib/shared/primitives/toast';
@@ -40,6 +41,13 @@
   let show = $state(false);
   let activeTab = $state<SettingsTab>('general');
   let appVersion = $state('');
+  let updateChannel = $state<UpdateChannel>(getUpdateChannel());
+
+  function onPreReleaseToggle(e: Event) {
+    const checked = (e.currentTarget as HTMLInputElement).checked;
+    updateChannel = checked ? 'pre' : 'stable';
+    setUpdateChannel(updateChannel);
+  }
 
   getVersion().then((v) => { appVersion = v; }).catch(() => { appVersion = ''; });
 
@@ -1390,6 +1398,20 @@
             <span class="about-version">v{appVersion || '—'}</span>
           </div>
           <p class="about-desc">The world's first AI-powered developer toolkit with built-in REST client, SQL & NoSQL database management, environment variables, GitHub sync, and more — all in one beautiful desktop app.</p>
+
+          <!-- Update channel -->
+          <div class="about-section-label">UPDATES</div>
+          <label class="about-channel-row">
+            <input
+              type="checkbox"
+              checked={updateChannel === 'pre'}
+              onchange={onPreReleaseToggle}
+            />
+            <span class="about-channel-text">
+              <span class="about-channel-title">Receive pre-release updates</span>
+              <span class="about-channel-desc">Get alpha and beta builds before they're stable. May contain bugs.</span>
+            </span>
+          </label>
 
           <!-- Tech Stack -->
           <div class="about-section-label">TECH STACK</div>

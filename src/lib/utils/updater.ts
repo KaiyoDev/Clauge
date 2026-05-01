@@ -1,9 +1,27 @@
 import { writable } from 'svelte/store';
+import { invoke } from '@tauri-apps/api/core';
 import { STORAGE_KEYS } from '$lib/shared/constants/storage';
 import { supportsSelfUpdate } from '$lib/utils/platform';
 
+export type UpdateChannel = 'stable' | 'pre';
+
+/** Reads the user's update channel from localStorage. Default: stable. */
+export function getUpdateChannel(): UpdateChannel {
+  if (typeof localStorage === 'undefined') return 'stable';
+  return localStorage.getItem(STORAGE_KEYS.UPDATE_CHANNEL) === 'pre' ? 'pre' : 'stable';
+}
+
+/** Persists the user's update channel choice. */
+export function setUpdateChannel(channel: UpdateChannel): void {
+  if (typeof localStorage === 'undefined') return;
+  localStorage.setItem(STORAGE_KEYS.UPDATE_CHANNEL, channel);
+}
+
 let updateReadyData: { version: string; body: string } | null = null;
-let pendingUpdate: any = null;
+// Sentinel — true means "an Update is staged in Rust state, ready to install".
+// The actual Update object lives in tauri::State (PendingUpdate); we never see
+// it from JS to avoid round-tripping a non-Cloneable type.
+let pendingUpdate: boolean = false;
 
 /** Reactive store: set when an update has been downloaded and is ready to install */
 export const updateAvailable = writable<{ version: string; body: string } | null>(null);
@@ -18,6 +36,9 @@ export const whatsNewContent = writable<{ version: string; body: string } | null
  * Check for updates, download if available, and set the updateAvailable store.
  * Returns update info if an update was found, null otherwise.
  *
+ * Routes through the Rust-side channel-aware updater so that pre-release
+ * users see the latest pre-release and stable users only see stable.
+ *
  * Skips entirely on Linux deb/rpm installs — those are owned by the system
  * package manager and would error trying to overwrite /usr/bin contents.
  */
@@ -26,15 +47,17 @@ export async function checkAndDownloadUpdate(): Promise<{ version: string; body:
     if (!(await supportsSelfUpdate())) {
       return null;
     }
-    const { check } = await import('@tauri-apps/plugin-updater');
-    const update = await check();
-    if (!update) return null;
+    const channel = getUpdateChannel();
+    const info = await invoke<{ version: string; body: string } | null>(
+      'check_for_update_in_channel',
+      { channel }
+    );
+    if (!info) return null;
 
-    await update.download();
-    pendingUpdate = update;
-    updateReadyData = { version: update.version, body: update.body || '' };
-    updateAvailable.set(updateReadyData);
-    return updateReadyData;
+    pendingUpdate = true; // sentinel — actual Update object lives in Rust state
+    updateReadyData = info;
+    updateAvailable.set(info);
+    return info;
   } catch (e) {
     console.warn('Update check failed:', e);
   }
@@ -43,22 +66,19 @@ export async function checkAndDownloadUpdate(): Promise<{ version: string; body:
 
 /**
  * Install the pending update and relaunch the app.
+ *
+ * If no pending update is loaded (e.g. user closed the app between check
+ * and install), re-runs the check on the current channel before installing.
  */
 export async function restartToUpdate(): Promise<void> {
   if (!pendingUpdate) {
-    // Re-check and download if pendingUpdate was lost
     try {
-      const { check } = await import('@tauri-apps/plugin-updater');
-      const update = await check();
-      if (update) {
-        await update.download();
-        pendingUpdate = update;
-      }
+      await checkAndDownloadUpdate();
     } catch (_) { /* ignore */ }
   }
   if (!pendingUpdate) return;
   try {
-    await pendingUpdate.install();
+    await invoke('install_pending_update');
     const { relaunch } = await import('@tauri-apps/plugin-process');
     await relaunch();
   } catch (e) {

@@ -172,6 +172,7 @@ dependencies = [
  "tokio",
  "tokio-stream",
  "tokio-util",
+ "url",
  "uuid",
  "window-vibrancy 0.7.1",
  "windows",

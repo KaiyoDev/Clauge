@@ -19,6 +19,7 @@ export const STORAGE_KEYS = {
   REQUEST_ENV_OVERRIDES: 'clauge_request_env_overrides',
   SQL_ROW_LIMIT: 'clauge_sql_row_limit',
   SSH_AUTO_RUN: 'clauge_ssh_auto_run',
+  UPDATE_CHANNEL: 'clauge_update_channel',
 } as const;
 
 // Legacy keys we migrate away from on first read.

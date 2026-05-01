@@ -207,6 +207,7 @@ pub fn run() {
             app.manage(modes::agent::models::TerminalState::default());
             app.manage(modes::ssh::models::SshTerminalState::default());
             app.manage(shared::ai::types::PendingFrontendTools::default());
+            app.manage(shared::updater::state::PendingUpdate::default());
 
             // Register every mode's AI tools into the shared dispatch registry.
             // Adding a new tool to a mode = one new function + one entry in
@@ -262,6 +263,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             shared::platform::install_type::get_install_type,
             shared::platform::install_type::supports_self_update,
+            shared::updater::commands::check_for_update_in_channel,
+            shared::updater::commands::install_pending_update,
             modes::rest::collections::list_collections,
             modes::rest::collections::create_collection,
             modes::rest::collections::update_collection,
