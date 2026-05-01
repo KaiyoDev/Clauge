@@ -47,7 +47,8 @@ jobs:
             libdbus-1-dev \
             libsecret-1-dev \
             patchelf \
-            pkg-config
+            pkg-config \
+            rpm
 
       - uses: oven-sh/setup-bun@v2
 
