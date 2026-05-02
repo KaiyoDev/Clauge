@@ -14,9 +14,10 @@
   interface Props {
     onsend?: () => void;
     onmethodchange?: (method: string) => void;
+    loading?: boolean;
   }
 
-  let { onsend, onmethodchange }: Props = $props();
+  let { onsend, onmethodchange, loading = false }: Props = $props();
 
   const METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
 
@@ -589,8 +590,12 @@
 
   <ReqEnvPill />
 
-  <button class="send-btn" onclick={handleSend}>
-    Send &#9654;
+  <button class="send-btn" onclick={handleSend} disabled={loading}>
+    {#if loading}
+      Sending&hellip;
+    {:else}
+      Send &#9654;
+    {/if}
   </button>
 </div>
 
@@ -744,10 +749,14 @@
     color: #fff;
     background: var(--acc);
   }
-  .send-btn:hover {
+  .send-btn:hover:not(:disabled) {
     opacity: 0.85;
   }
-  .send-btn:active {
+  .send-btn:active:not(:disabled) {
     opacity: 0.75;
+  }
+  .send-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
   }
 </style>

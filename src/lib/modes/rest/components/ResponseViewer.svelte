@@ -111,9 +111,22 @@
 
   async function copyResponse() {
     if (!response) return;
+    // Copy whatever the user is currently viewing, not always the body.
+    let text: string;
+    let label: string;
+    if (activeTab === 'headers') {
+      text = response.headers.map(([k, v]) => `${k}: ${v}`).join('\n');
+      label = 'Headers copied';
+    } else if (activeTab === 'pretty') {
+      text = prettyBody;
+      label = 'Response copied';
+    } else {
+      text = response.body;
+      label = 'Response copied';
+    }
     try {
-      await writeText(response.body);
-      showToast('Response copied', 'success');
+      await writeText(text);
+      showToast(label, 'success');
     } catch {
       showToast('Failed to copy', 'error');
     }

@@ -15,28 +15,30 @@
   import type { HttpResponse } from '$lib/types';
   import { get } from 'svelte/store';
 
-  // Per-tab response cache
-  let responseMap = new Map<number, HttpResponse | null>();
+  // Per-tab caches. Plain Maps — they don't need to be reactive themselves;
+  // we project the active tab's slot into reactive `$state` below.
+  const responseCache = new Map<number, HttpResponse | null>();
+  const loadingCache = new Map<number, boolean>();
+
+  // What's currently displayed (active tab's slot).
   let response: HttpResponse | null = $state(null);
   let loading = $state(false);
   let currentMethod = $state('GET');
 
-  // Sync response to shared store for AI panel
-  $effect(() => {
-    currentRestResponse.set(response);
-  });
-
-  // Clear/restore response when switching tabs
+  // On tab switch, swap visible state from the cache.
   let prevTabId = -1;
   $effect(() => {
     const tabId = $activeTabId;
     if (tabId !== prevTabId) {
-      // Save current response for previous tab
-      if (prevTabId >= 0) responseMap.set(prevTabId, response);
-      // Restore response for new tab (or null if none)
-      response = responseMap.get(tabId) ?? null;
       prevTabId = tabId;
+      response = responseCache.get(tabId) ?? null;
+      loading = loadingCache.get(tabId) ?? false;
     }
+  });
+
+  // Sync active-tab response to shared store for AI panel
+  $effect(() => {
+    currentRestResponse.set(response);
   });
 
   let rightPanePct = $state(55);
@@ -67,35 +69,47 @@
   }
 
   async function handleSend() {
+    // Capture the originating tab once. All async work below writes back to
+    // THIS tab — even if the user switches tabs while the request is in flight.
+    const tabId = get(activeTabId);
+    if (tabId < 0) return;
+
+    // Don't allow concurrent sends on the same tab.
+    if (loadingCache.get(tabId)) return;
+
     const reqId = get(activeRequestId);
     const req = get(activeRequest);
 
-    loading = true;
-    response = null;
+    loadingCache.set(tabId, true);
+    responseCache.set(tabId, null);
+    if (get(activeTabId) === tabId) {
+      loading = true;
+      response = null;
+    }
 
+    let resp: HttpResponse | null = null;
     try {
       if (reqId && req) {
         // Saved request — commit any dirty changes before executing
-        const tabId = get(activeTabId);
         const draft = getDraft(tabId);
         if (draft) {
           await commitRequest(reqId, draft);
         }
-        const overrideKey = reqId || String(get(activeTabId));
+        const overrideKey = reqId || String(tabId);
         const overrides = get(requestEnvOverrides);
         const globalEnv = get(activeEnvId);
         const envId = getEffectiveEnvId(overrideKey, overrides, globalEnv) || '';
-        response = await executeRequest(reqId, envId);
+        resp = await executeRequest(reqId, envId);
       } else {
         // Unsaved tab — read from draft
-        const tabId = get(activeTabId);
         const draft = getDraft(tabId);
         const methodVal = draft?.method || currentMethod || 'GET';
         const urlVal = draft?.url?.trim();
 
         if (!urlVal) {
           showToast('Enter a URL first', 'error');
-          loading = false;
+          loadingCache.set(tabId, false);
+          if (get(activeTabId) === tabId) loading = false;
           return;
         }
 
@@ -118,14 +132,20 @@
         const draftAuthType = draft?.authType || 'none';
         const draftAuthData = draft?.authData || '{}';
         const draftBodyType = draft?.bodyType || 'json';
-        response = await quickExecute(methodVal, finalUrl, draft?.body || '', headerPairs, globalEnv || '', draftAuthType, draftAuthData, draftBodyType);
+        resp = await quickExecute(methodVal, finalUrl, draft?.body || '', headerPairs, globalEnv || '', draftAuthType, draftAuthData, draftBodyType);
       }
 
-      showToast(`${response.status} ${response.status_text}`, response.status < 400 ? 'success' : 'error');
+      // Only toast if user is still on the originating tab — otherwise the
+      // notification appears on whatever tab they switched to, which is noise.
+      if (get(activeTabId) === tabId) {
+        showToast(`${resp.status} ${resp.status_text}`, resp.status < 400 ? 'success' : 'error');
+      }
       loadHistory();
     } catch (e: any) {
-      showToast(friendlyError(e), 'error');
-      response = {
+      if (get(activeTabId) === tabId) {
+        showToast(friendlyError(e), 'error');
+      }
+      resp = {
         status: 0,
         status_text: 'Error',
         headers: [],
@@ -134,9 +154,13 @@
         size_bytes: 0,
       };
     } finally {
-      loading = false;
-      // Cache response for this tab
-      responseMap.set(get(activeTabId), response);
+      responseCache.set(tabId, resp);
+      loadingCache.set(tabId, false);
+      // Only update the visible pane if the user is still on the originating tab.
+      if (get(activeTabId) === tabId) {
+        response = resp;
+        loading = false;
+      }
     }
   }
 
@@ -164,11 +188,16 @@
 {:else}
   <div class="rest-panel">
     <div class="rest-bar-area">
-      <RequestBar onsend={handleSend} onmethodchange={handleMethodChange} />
+      <RequestBar onsend={handleSend} onmethodchange={handleMethodChange} {loading} />
     </div>
     <div class="rest-panes" class:dragging bind:this={panesEl}>
+      <!-- {#key $activeTabId}: forces RequestEditor (and its KVTable / BodyEditor /
+           AuthEditor children) to remount when the active tab changes, so per-tab
+           draft state can't bleed via stale component-local fields. -->
       <div class="rest-pane-left" style="width:{100 - rightPanePct}%">
-        <RequestEditor {currentMethod} />
+        {#key $activeTabId}
+          <RequestEditor {currentMethod} />
+        {/key}
       </div>
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="rest-divider" onmousedown={onDividerDown}></div>

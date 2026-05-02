@@ -81,6 +81,9 @@ pub struct EnvVariable {
 pub struct HistoryEntry {
     pub id: String,
     pub request_id: Option<String>,
+    /// Joined from `requests.name`. NULL for unsaved/quick-execute entries
+    /// or when the source request has been deleted.
+    pub request_name: Option<String>,
     pub method: String,
     pub url: String,
     pub resolved_url: String,

@@ -26,6 +26,12 @@
     }
   }
 
+  /** Title for a history row: saved request name when present, else URL path. */
+  function entryTitle(entry: HistoryEntry): string {
+    const name = entry.requestName?.trim();
+    return name ? name : extractPath(entry.url);
+  }
+
   function extractHost(url: string): string {
     try {
       return new URL(url).host;
@@ -90,7 +96,7 @@
         <div class="hist-item" onclick={() => openHistoryEntry(entry)}>
           <div class="hist-top">
             <span class="hist-method" style="background:{colors.bg};color:{colors.color}">{methodLabel(entry.method)}</span>
-            <span class="hist-path">{extractPath(entry.url)}</span>
+            <span class="hist-path" title={entry.url}>{entryTitle(entry)}</span>
             {#if entry.responseStatus}
               <span class="hist-status {statusClass(entry.responseStatus)}">{entry.responseStatus}</span>
             {/if}

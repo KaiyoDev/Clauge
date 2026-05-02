@@ -4,7 +4,11 @@ use crate::db::models::HistoryEntry;
 
 pub async fn list_recent(pool: &SqlitePool, limit: i32) -> Result<Vec<HistoryEntry>, sqlx::Error> {
     sqlx::query_as::<_, HistoryEntry>(
-        "SELECT * FROM history ORDER BY created_at DESC LIMIT ?",
+        "SELECT h.*, r.name AS request_name
+         FROM history h
+         LEFT JOIN requests r ON h.request_id = r.id
+         ORDER BY h.created_at DESC
+         LIMIT ?",
     )
     .bind(limit)
     .fetch_all(pool)

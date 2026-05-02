@@ -29,6 +29,9 @@
     overflow-y: auto;
     background: transparent;
     padding: 8px 0;
+    user-select: text;
+    -webkit-user-select: text;
+    cursor: text;
   }
   .resp-headers::-webkit-scrollbar { width: 4px; }
   .resp-headers::-webkit-scrollbar-thumb { background: var(--b1); border-radius: 2px; }
@@ -51,6 +54,8 @@
     padding: 4px 14px;
     border-bottom: 1px solid #111128;
     vertical-align: top;
+    user-select: text;
+    -webkit-user-select: text;
   }
 
   .rh-key {

@@ -106,6 +106,9 @@ export interface HttpResponse {
 export interface HistoryEntry {
   id: string;
   requestId: string | null;
+  /** Joined from requests.name. Null when the entry has no saved request
+   *  or the source request was deleted. */
+  requestName: string | null;
   method: string;
   url: string;
   resolvedUrl: string;
