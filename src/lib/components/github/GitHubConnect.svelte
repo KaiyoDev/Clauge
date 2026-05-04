@@ -14,6 +14,8 @@
   import { loadEnvironments } from '$lib/modes/rest/stores';
   import { loadConnections as loadSqlConnections, loadSqlScripts } from '$lib/modes/sql/stores';
   import { loadNoSqlConnections } from '$lib/modes/nosql/stores';
+  import { APP_EVENT } from '$lib/shared/constants/events';
+  import { settings } from '$lib/stores/settings';
 
   let show = $state(false);
   let connecting = $state(false);
@@ -29,53 +31,41 @@
     }
   });
 
-  // Listen for deep link callback with OAuth token
-  let unlisten: (() => void) | null = null;
-
-  onMount(async () => {
+  async function handleOAuthCallback(e: Event) {
+    // Onboarding owns the callback while it's active; yield to it.
+    if (!get(settings)['onboarding_complete']) return;
+    const { token } = (e as CustomEvent<{ token: string }>).detail;
+    connecting = true;
     try {
-      const { onOpenUrl } = await import('@tauri-apps/plugin-deep-link');
-      unlisten = await onOpenUrl(async (urls) => {
-        for (const url of urls) {
-          if (url.includes('oauth-callback')) {
-            const params = new URL(url).searchParams;
-            const token = params.get('token');
-            if (token) {
-              connecting = true;
-              try {
-                const username = await githubConnectWithToken(token);
-                setConnected(username);
-                showToast(`Connected as ${username}`, 'success');
-                activeModal.set(null);
-                // Check if local is empty and cloud has data to restore
-                const localEmpty = get(collections).length === 0
-                  && get(sqlConnections).length === 0
-                  && get(nosqlConnections).length === 0;
-                if (localEmpty) {
-                  try {
-                    const gistExists = await gistCheckExists();
-                    if (gistExists) showSyncRestorePrompt.set(true);
-                    else markSynced();
-                  } catch { markSynced(); }
-                } else {
-                  markSynced();
-                }
-              } catch (e) {
-                showToast(friendlyError(e), 'error');
-              } finally {
-                connecting = false;
-              }
-            }
-          }
-        }
-      });
-    } catch {
-      // Deep link not available in dev mode
+      const username = await githubConnectWithToken(token);
+      setConnected(username);
+      showToast(`Connected as ${username}`, 'success');
+      activeModal.set(null);
+      const localEmpty = get(collections).length === 0
+        && get(sqlConnections).length === 0
+        && get(nosqlConnections).length === 0;
+      if (localEmpty) {
+        try {
+          const gistExists = await gistCheckExists();
+          if (gistExists) showSyncRestorePrompt.set(true);
+          else markSynced();
+        } catch { markSynced(); }
+      } else {
+        markSynced();
+      }
+    } catch (e) {
+      showToast(friendlyError(e), 'error');
+    } finally {
+      connecting = false;
     }
+  }
+
+  onMount(() => {
+    window.addEventListener(APP_EVENT.OAUTH_CALLBACK, handleOAuthCallback);
   });
 
   onDestroy(() => {
-    unlisten?.();
+    window.removeEventListener(APP_EVENT.OAUTH_CALLBACK, handleOAuthCallback);
   });
 
   async function handleConnect() {

@@ -70,4 +70,5 @@ export const APP_EVENT = {
   TAB_CLOSE_PROMPT: 'clauge:tab-close-prompt',
   SQL_SAVE: 'clauge:sql-save',
   SAVE_NEW_REQUEST: 'clauge:save-new-request',
+  OAUTH_CALLBACK: 'clauge:oauth-callback',
 } as const;

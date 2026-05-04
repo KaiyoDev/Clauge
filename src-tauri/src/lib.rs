@@ -30,8 +30,8 @@ pub fn run() {
             // deep-link cargo feature is supposed to do this automatically,
             // but the auto-forward can miss on Linux .deb installs (the
             // .desktop handoff produces a slightly different argv shape).
-            // Manual emission guarantees the frontend's onOpenUrl handler
-            // (GitHubConnect.svelte / Onboarding.svelte) fires.
+            // The frontend's centralized handler in +layout.svelte listens
+            // for this event via onOpenUrl() and dispatches clauge:oauth-callback.
             use tauri::Emitter;
             let uris: Vec<String> = args
                 .iter()

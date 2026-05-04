@@ -39,6 +39,7 @@
   import { tabs, addTab, activeTabId, activateTab } from '$lib/shared/stores/tabs';
   import type { AgentSession } from '$lib/modes/agent/types';
   import { setupGlobalShortcuts, teardownGlobalShortcuts } from '$lib/utils/shortcuts';
+  import { isLinux } from '$lib/utils/platform';
   import { applyTheme } from '$lib/utils/theme';
   import ShortcutsOverlay from '$lib/shared/primitives/ShortcutsOverlay.svelte';
   import SaveRequestDialog from '$lib/shared/primitives/SaveRequestDialog.svelte';
@@ -58,6 +59,10 @@
   let saveDialogTabId = $state(-1);
   let syncInterval: ReturnType<typeof setInterval> | null = null;
   let usageLimitsInterval: ReturnType<typeof setInterval> | null = null;
+  let deepLinkUnlisten: (() => void) | null = null;
+  // Tracks the last dispatched OAuth token to prevent double-firing
+  // (getCurrent() and onOpenUrl can both return the same startup URL).
+  let lastDispatchedToken = '';
 
   let showNewSessionModal = $state(false);
   let showEditSessionModal = $state(false);
@@ -247,6 +252,7 @@
     window.removeEventListener(AGENT_EVENT.ADD_TAB, handleAgentAddTab);
     window.removeEventListener(SSH_EVENT.ADD_TAB, handleSshAddTab);
     window.removeEventListener(EXPLORER_EVENT.ADD_TAB, handleExplorerAddTab);
+    deepLinkUnlisten?.();
     if (syncInterval) clearInterval(syncInterval);
     if (usageLimitsInterval) clearInterval(usageLimitsInterval);
   });
@@ -324,6 +330,43 @@
     ]);
 
     applyAppearanceOnStartup();
+
+    // ── Deep-link handling (centralized) ────────────────────────────────────
+    // On Linux, onOpenUrl() only fires when the single-instance plugin
+    // forwards a URL from a second process (app already running). For cold
+    // starts — where the OS launches the app with the URL as a CLI arg —
+    // getCurrent() is the only way to retrieve it. Both paths are needed.
+    //
+    // The installed .desktop Exec line is often missing %u (Tauri's bundler
+    // doesn't add it). register() creates a user-local handler at
+    // ~/.local/share/applications/clauge-handler.desktop with the correct
+    // Exec="<binary>" %u, and sets it as the xdg default for clauge://.
+    // This must run on every startup so the path stays current (e.g. after
+    // an update). No-op on macOS/Windows per plugin design.
+    try {
+      const { register, getCurrent, onOpenUrl } = await import('@tauri-apps/plugin-deep-link');
+
+      if (isLinux()) await register('clauge').catch(() => {});
+
+      function dispatchOAuth(urls: string[]) {
+        for (const url of urls) {
+          if (!url.includes('oauth-callback')) continue;
+          const token = new URL(url).searchParams.get('token');
+          if (!token || token === lastDispatchedToken) continue;
+          lastDispatchedToken = token;
+          window.dispatchEvent(new CustomEvent(APP_EVENT.OAUTH_CALLBACK, { detail: { token } }));
+        }
+      }
+
+      // Cold-start: URL is in process args, not in any event.
+      const startupUrls = await getCurrent();
+      if (startupUrls?.length) dispatchOAuth(startupUrls);
+
+      // Already-running: single-instance plugin forwards the second-instance args.
+      deepLinkUnlisten = await onOpenUrl(dispatchOAuth);
+    } catch {
+      // Deep link plugin not available in dev mode — safe to ignore.
+    }
 
     // No default tab — user creates tabs by clicking "+" or opening a request
 

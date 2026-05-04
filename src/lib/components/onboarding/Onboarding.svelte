@@ -6,6 +6,7 @@
   import { testAiKey } from '$lib/commands/ai';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { isMac, isLinux } from '$lib/utils/platform';
+  import { APP_EVENT } from '$lib/shared/constants/events';
 
   // Custom traffic-light controls render on macOS + Linux (both run with
   // decorations:false). Windows keeps native chrome.
@@ -34,70 +35,58 @@
   let ghConnecting = $state(false);
   let ghConnected = $state(false);
   let ghUsername = $state('');
-  let unlisten: (() => void) | null = null;
 
   const TOTAL_STEPS = 6;
 
-  onMount(async () => {
+  async function handleOAuthCallback(e: Event) {
+    // Only handle while onboarding is in progress; GitHubConnect owns it after.
+    if (get(settings)['onboarding_complete']) return;
+    const { token } = (e as CustomEvent<{ token: string }>).detail;
+    ghConnecting = true;
+    try {
+      const { githubConnectWithToken, gistCheckExists } = await import('$lib/commands/github');
+      const { setConnected, markSynced, showSyncRestorePrompt } = await import('$lib/stores/github');
+      const { showToast: toast } = await import('$lib/shared/primitives/toast');
+      const username = await githubConnectWithToken(token);
+      setConnected(username);
+      ghConnected = true;
+      ghUsername = username;
+      toast(`Connected as ${username}`, 'success');
+      const { collections } = await import('$lib/modes/rest/stores');
+      const { connections: sqlConns } = await import('$lib/modes/sql/stores');
+      const { nosqlConnections } = await import('$lib/modes/nosql/stores');
+      const localEmpty = get(collections).length === 0
+        && get(sqlConns).length === 0
+        && get(nosqlConnections).length === 0;
+      if (localEmpty) {
+        try {
+          const gistExists = await gistCheckExists();
+          if (gistExists) showSyncRestorePrompt.set(true);
+          else markSynced();
+        } catch { markSynced(); }
+      } else {
+        markSynced();
+      }
+    } catch (e: any) {
+      const { showToast } = await import('$lib/shared/primitives/toast');
+      const { friendlyError } = await import('$lib/utils/errors');
+      showToast(friendlyError(e), 'error');
+    } finally {
+      ghConnecting = false;
+    }
+  }
+
+  onMount(() => {
     const s = get(settings);
     if (!s['onboarding_complete']) {
       show = true;
       setTimeout(() => { mounted = true; }, 50);
     }
-
-    // Listen for OAuth deep link callback
-    try {
-      const { onOpenUrl } = await import('@tauri-apps/plugin-deep-link');
-      unlisten = await onOpenUrl(async (urls) => {
-        for (const url of urls) {
-          if (url.includes('oauth-callback')) {
-            const params = new URL(url).searchParams;
-            const token = params.get('token');
-            if (token) {
-              ghConnecting = true;
-              try {
-                const { githubConnectWithToken, gistCheckExists } = await import('$lib/commands/github');
-                const { setConnected, markSynced, showSyncRestorePrompt } = await import('$lib/stores/github');
-                const { showToast: toast } = await import('$lib/shared/primitives/toast');
-                const username = await githubConnectWithToken(token);
-                setConnected(username);
-                ghConnected = true;
-                ghUsername = username;
-                toast(`Connected as ${username}`, 'success');
-                // Check if local is empty and cloud has data to restore
-                const { collections } = await import('$lib/modes/rest/stores');
-                const { connections: sqlConns } = await import('$lib/modes/sql/stores');
-                const { nosqlConnections } = await import('$lib/modes/nosql/stores');
-                const localEmpty = get(collections).length === 0
-                  && get(sqlConns).length === 0
-                  && get(nosqlConnections).length === 0;
-                if (localEmpty) {
-                  try {
-                    const gistExists = await gistCheckExists();
-                    if (gistExists) showSyncRestorePrompt.set(true);
-                    else markSynced();
-                  } catch { markSynced(); }
-                } else {
-                  markSynced();
-                }
-              } catch (e: any) {
-                const { showToast } = await import('$lib/shared/primitives/toast');
-                const { friendlyError } = await import('$lib/utils/errors');
-                showToast(friendlyError(e), 'error');
-              } finally {
-                ghConnecting = false;
-              }
-            }
-          }
-        }
-      });
-    } catch {
-      // Deep link not available in dev mode
-    }
+    window.addEventListener(APP_EVENT.OAUTH_CALLBACK, handleOAuthCallback);
   });
 
   onDestroy(() => {
-    unlisten?.();
+    window.removeEventListener(APP_EVENT.OAUTH_CALLBACK, handleOAuthCallback);
   });
 
   $effect(() => {
