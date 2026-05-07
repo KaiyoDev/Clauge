@@ -188,7 +188,7 @@ pub async fn open_authenticated_ssh_session(
                         .await
                         .map_err(|e| format!("tcp connect ({}): {}", profile.name, e))?;
                 if let Err(e) = tcp.set_nodelay(true) {
-                    eprintln!("[ssh] warning: TCP_NODELAY not set ({})", e);
+                    log::warn!("[ssh] warning: TCP_NODELAY not set ({})", e);
                 }
                 Box::new(tcp)
             }
@@ -233,7 +233,7 @@ pub async fn open_authenticated_ssh_session_with_spec(
         .await
         .map_err(|e| format!("tcp connect: {}", e))?;
     if let Err(e) = tcp.set_nodelay(true) {
-        eprintln!("[ssh] warning: TCP_NODELAY not set ({})", e);
+        log::warn!("[ssh] warning: TCP_NODELAY not set ({})", e);
     }
     perform_ssh_handshake_and_auth(Box::new(tcp), &spec).await
 }

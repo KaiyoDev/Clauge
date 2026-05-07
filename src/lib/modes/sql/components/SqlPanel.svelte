@@ -324,6 +324,14 @@
     }
     if (!activeSqlTab) return;
 
+    // The $effect that creates the per-db pool runs in the next microtask; if
+    // the user hits Run immediately after "Connected", the pool may not exist
+    // yet. Await it here — connectToDatabase dedups in-flight calls so this
+    // shares the same Promise as the $effect.
+    if (currentDatabase && $activeConnection && !getDbLiveId($activeConnection.id, currentDatabase)) {
+      try { await connectToDatabase($activeConnection.id, currentDatabase); } catch { /* falls back to instance liveId below */ }
+    }
+
     const lid = getConnectionLid();
     if (!lid) { showToast('Connection lost -- reconnect', 'error'); return; }
 
@@ -390,6 +398,10 @@
       return;
     }
     if (!activeSqlTab) return;
+
+    if (currentDatabase && $activeConnection && !getDbLiveId($activeConnection.id, currentDatabase)) {
+      try { await connectToDatabase($activeConnection.id, currentDatabase); } catch { /* falls back below */ }
+    }
 
     const lid = getConnectionLid();
     if (!lid) { showToast('Connection lost -- reconnect', 'error'); return; }

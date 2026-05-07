@@ -43,14 +43,10 @@
     }
   }
 
-  function handleContextMenu(e: MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-
+  function buildMenuItems() {
     const collList: Collection[] = [];
     collections.subscribe(c => { collList.push(...c); })();
 
-    // Build "Move to..." items for other collections
     const moveItems = collList
       .filter(c => c.id !== request.collectionId)
       .map(c => ({
@@ -58,8 +54,8 @@
         action: async () => {
           try {
             await cmd.moveRequest(request.id, c.id);
-            ondeleted?.(); // triggers reload in source collection
-            await loadCollections(); // refresh entire sidebar
+            ondeleted?.();
+            await loadCollections();
             showToast(`Moved to ${c.name}`, 'success');
           } catch (err) {
             showToast('Failed to move request', 'error');
@@ -67,18 +63,20 @@
         },
       }));
 
-    showContextMenu(e.clientX, e.clientY, [
+    return [
       {
         label: 'Rename',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
         action: () => { renaming = true; },
       },
       {
         label: 'Duplicate',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>',
         action: async () => {
           try {
             await cmd.duplicateRequest(request.id);
             showToast('Request duplicated', 'success');
-            ondeleted?.(); // triggers reload
+            ondeleted?.();
           } catch (err) {
             showToast('Failed to duplicate request', 'error');
           }
@@ -86,6 +84,7 @@
       },
       {
         label: 'Copy as cURL',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>',
         action: async () => {
           try {
             const curl = await cmd.exportAsCurl(request.id);
@@ -100,16 +99,31 @@
         { label: '', action: () => {}, separator: true },
         ...moveItems.map(item => ({
           label: `Move to ${item.label}`,
+          icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>',
           action: item.action,
         })),
       ] : []),
       { label: '', action: () => {}, separator: true },
       {
         label: 'Delete',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
         danger: true,
         action: () => { showDeleteConfirm = true; },
       },
-    ]);
+    ];
+  }
+
+  function handleContextMenu(e: MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    showContextMenu(e.clientX, e.clientY, buildMenuItems());
+  }
+
+  function handleMenuBtn(e: MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    showContextMenu(rect.left, rect.bottom + 4, buildMenuItems());
   }
 
   async function handleRename(newName: string) {
@@ -176,6 +190,9 @@
     />
   {:else}
     <span class="nreq-name">{request.name || request.url || 'Untitled'}</span>
+    <button class="nreq-menu" onclick={handleMenuBtn} title="Options" tabindex="-1">
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+    </button>
   {/if}
 </div>
 
@@ -189,13 +206,14 @@
 
 <style>
   .nreq {
-    padding: 5px 8px 5px 24px;
+    padding: 7px 6px 7px 24px;
     display: flex;
     align-items: center;
     gap: 7px;
     cursor: pointer;
     transition: background 0.1s, opacity 0.15s;
     border-left: 2px solid transparent;
+    min-height: 36px;
   }
   .nreq.dragging {
     opacity: 0.4;
@@ -238,15 +256,37 @@
     letter-spacing: 0.04em;
   }
   .nreq-name {
-    font-size: 11.5px;
+    font-size: 12.5px;
     color: var(--t2);
     flex: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    font-family: var(--mono);
+    font-family: var(--ui);
   }
   .nreq.on .nreq-name {
+    color: var(--t1);
+  }
+  .nreq-menu {
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--t4);
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s, color 0.1s;
+  }
+  .nreq:hover .nreq-menu {
+    display: flex;
+  }
+  .nreq-menu:hover {
+    background: rgba(255,255,255,0.08);
     color: var(--t1);
   }
 </style>

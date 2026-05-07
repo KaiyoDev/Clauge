@@ -633,17 +633,16 @@
     flex-shrink: 0;
     width: 22px;
     height: 22px;
-    display: inline-flex;
+    display: none;
     align-items: center;
     justify-content: center;
     border-radius: 4px;
     color: var(--t3);
-    opacity: 0;
-    transition: opacity 0.1s, background 0.1s, color 0.1s;
+    transition: background 0.1s, color 0.1s;
     cursor: default;
   }
   .ex-row:hover .ex-row-ellipsis,
-  .ex-row.active .ex-row-ellipsis { opacity: 1; }
+  .ex-row.active .ex-row-ellipsis { display: inline-flex; }
   .ex-row-ellipsis:hover {
     background: var(--b1);
     color: var(--t1);

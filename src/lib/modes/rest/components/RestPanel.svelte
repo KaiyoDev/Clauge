@@ -4,7 +4,7 @@
   import RequestBar from './RequestBar.svelte';
   import RequestEditor from './RequestEditor.svelte';
   import ResponseViewer from './ResponseViewer.svelte';
-  import { activeRequest, activeRequestId, requestEnvOverrides, commitRequest, currentRestResponse } from '$lib/modes/rest/stores';
+  import { activeRequest, activeRequestId, clearActiveRequest, loadRequest, requestEnvOverrides, commitRequest, currentRestResponse } from '$lib/modes/rest/stores';
   import { activeEnvId, getEffectiveEnvId } from '$lib/modes/rest/stores';
   import { executeRequest, quickExecute } from '$lib/modes/rest/commands';
   import { showToast } from '$lib/shared/primitives/toast';
@@ -47,6 +47,26 @@
       prevTabId = tabId;
       response = responseCache.get(tabId) ?? null;
       loading = loadingCache.get(tabId) ?? false;
+    }
+  });
+
+  // Sync activeRequest to the active REST tab on every tab switch.
+  // Without this, stale saved-request state leaks into unsaved tabs (and vice
+  // versa) because activeRequest is a global store never cleared on tab switch.
+  // Uses get() for tabs/activeRequestId so only activeTabId changes retrigger this.
+  $effect(() => {
+    const tabId = $activeTabId;
+    const tab = get(tabs).find(t => t.id === tabId && t.mode === 'rest');
+    if (!tab) return;
+
+    if (tab.key === null) {
+      // Unsaved tab — clear global request so child components use draft state
+      clearActiveRequest();
+      const draft = getDraft(tabId);
+      currentMethod = draft?.method || 'GET';
+    } else if (tab.key !== get(activeRequestId)) {
+      // Different saved tab — load the correct request
+      loadRequest(tab.key);
     }
   });
 

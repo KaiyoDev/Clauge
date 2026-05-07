@@ -82,16 +82,16 @@
     }
   }
 
-  function handleContextMenu(e: MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    showContextMenu(e.clientX, e.clientY, [
+  function buildCollMenuItems() {
+    return [
       {
         label: 'Rename',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
         action: () => { renaming = true; },
       },
       {
         label: 'Add Request',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
         action: () => {
           expanded = true;
           if (!loaded) loadRequests();
@@ -101,10 +101,24 @@
       { label: '', action: () => {}, separator: true },
       {
         label: 'Delete',
+        icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
         danger: true,
         action: () => { showDeleteConfirm = true; },
       },
-    ]);
+    ];
+  }
+
+  function handleContextMenu(e: MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    showContextMenu(e.clientX, e.clientY, buildCollMenuItems());
+  }
+
+  function handleCollMenuBtn(e: MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    showContextMenu(rect.left, rect.bottom + 4, buildCollMenuItems());
   }
 
   async function handleRename(newName: string) {
@@ -294,13 +308,16 @@
     <button class="coll-add" title="Add request" onclick={handleAddClick}>
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
     </button>
+    <button class="coll-menu" title="Options" onclick={handleCollMenuBtn}>
+      <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+    </button>
     <svg class="ncoll-arr" class:open={expanded} viewBox="0 0 24 24">
       <path d="M9 18l6-6-6-6" stroke="currentColor" fill="none" stroke-width="1.8" stroke-linecap="round"/>
     </svg>
   </div>
   <div
     class="ncoll-body"
-    style="max-height:{expanded ? (filteredRequests.length + (addingRequest ? 1 : 0)) * 40 + 200 + 'px' : '0'}"
+    style="max-height:{expanded ? (filteredRequests.length + (addingRequest ? 1 : 0)) * 38 + 200 + 'px' : '0'}"
     ondragover={handleBodyDragOver}
     ondrop={handleBodyDrop}
   >
@@ -482,6 +499,28 @@
     fill: none;
     stroke-width: 2.2;
     stroke-linecap: round;
+  }
+  .coll-menu {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    color: var(--t3);
+    transition: background 0.1s, color 0.1s;
+    padding: 0;
+  }
+  .ncoll-hdr:hover .coll-menu {
+    display: flex;
+  }
+  .coll-menu:hover {
+    background: var(--b1);
+    color: var(--t1);
   }
   .inline-add-req {
     display: flex;

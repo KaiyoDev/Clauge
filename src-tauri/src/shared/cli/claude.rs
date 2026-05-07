@@ -113,14 +113,32 @@ impl CliRunner for ClaudeRunner {
     }
 
     fn run_plugin_subcommand(&self, args: &[&str]) -> Result<(bool, String), String> {
-        let mut full: Vec<&str> = vec!["plugins"];
-        full.extend_from_slice(args);
-        let output = std::process::Command::new(BINARY)
-            .args(&full)
+        // Build "claude plugins <args...>" as a single shell string and run it
+        // through the user's login + interactive shell so PATH entries added by
+        // nvm / fnm / asdf / Homebrew are visible. Running the bare BINARY name
+        // via Command::new bypasses those rc-file additions and silently fails
+        // when claude is installed via a version manager.
+        let mut parts: Vec<&str> = vec![BINARY, "plugins"];
+        parts.extend_from_slice(args);
+        let cmd = parts.join(" ");
+
+        let (shell_path, shell_kind) = default_user_shell();
+        let shell_args = shell_kind.exec_command_argv(&cmd);
+
+        let output = std::process::Command::new(&shell_path)
+            .args(&shell_args)
             .output()
-            .map_err(|e| format!("Failed to run {} plugins: {}", BINARY, e))?;
+            .map_err(|e| format!("Failed to run plugin subcommand: {}", e))?;
+
         let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-        Ok((output.status.success(), stderr))
+        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        // Surface stdout in the error when the command fails — some CLI tools
+        // write their error message to stdout rather than stderr.
+        if !output.status.success() {
+            let msg = if stderr.is_empty() { stdout } else { stderr };
+            return Ok((false, msg));
+        }
+        Ok((true, String::new()))
     }
 
     fn sessions_root(&self) -> Option<PathBuf> {

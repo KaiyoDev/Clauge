@@ -74,7 +74,7 @@ pub async fn open(
         .map_err(|e| format!("local addr: {}", e))?
         .port();
 
-    eprintln!(
+    log::info!(
         "[ssh-tunnel] open profile={} target={}:{} local=127.0.0.1:{}",
         profile_id, target_host, target_port, local_port
     );
@@ -111,7 +111,7 @@ async fn run_accept_loop(
     loop {
         tokio::select! {
             _ = &mut shutdown_rx => {
-                eprintln!("[ssh-tunnel] shutdown signal received, closing listener");
+                log::info!("[ssh-tunnel] shutdown signal received, closing listener");
                 break;
             }
             accept = listener.accept() => {
@@ -121,12 +121,12 @@ async fn run_accept_loop(
                         let target_host = target_host.clone();
                         tokio::spawn(async move {
                             if let Err(e) = forward_connection(tcp, handle, target_host, target_port).await {
-                                eprintln!("[ssh-tunnel] forward {} failed: {}", peer, e);
+                                log::warn!("[ssh-tunnel] forward {} failed: {}", peer, e);
                             }
                         });
                     }
                     Err(e) => {
-                        eprintln!("[ssh-tunnel] accept error: {}", e);
+                        log::warn!("[ssh-tunnel] accept error: {}", e);
                         // Brief backoff so a transient error doesn't burn CPU.
                         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
                     }

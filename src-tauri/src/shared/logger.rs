@@ -58,6 +58,10 @@ impl Log for RollingLogger {
                 record.target(),
                 record.args()
             );
+            // Flush after every write so log entries are visible immediately
+            // on Windows (page-cache writes don't appear in the file until
+            // flushed when the file is open in another reader).
+            let _ = cur.file.flush();
         }
 
         #[cfg(debug_assertions)]

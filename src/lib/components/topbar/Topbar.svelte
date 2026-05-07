@@ -171,6 +171,13 @@
       // request (closeTab doesn't run side effects on its own).
       if (newActive.key) loadRequest(newActive.key);
       else clearActiveRequest();
+    } else if (newActive?.mode === 'agent' && newActive.key) {
+      // Same-mode agent close: switch the active session to the promoted tab.
+      // closeTab only updates the tab bar; activeAgentSession must be set
+      // explicitly or the panel stays blank until the user clicks the tab.
+      const sessions = get(agentSessions);
+      const nextSession = sessions.find(s => s.id === newActive.key);
+      if (nextSession) activeAgentSession.set(nextSession);
     }
   }
 

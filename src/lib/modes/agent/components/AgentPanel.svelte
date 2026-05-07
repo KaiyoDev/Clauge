@@ -3,6 +3,7 @@
   import { get } from 'svelte/store';
   import { Terminal } from '@xterm/xterm';
   import { FitAddon } from '@xterm/addon-fit';
+  import { SearchAddon } from '@xterm/addon-search';
   import '@xterm/xterm/css/xterm.css';
   import { Channel } from '@tauri-apps/api/core';
   import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -64,8 +65,8 @@
   let wrapperEl: HTMLDivElement;
 
   // Active terminal entry refs
-  let activeTermEntry: { term: Terminal; fitAddon: FitAddon; container: HTMLDivElement; terminalId: string | null; _exitBuffer?: string } | null = null;
-  let activeShellEntry: { term: Terminal; fitAddon: FitAddon; container: HTMLDivElement; terminalId: string | null } | null = null;
+  let activeTermEntry: { term: Terminal; fitAddon: FitAddon; searchAddon: SearchAddon; container: HTMLDivElement; terminalId: string | null; _exitBuffer?: string } | null = null;
+  let activeShellEntry: { term: Terminal; fitAddon: FitAddon; searchAddon: SearchAddon; container: HTMLDivElement; terminalId: string | null } | null = null;
 
   // Divider drag state
   let dragging = $state(false);
@@ -73,6 +74,165 @@
 
   // Terminal background color (synced with theme to fill gaps)
   let termBg = $state('#0d0d18');
+
+  // Main terminal find bar
+  let termFindOpen          = $state(false);
+  let termFindQuery         = $state('');
+  let termFindNoMatch       = $state(false);
+  let termFindResultIndex   = $state(-1);
+  let termFindResultCount   = $state(0);
+  let termFindCaseSensitive = $state(false);
+  let termFindRegex         = $state(false);
+  let termFindWholeWord     = $state(false);
+  let termFindInputEl: HTMLInputElement | null = null;
+
+  // Shell terminal find bar
+  let shellFindOpen          = $state(false);
+  let shellFindQuery         = $state('');
+  let shellFindNoMatch       = $state(false);
+  let shellFindResultIndex   = $state(-1);
+  let shellFindResultCount   = $state(0);
+  let shellFindCaseSensitive = $state(false);
+  let shellFindRegex         = $state(false);
+  let shellFindWholeWord     = $state(false);
+  let shellFindInputEl: HTMLInputElement | null = null;
+
+  const FIND_DECORATIONS = {
+    matchBackground:               '#1c3d6b',
+    matchBorder:                   '#2a5a9e',
+    matchOverviewRuler:            '#4488cc',
+    activeMatchBackground:         '#7a3d00',
+    activeMatchBorder:             '#e07000',
+    activeMatchColorOverviewRuler: '#ff8c00',
+  };
+
+  function searchOpts(caseSensitive: boolean, regex: boolean, wholeWord: boolean) {
+    return { regex, caseSensitive, wholeWord, decorations: FIND_DECORATIONS };
+  }
+
+  // Main terminal find functions
+  function openTermFind() {
+    termFindOpen = true;
+    termFindNoMatch = false;
+    termFindResultIndex = -1;
+    termFindResultCount = 0;
+    requestAnimationFrame(() => termFindInputEl?.focus());
+  }
+  function closeTermFind() {
+    termFindOpen = false;
+    termFindQuery = '';
+    termFindNoMatch = false;
+    termFindResultIndex = -1;
+    termFindResultCount = 0;
+    try { activeTermEntry?.searchAddon.clearDecorations(); } catch { /* ignore */ }
+    requestAnimationFrame(() => { try { activeTermEntry?.term.focus(); } catch { /* ignore */ } });
+  }
+  function doTermFindNext() {
+    if (!activeTermEntry || !termFindQuery) return;
+    try {
+      const found = activeTermEntry.searchAddon.findNext(termFindQuery, searchOpts(termFindCaseSensitive, termFindRegex, termFindWholeWord));
+      termFindNoMatch = !found;
+    } catch { termFindNoMatch = true; }
+  }
+  function doTermFindPrev() {
+    if (!activeTermEntry || !termFindQuery) return;
+    try {
+      const found = activeTermEntry.searchAddon.findPrevious(termFindQuery, searchOpts(termFindCaseSensitive, termFindRegex, termFindWholeWord));
+      termFindNoMatch = !found;
+    } catch { termFindNoMatch = true; }
+  }
+  function onTermFindInput(e: Event) {
+    const query = (e.currentTarget as HTMLInputElement).value;
+    termFindQuery = query;
+    termFindNoMatch = false;
+    if (!activeTermEntry) return;
+    if (!query) {
+      termFindResultIndex = -1;
+      termFindResultCount = 0;
+      try { activeTermEntry.searchAddon.clearDecorations(); } catch { /* ignore */ }
+      return;
+    }
+    try {
+      const found = activeTermEntry.searchAddon.findNext(query, searchOpts(termFindCaseSensitive, termFindRegex, termFindWholeWord));
+      termFindNoMatch = !found;
+    } catch { termFindNoMatch = true; }
+  }
+  function reRunTermSearch() {
+    if (!activeTermEntry || !termFindQuery) return;
+    try {
+      const found = activeTermEntry.searchAddon.findNext(termFindQuery, searchOpts(termFindCaseSensitive, termFindRegex, termFindWholeWord));
+      termFindNoMatch = !found;
+    } catch { termFindNoMatch = true; }
+  }
+  function toggleTermCase()  { termFindCaseSensitive = !termFindCaseSensitive; reRunTermSearch(); }
+  function toggleTermRegex() { termFindRegex         = !termFindRegex;         reRunTermSearch(); }
+  function toggleTermWord()  { termFindWholeWord     = !termFindWholeWord;     reRunTermSearch(); }
+  function onTermFindKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter')  { e.preventDefault(); if (e.shiftKey) doTermFindPrev(); else doTermFindNext(); }
+    else if (e.key === 'Escape') { closeTermFind(); }
+  }
+
+  // Shell terminal find functions
+  function openShellFind() {
+    shellFindOpen = true;
+    shellFindNoMatch = false;
+    shellFindResultIndex = -1;
+    shellFindResultCount = 0;
+    requestAnimationFrame(() => shellFindInputEl?.focus());
+  }
+  function closeShellFind() {
+    shellFindOpen = false;
+    shellFindQuery = '';
+    shellFindNoMatch = false;
+    shellFindResultIndex = -1;
+    shellFindResultCount = 0;
+    try { activeShellEntry?.searchAddon.clearDecorations(); } catch { /* ignore */ }
+    requestAnimationFrame(() => { try { activeShellEntry?.term.focus(); } catch { /* ignore */ } });
+  }
+  function doShellFindNext() {
+    if (!activeShellEntry || !shellFindQuery) return;
+    try {
+      const found = activeShellEntry.searchAddon.findNext(shellFindQuery, searchOpts(shellFindCaseSensitive, shellFindRegex, shellFindWholeWord));
+      shellFindNoMatch = !found;
+    } catch { shellFindNoMatch = true; }
+  }
+  function doShellFindPrev() {
+    if (!activeShellEntry || !shellFindQuery) return;
+    try {
+      const found = activeShellEntry.searchAddon.findPrevious(shellFindQuery, searchOpts(shellFindCaseSensitive, shellFindRegex, shellFindWholeWord));
+      shellFindNoMatch = !found;
+    } catch { shellFindNoMatch = true; }
+  }
+  function onShellFindInput(e: Event) {
+    const query = (e.currentTarget as HTMLInputElement).value;
+    shellFindQuery = query;
+    shellFindNoMatch = false;
+    if (!activeShellEntry) return;
+    if (!query) {
+      shellFindResultIndex = -1;
+      shellFindResultCount = 0;
+      try { activeShellEntry.searchAddon.clearDecorations(); } catch { /* ignore */ }
+      return;
+    }
+    try {
+      const found = activeShellEntry.searchAddon.findNext(query, searchOpts(shellFindCaseSensitive, shellFindRegex, shellFindWholeWord));
+      shellFindNoMatch = !found;
+    } catch { shellFindNoMatch = true; }
+  }
+  function reRunShellSearch() {
+    if (!activeShellEntry || !shellFindQuery) return;
+    try {
+      const found = activeShellEntry.searchAddon.findNext(shellFindQuery, searchOpts(shellFindCaseSensitive, shellFindRegex, shellFindWholeWord));
+      shellFindNoMatch = !found;
+    } catch { shellFindNoMatch = true; }
+  }
+  function toggleShellCase()  { shellFindCaseSensitive = !shellFindCaseSensitive; reRunShellSearch(); }
+  function toggleShellRegex() { shellFindRegex         = !shellFindRegex;         reRunShellSearch(); }
+  function toggleShellWord()  { shellFindWholeWord     = !shellFindWholeWord;     reRunShellSearch(); }
+  function onShellFindKeydown(e: KeyboardEvent) {
+    if (e.key === 'Enter')  { e.preventDefault(); if (e.shiftKey) doShellFindPrev(); else doShellFindNext(); }
+    else if (e.key === 'Escape') { closeShellFind(); }
+  }
 
   // Track current session to detect changes
   let currentSessionId: string | null = null;
@@ -187,7 +347,7 @@
     return getTerminalTheme(app.theme, app.accentColor);
   }
 
-  function createTermEntry(sessionId: string): { term: Terminal; fitAddon: FitAddon; container: HTMLDivElement; terminalId: string | null; _exitBuffer?: string } {
+  function createTermEntry(sessionId: string): { term: Terminal; fitAddon: FitAddon; searchAddon: SearchAddon; container: HTMLDivElement; terminalId: string | null; _exitBuffer?: string } {
     const t = new Terminal({
       cursorBlink: true,
       fontSize: 13,
@@ -195,15 +355,40 @@
       theme: getCurrentTermTheme(),
       scrollback: 10000,
       lineHeight: 1.35,
+      smoothScrollDuration: 100,
+      rescaleOverlappingGlyphs: true,
+      cursorStyle: 'bar',
+      cursorInactiveStyle: 'outline',
+      rightClickSelectsWord: true,
     });
     const fa = new FitAddon();
+    const sa = new SearchAddon();
     t.loadAddon(fa);
+    t.loadAddon(sa);
 
     const container = document.createElement('div');
     container.style.cssText = 'width:100%;height:100%;display:none;';
     terminalEl.appendChild(container);
     t.open(container);
     loadWebGLAddon(t);
+
+    sa.onDidChangeResults(({ resultIndex, resultCount }) => {
+      if (activeTermEntry?.container !== container) return;
+      termFindResultIndex = resultIndex;
+      termFindResultCount = resultCount;
+    });
+
+    t.attachCustomKeyEventHandler((e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f' && e.type === 'keydown') {
+        openTermFind();
+        return false;
+      }
+      if (e.key === 'Escape' && e.type === 'keydown' && termFindOpen) {
+        closeTermFind();
+        return false;
+      }
+      return true;
+    });
 
     t.onData((data) => {
       // Only count REAL user typing as exit intent. xterm fires onData for protocol
@@ -257,27 +442,40 @@
       }, RESIZE_DEBOUNCE_MS);
     }).observe(container);
 
-    const entry = { term: t, fitAddon: fa, container, terminalId: null as string | null, _exitBuffer: '' };
+    const entry = { term: t, fitAddon: fa, searchAddon: sa, container, terminalId: null as string | null, _exitBuffer: '' };
 
     agentTerminalMap.update(m => { m.set(sessionId, entry); return new Map(m); });
     return entry;
   }
 
-  function showTermEntry(entry: { term: Terminal; fitAddon: FitAddon; container: HTMLDivElement; terminalId: string | null }) {
+  function showTermEntry(entry: { term: Terminal; fitAddon: FitAddon; searchAddon: SearchAddon; container: HTMLDivElement; terminalId: string | null }) {
     if (activeTermEntry && activeTermEntry !== entry) {
       activeTermEntry.container.style.display = 'none';
       try { activeTermEntry.term.options.scrollback = 1000; } catch (_) {}
+      if (termFindOpen) try { activeTermEntry.searchAddon.clearDecorations(); } catch { /* ignore */ }
     }
     entry.container.style.display = 'block';
     try { entry.term.options.scrollback = 10000; } catch (_) {}
     activeTermEntry = entry;
     requestAnimationFrame(() => {
       try { entry.fitAddon.fit(); } catch (_) {}
-      try { entry.term.focus(); } catch (_) {}
+      if (termFindOpen) {
+        termFindInputEl?.focus();
+        if (termFindQuery) {
+          termFindResultIndex = -1;
+          termFindResultCount = 0;
+          try {
+            const found = entry.searchAddon.findNext(termFindQuery, searchOpts(termFindCaseSensitive, termFindRegex, termFindWholeWord));
+            termFindNoMatch = !found;
+          } catch { termFindNoMatch = true; }
+        }
+      } else {
+        try { entry.term.focus(); } catch (_) {}
+      }
     });
   }
 
-  function createShellEntry(sessionId: string): { term: Terminal; fitAddon: FitAddon; container: HTMLDivElement; terminalId: string | null } {
+  function createShellEntry(sessionId: string): { term: Terminal; fitAddon: FitAddon; searchAddon: SearchAddon; container: HTMLDivElement; terminalId: string | null } {
     const t = new Terminal({
       cursorBlink: true,
       fontSize: 13,
@@ -285,15 +483,40 @@
       theme: getCurrentTermTheme(),
       scrollback: 5000,
       lineHeight: 1.35,
+      smoothScrollDuration: 100,
+      rescaleOverlappingGlyphs: true,
+      cursorStyle: 'bar',
+      cursorInactiveStyle: 'outline',
+      rightClickSelectsWord: true,
     });
     const fa = new FitAddon();
+    const sa = new SearchAddon();
     t.loadAddon(fa);
+    t.loadAddon(sa);
 
     const container = document.createElement('div');
     container.style.cssText = 'width:100%;height:100%;display:none;';
     shellEl.appendChild(container);
     t.open(container);
     loadWebGLAddon(t);
+
+    sa.onDidChangeResults(({ resultIndex, resultCount }) => {
+      if (activeShellEntry?.container !== container) return;
+      shellFindResultIndex = resultIndex;
+      shellFindResultCount = resultCount;
+    });
+
+    t.attachCustomKeyEventHandler((e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f' && e.type === 'keydown') {
+        openShellFind();
+        return false;
+      }
+      if (e.key === 'Escape' && e.type === 'keydown' && shellFindOpen) {
+        closeShellFind();
+        return false;
+      }
+      return true;
+    });
 
     // Safety fallback — if first data never arrives, drop the loader after 3s
     setTimeout(() => {
@@ -331,20 +554,34 @@
       }, RESIZE_DEBOUNCE_MS);
     }).observe(container);
 
-    const sEntry = { term: t, fitAddon: fa, container, terminalId: null as string | null };
+    const sEntry = { term: t, fitAddon: fa, searchAddon: sa, container, terminalId: null as string | null };
     agentShellMap.update(m => { m.set(sessionId, sEntry); return new Map(m); });
     return sEntry;
   }
 
-  function showShellEntry(sEntry: { term: Terminal; fitAddon: FitAddon; container: HTMLDivElement; terminalId: string | null }) {
+  function showShellEntry(sEntry: { term: Terminal; fitAddon: FitAddon; searchAddon: SearchAddon; container: HTMLDivElement; terminalId: string | null }) {
     if (activeShellEntry && activeShellEntry !== sEntry) {
       activeShellEntry.container.style.display = 'none';
       try { activeShellEntry.term.options.scrollback = 500; } catch (_) {}
+      if (shellFindOpen) try { activeShellEntry.searchAddon.clearDecorations(); } catch { /* ignore */ }
     }
     sEntry.container.style.display = 'block';
     try { sEntry.term.options.scrollback = 5000; } catch (_) {}
     activeShellEntry = sEntry;
-    requestAnimationFrame(() => { try { sEntry.fitAddon.fit(); } catch (_) {} });
+    requestAnimationFrame(() => {
+      try { sEntry.fitAddon.fit(); } catch (_) {}
+      if (shellFindOpen) {
+        shellFindInputEl?.focus();
+        if (shellFindQuery) {
+          shellFindResultIndex = -1;
+          shellFindResultCount = 0;
+          try {
+            const found = sEntry.searchAddon.findNext(shellFindQuery, searchOpts(shellFindCaseSensitive, shellFindRegex, shellFindWholeWord));
+            shellFindNoMatch = !found;
+          } catch { shellFindNoMatch = true; }
+        }
+      }
+    });
   }
 
   function refitAll(sendPtyResize = false) {
@@ -1260,6 +1497,45 @@
           <button class="ended-btn" type="button" onclick={startNewForActiveSession}>Start new</button>
         </div>
       {/if}
+      {#if termFindOpen}
+        <div class="agent-find-bar">
+          <!-- svelte-ignore a11y_autofocus -->
+          <input
+            bind:this={termFindInputEl}
+            value={termFindQuery}
+            oninput={onTermFindInput}
+            onkeydown={onTermFindKeydown}
+            onblur={() => { try { activeTermEntry?.searchAddon.clearActiveDecoration(); } catch { /* ignore */ } }}
+            class="agent-find-input"
+            class:no-match={termFindNoMatch}
+            placeholder="Find in terminal…"
+            spellcheck={false}
+            autocomplete="off"
+          />
+          <div class="agent-find-sep"></div>
+          <button class="agent-find-toggle" class:active={termFindCaseSensitive} onclick={toggleTermCase} title="Case sensitive (Aa)">Aa</button>
+          <button class="agent-find-toggle" class:active={termFindRegex}         onclick={toggleTermRegex} title="Use regular expression (.*)">.*</button>
+          <button class="agent-find-toggle" class:active={termFindWholeWord}     onclick={toggleTermWord}  title="Match whole word">W</button>
+          <div class="agent-find-sep"></div>
+          {#if termFindQuery}
+            <span class="agent-find-count" class:no-results={termFindNoMatch}>
+              {#if termFindNoMatch}No results
+              {:else if termFindResultCount > 0}{termFindResultIndex === -1 ? `${termFindResultCount}+` : `${termFindResultIndex + 1} / ${termFindResultCount}`}
+              {/if}
+            </span>
+          {/if}
+          <button class="agent-find-btn" onclick={doTermFindPrev} title="Previous (Shift+Enter)">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <button class="agent-find-btn" onclick={doTermFindNext} title="Next (Enter)">
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="agent-find-sep"></div>
+          <button class="agent-find-close" onclick={closeTermFind} title="Close (Esc)">
+            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      {/if}
       <div class="agent-terminal-container" class:term-hidden={!termReady} bind:this={terminalEl} style="background:{termBg}"></div>
     </div>
 
@@ -1274,6 +1550,45 @@
               <span class="loading-title">Starting Shell</span>
               <span class="loading-sub">Loading terminal session<span class="loading-dots"></span></span>
             </div>
+          </div>
+        {/if}
+        {#if shellFindOpen}
+          <div class="agent-find-bar agent-shell-find-bar">
+            <!-- svelte-ignore a11y_autofocus -->
+            <input
+              bind:this={shellFindInputEl}
+              value={shellFindQuery}
+              oninput={onShellFindInput}
+              onkeydown={onShellFindKeydown}
+              onblur={() => { try { activeShellEntry?.searchAddon.clearActiveDecoration(); } catch { /* ignore */ } }}
+              class="agent-find-input"
+              class:no-match={shellFindNoMatch}
+              placeholder="Find in terminal…"
+              spellcheck={false}
+              autocomplete="off"
+            />
+            <div class="agent-find-sep"></div>
+            <button class="agent-find-toggle" class:active={shellFindCaseSensitive} onclick={toggleShellCase} title="Case sensitive (Aa)">Aa</button>
+            <button class="agent-find-toggle" class:active={shellFindRegex}         onclick={toggleShellRegex} title="Use regular expression (.*)">.*</button>
+            <button class="agent-find-toggle" class:active={shellFindWholeWord}     onclick={toggleShellWord}  title="Match whole word">W</button>
+            <div class="agent-find-sep"></div>
+            {#if shellFindQuery}
+              <span class="agent-find-count" class:no-results={shellFindNoMatch}>
+                {#if shellFindNoMatch}No results
+                {:else if shellFindResultCount > 0}{shellFindResultIndex === -1 ? `${shellFindResultCount}+` : `${shellFindResultIndex + 1} / ${shellFindResultCount}`}
+                {/if}
+              </span>
+            {/if}
+            <button class="agent-find-btn" onclick={doShellFindPrev} title="Previous (Shift+Enter)">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+            </button>
+            <button class="agent-find-btn" onclick={doShellFindNext} title="Next (Enter)">
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="agent-find-sep"></div>
+            <button class="agent-find-close" onclick={closeShellFind} title="Close (Esc)">
+              <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
         {/if}
         <div class="agent-shell-container" class:term-hidden={activeShellLoading} bind:this={shellEl} style="background:{termBg}"></div>
@@ -1495,6 +1810,113 @@
   .shell-loading {
     /* same .agent-loading positioning, just scoped here */
   }
+
+  .agent-find-bar {
+    position: absolute;
+    top: 8px;
+    right: 14px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 1px;
+    background: var(--n2, #1a1a2e);
+    border: 1px solid var(--b1);
+    border-radius: 7px;
+    padding: 3px 5px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    animation: findSlideIn 0.12s ease;
+  }
+  .agent-shell-find-bar {
+    right: 8px;
+  }
+  @keyframes findSlideIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .agent-find-input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--t1);
+    font-family: var(--mono);
+    font-size: 12px;
+    width: 180px;
+    padding: 2px 4px;
+    caret-color: var(--acc);
+  }
+  .agent-find-input.no-match { color: var(--err, #f55); }
+  .agent-find-input::placeholder { color: var(--t4); }
+  .agent-find-sep {
+    width: 1px;
+    height: 16px;
+    background: var(--b1);
+    flex-shrink: 0;
+    margin: 0 3px;
+  }
+  .agent-find-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 22px;
+    min-width: 22px;
+    padding: 0 4px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--t4);
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.1s, color 0.1s;
+  }
+  .agent-find-toggle:hover { background: rgba(255,255,255,0.07); color: var(--t2); }
+  .agent-find-toggle.active {
+    background: color-mix(in srgb, var(--acc) 20%, transparent);
+    color: var(--acc);
+  }
+  .agent-find-count {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--t3);
+    white-space: nowrap;
+    padding: 0 4px;
+    min-width: 52px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .agent-find-count.no-results { color: var(--err, #f55); }
+  .agent-find-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--t3);
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .agent-find-btn:hover { background: rgba(255,255,255,0.07); color: var(--t1); }
+  .agent-find-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--t4);
+    cursor: pointer;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .agent-find-close:hover { background: rgba(255,255,255,0.07); color: var(--t2); }
 
   .agent-empty {
     flex: 1;

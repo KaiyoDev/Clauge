@@ -22,6 +22,29 @@
 
   let { result, error, loading, tabId = -1, query = '', liveConnectionId = '', databaseName = '' }: Props = $props();
 
+  // Virtual scrolling — only the rows in the visible viewport (+ overscan)
+  // are in the DOM. Spacer rows above/below maintain the correct scroll height.
+  const ROW_HEIGHT = 35;
+  const OVERSCAN = 20;
+
+  let scrollContainer = $state<HTMLElement | null>(null);
+  let scrollTop = $state(0);
+  let viewportHeight = $state(400);
+  let widthRafId: number | null = null;
+
+  const visibleStart = $derived(
+    result ? Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN) : 0
+  );
+  const visibleEnd = $derived(
+    result
+      ? Math.min(result.rows.length, Math.ceil((scrollTop + viewportHeight) / ROW_HEIGHT) + OVERSCAN)
+      : 0
+  );
+  const spacerTop = $derived(visibleStart * ROW_HEIGHT);
+  const spacerBottom = $derived(
+    result ? Math.max(0, (result.rows.length - visibleEnd) * ROW_HEIGHT) : 0
+  );
+
   let limitInputValue = $state(String($sqlRowLimit));
   // Keep input in sync when store changes externally
   $effect(() => {
@@ -70,13 +93,20 @@
     }
   });
 
-  // Reset state when result changes
   $effect(() => {
     if (result) {
-      columnWidths = result.columns.map((col, i) => computeColumnWidth(col, i));
+      scrollTop = 0;
+      if (scrollContainer) scrollContainer.scrollTop = 0;
       editingCell = null;
       dirtyRows = new Map();
       deletedRows = new Set();
+      // Defer column-width measurement off the critical paint path so the
+      // first frame of rows appears immediately on large result sets.
+      if (widthRafId !== null) cancelAnimationFrame(widthRafId);
+      widthRafId = requestAnimationFrame(() => {
+        widthRafId = null;
+        columnWidths = result!.columns.map((col, i) => computeColumnWidth(col, i));
+      });
     }
   });
 
@@ -384,7 +414,7 @@
     await copyToClipboard(header + '\n' + rows);
   }
 
-  async function exportCsv() {
+  function exportCsv() {
     if (!result) return;
     const escape = (v: string) => {
       if (v.includes(',') || v.includes('"') || v.includes('\n')) return '"' + v.replace(/"/g, '""') + '"';
@@ -392,7 +422,21 @@
     };
     const header = result.columns.map(escape).join(',');
     const rows = result.rows.map(row => row.map(cell => escape(formatValue(cell))).join(',')).join('\n');
-    await copyToClipboard(header + '\n' + rows);
+    const csv = header + '\n' + rows;
+
+    // Derive a filename from the query (e.g. "select_users.csv")
+    const match = query.trim().match(/\b(?:FROM|INTO|UPDATE|TABLE)\s+[`"']?(\w+)/i);
+    const base = match ? match[1] : 'export';
+    const filename = `${base}_${new Date().toISOString().slice(0, 10)}.csv`;
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`Saved ${filename}`, 'success');
   }
 
   const totalWidth = $derived(
@@ -433,7 +477,13 @@
       <div class="rt-duration">{result.durationMs}ms</div>
     </div>
   {:else}
-    <div class="rt-scroll" class:resizing={resizingCol !== null}>
+    <div
+      class="rt-scroll"
+      class:resizing={resizingCol !== null}
+      bind:this={scrollContainer}
+      bind:clientHeight={viewportHeight}
+      onscroll={(e) => { scrollTop = (e.currentTarget as HTMLElement).scrollTop; }}
+    >
       <table class="rt-table" style="min-width:{totalWidth}px">
         <thead>
           <tr>
@@ -451,8 +501,14 @@
           </tr>
         </thead>
         <tbody>
-          {#each result.rows as row, rowIdx}
-            <tr class:rt-deleted={deletedRows.has(rowIdx)}>
+          {#if spacerTop > 0}
+            <tr style="height:{spacerTop}px" aria-hidden="true">
+              <td colspan={result.columns.length + 1} style="padding:0;border:none"></td>
+            </tr>
+          {/if}
+          {#each result.rows.slice(visibleStart, visibleEnd) as row, i}
+            {@const rowIdx = visibleStart + i}
+            <tr class="rt-data-row" class:rt-deleted={deletedRows.has(rowIdx)}>
               <td class="rt-row-num">{rowIdx + 1}</td>
               {#each row as cell, colIdx}
                 {@const vtype = getValueType(cell)}
@@ -484,6 +540,11 @@
               {/each}
             </tr>
           {/each}
+          {#if spacerBottom > 0}
+            <tr style="height:{spacerBottom}px" aria-hidden="true">
+              <td colspan={result.columns.length + 1} style="padding:0;border:none"></td>
+            </tr>
+          {/if}
         </tbody>
       </table>
     </div>
@@ -658,23 +719,23 @@
   }
   .rt-resize-handle:hover { background: var(--acc); }
 
-  /* Cells — max 3 lines, then clip */
+  .rt-data-row { height: 35px; }
+
   .rt-cell {
     padding: 7px 12px;
     border-bottom: 1px solid var(--b1);
     border-right: 1px solid color-mix(in srgb, var(--b1) 50%, transparent);
     color: var(--t1);
     cursor: default;
-    max-height: 57px;
     overflow: hidden;
+    vertical-align: middle;
   }
   .rt-cell:last-child { border-right: none; }
   .rt-cell-text {
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
+    display: block;
     overflow: hidden;
-    word-break: break-word;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     line-height: 19px;
   }
 

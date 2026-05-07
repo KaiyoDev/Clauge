@@ -104,6 +104,17 @@ pub enum DatabasePool {
     Clickhouse(ClickhouseClient),
 }
 
+impl Clone for DatabasePool {
+    fn clone(&self) -> Self {
+        match self {
+            Self::Postgres(p) => Self::Postgres(p.clone()),
+            Self::MySql(p) => Self::MySql(p.clone()),
+            Self::Sqlite(p) => Self::Sqlite(p.clone()),
+            Self::Clickhouse(c) => Self::Clickhouse(c.clone()),
+        }
+    }
+}
+
 pub struct SqlConnectionManager {
     pub connections: Mutex<HashMap<String, DatabasePool>>,
     /// Parallel map keyed by the same id as `connections`, holding any
@@ -225,7 +236,7 @@ async fn build_pool_inner(
     app_pool: Option<&SqlitePool>,
 ) -> Result<DatabasePool, String> {
     let url = build_connection_url(config)?;
-    eprintln!("[Clauge SQL] create_pool driver={} host={} port={} db={} ssl={} user={}",
+    log::info!("[Clauge SQL] create_pool driver={} host={} port={} db={} ssl={} user={}",
         config.driver, config.host, config.port, config.database, config.ssl, config.username);
     match dialect {
         SqlDialect::Postgres => {
@@ -236,21 +247,21 @@ async fn build_pool_inner(
                 config.username, config.password, config.host, config.port, config.database
             );
             let ssl_mode = if config.ssl { PgSslMode::Require } else { PgSslMode::Prefer };
-            eprintln!("[Clauge SQL] PG base_url={} ssl_mode={:?}", base_url.replace(&config.password, "***"), ssl_mode);
+            log::info!("[Clauge SQL] PG base_url={} ssl_mode={:?}", base_url.replace(&config.password, "***"), ssl_mode);
             let mut opts = PgConnectOptions::from_str(&base_url)
                 .map_err(|e| {
-                    eprintln!("[Clauge SQL] PgConnectOptions parse error: {}", e);
+                    log::error!("[Clauge SQL] PgConnectOptions parse error: {}", e);
                     format!("Invalid PostgreSQL URL: {}", e)
                 })?;
             opts = opts.ssl_mode(ssl_mode);
-            eprintln!("[Clauge SQL] Connecting to PostgreSQL...");
+            log::info!("[Clauge SQL] Connecting to PostgreSQL...");
             let pool = sqlx::PgPool::connect_with(opts)
                 .await
                 .map_err(|e| {
-                    eprintln!("[Clauge SQL] PostgreSQL connection FAILED: {}", e);
+                    log::error!("[Clauge SQL] PostgreSQL connection FAILED: {}", e);
                     format!("PostgreSQL connection failed: {}", e)
                 })?;
-            eprintln!("[Clauge SQL] PostgreSQL connected OK");
+            log::info!("[Clauge SQL] PostgreSQL connected OK");
             Ok(DatabasePool::Postgres(pool))
         }
         SqlDialect::MySql => {
@@ -274,7 +285,7 @@ async fn build_pool_inner(
                 .ping()
                 .await
                 .map_err(|e| format!("ClickHouse connection failed: {}", e))?;
-            eprintln!("[Clauge SQL] ClickHouse connected OK");
+            log::info!("[Clauge SQL] ClickHouse connected OK");
             Ok(DatabasePool::Clickhouse(client))
         }
     }
@@ -581,17 +592,25 @@ pub async fn sql_execute_query(
     connection_id: String,
     query: String,
 ) -> Result<SqlQueryResult, String> {
-    let connections = manager.connections.lock().await;
-    let pool = connections
-        .get(&connection_id)
-        .ok_or_else(|| "Connection not found".to_string())?;
+    // Clone the pool reference and immediately release the mutex so other
+    // commands (tab switching, AI panel, sidebar refreshes, concurrent
+    // queries from other tabs) are not blocked for the duration of fetch_all.
+    // All sqlx pool types and ClickhouseClient are cheaply cloneable (they
+    // are internally reference-counted / stateless HTTP clients).
+    let pool = {
+        let connections = manager.connections.lock().await;
+        connections
+            .get(&connection_id)
+            .ok_or_else(|| "Connection not found".to_string())?
+            .clone()
+    };
 
     let start = Instant::now();
 
     match pool {
         DatabasePool::Postgres(p) => {
             let rows = sqlx::query(&query)
-                .fetch_all(p)
+                .fetch_all(&p)
                 .await
                 .map_err(|e| e.to_string())?;
             let duration_ms = start.elapsed().as_millis() as u64;
@@ -612,7 +631,7 @@ pub async fn sql_execute_query(
         }
         DatabasePool::MySql(p) => {
             let rows = sqlx::query(&query)
-                .fetch_all(p)
+                .fetch_all(&p)
                 .await
                 .map_err(|e| e.to_string())?;
             let duration_ms = start.elapsed().as_millis() as u64;
@@ -633,7 +652,7 @@ pub async fn sql_execute_query(
         }
         DatabasePool::Sqlite(p) => {
             let rows = sqlx::query(&query)
-                .fetch_all(p)
+                .fetch_all(&p)
                 .await
                 .map_err(|e| e.to_string())?;
             let duration_ms = start.elapsed().as_millis() as u64;

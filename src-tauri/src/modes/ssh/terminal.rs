@@ -34,7 +34,7 @@ pub async fn ssh_spawn_terminal(
     let pool_clone: SqlitePool = pool.inner().clone();
     let profile_id_for_task = profile_id.clone();
 
-    eprintln!("[ssh] connect profile={}", profile_id);
+    log::info!("[ssh] connect profile={}", profile_id);
 
     // Drive the whole russh session inside this task. Any failure → emit
     // exit:true so the frontend can swap to the reconnect banner.
@@ -48,7 +48,7 @@ pub async fn ssh_spawn_terminal(
         )
         .await
         {
-            eprintln!("[ssh] session ended: {}", err);
+            log::warn!("[ssh] session ended: {}", err);
         }
         // Always signal exit on the way out so the frontend cleans up.
         let _ = on_output_for_task.send(TerminalOutputPayload {
@@ -195,7 +195,7 @@ async fn run_ssh_session(
                 match cmd {
                     Some(SshCommand::Write(bytes)) => {
                         if let Err(e) = chan.data(&bytes[..]).await {
-                            eprintln!("[ssh] write error: {}", e);
+                            log::warn!("[ssh] write error: {}", e);
                             break;
                         }
                     }
@@ -204,7 +204,7 @@ async fn run_ssh_session(
                             .window_change(cols as u32, rows as u32, 0, 0)
                             .await
                         {
-                            eprintln!("[ssh] resize error: {}", e);
+                            log::warn!("[ssh] resize error: {}", e);
                         }
                     }
                     Some(SshCommand::Kill) => {
