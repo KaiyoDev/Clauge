@@ -292,7 +292,7 @@
   .nv-sep { color: var(--t4); }
   .nv-saving { color: var(--warn, #f5a623); font-style: italic; }
   .nv-dirty { color: var(--t4); font-style: italic; }
-  .nv-saved { color: var(--ok, #1dc880); }
+  .nv-saved { color: var(--acc); }
 
   .nv-title {
     border: none;

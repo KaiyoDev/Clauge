@@ -1,17 +1,17 @@
   .stg-layout {
     display: flex;
-    margin: -18px;
-    height: calc(85vh - 86px);
-    min-height: 440px;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
     overflow: hidden;
   }
 
   /* -- Tab sidebar -- */
   .stg-tabs {
-    width: 160px;
+    width: 240px;
     background: var(--e);
     border-right: 1px solid var(--b1);
-    padding: 6px 0;
+    padding: 10px 0;
     display: flex;
     flex-direction: column;
     flex-shrink: 0;
@@ -24,13 +24,13 @@
   .stg-tab {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
+    gap: 12px;
+    padding: 11px 20px;
     border: none;
     background: transparent;
     color: var(--t3);
     font-family: var(--ui);
-    font-size: 12px;
+    font-size: 13.5px;
     cursor: default;
     transition: color 0.12s, background 0.12s;
     border-left: 2px solid transparent;
@@ -49,17 +49,17 @@
   }
 
   .stg-tab svg {
-    width: 15px;
-    height: 15px;
+    width: 17px;
+    height: 17px;
     flex-shrink: 0;
   }
 
   /* Sidebar group header (e.g. "Modes"). Sits between tab groups. */
   .stg-tab-section {
     display: block;
-    padding: 14px 14px 4px;
+    padding: 18px 20px 6px;
     font-family: var(--ui);
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -68,7 +68,7 @@
   }
   /* Avoid extra top padding when a header is the first child. */
   .stg-tab-section:first-child {
-    padding-top: 8px;
+    padding-top: 10px;
   }
 
   /* -- Content pane -- */

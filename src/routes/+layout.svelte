@@ -7,7 +7,6 @@
   import Toast from '$lib/shared/primitives/Toast.svelte';
   import ContextMenu from '$lib/shared/primitives/ContextMenu.svelte';
   import EnvManagerModal from '$lib/components/env/EnvManagerModal.svelte';
-  import SettingsModal from '$lib/components/settings/SettingsModal.svelte';
   import { loadAgentSessions, loadAgentContexts } from '$lib/modes/agent/stores';
   import { getPurposeColor } from '$lib/modes/agent/ai/prompt';
   import NewSessionModal from '$lib/modes/agent/components/NewSessionModal.svelte';
@@ -685,7 +684,6 @@
 <Toast />
 <ContextMenu />
 <EnvManagerModal />
-<SettingsModal />
 <ShortcutsOverlay show={$activeModal === 'shortcuts'} onclose={() => activeModal.set(null)} />
 <SaveRequestDialog bind:show={showSaveDialog} tabId={saveDialogTabId} />
 <Onboarding />

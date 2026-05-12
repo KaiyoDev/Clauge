@@ -16,7 +16,7 @@
   import { checkAndDownloadUpdate, showWhatsNewModal, whatsNewContent, updateAvailable } from '$lib/utils/updater';
   import { showToast } from '$lib/shared/primitives/toast';
   import { FULLSCREEN_POLL_INTERVAL_MS } from '$lib/shared/constants/timings';
-  import { tabs, activeTabId } from '$lib/shared/stores/tabs';
+  import { tabs, activeTabId, openSettingsTab } from '$lib/shared/stores/tabs';
   import { get } from 'svelte/store';
   import { activateTabAcrossMode } from '$lib/utils/tabActivation';
 
@@ -209,13 +209,13 @@
   function handleProfileAction(action: string) {
     profileMenuOpen = false;
     switch (action) {
-      case 'sync': activeModal.set('settings:account'); break;
-      case 'settings': activeModal.set('settings'); break;
+      case 'sync': openSettingsTab('account'); break;
+      case 'settings': openSettingsTab('general'); break;
       case 'check-updates': handleCheckForUpdates(); break;
       case 'whats-new': openExternal('https://clauge.in/changelog.html'); break;
       case 'report': openExternal('https://github.com/ansxuman/Clauge/issues/new'); break;
       case 'coffee': openExternal('https://buymeacoffee.com/ansxuman'); break;
-      case 'about': activeModal.set('settings'); break;
+      case 'about': openSettingsTab('about'); break;
     }
   }
 
@@ -592,12 +592,12 @@
     gap: 10px;
     padding: 8px 12px;
     font-size: 11px;
-    color: var(--ok);
+    color: var(--acc);
     font-family: var(--ui);
   }
   .pm-sync-status svg {
     width: 14px; height: 14px; min-width: 14px;
-    stroke: var(--ok); fill: none;
+    stroke: var(--acc); fill: none;
     stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
     flex-shrink: 0;
   }

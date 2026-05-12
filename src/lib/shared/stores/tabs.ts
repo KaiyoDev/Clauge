@@ -1,7 +1,7 @@
 import { writable, get } from 'svelte/store';
 import type { KVInput } from '$lib/types';
 
-export type TabMode = 'rest' | 'sql' | 'nosql' | 'agent' | 'ssh' | 'explorer' | 'history' | 'workspace';
+export type TabMode = 'rest' | 'sql' | 'nosql' | 'agent' | 'ssh' | 'explorer' | 'history' | 'workspace' | 'settings';
 
 export interface Tab {
   id: number;
@@ -69,6 +69,21 @@ export function activateTab(id: number) {
 
 export function updateTab(id: number, updates: Partial<Tab>) {
   tabs.update(t => t.map(x => x.id === id ? { ...x, ...updates } : x));
+}
+
+/** Open (or focus) the singleton Settings tab. Settings is cross-mode:
+ *  activateTabAcrossMode does NOT call `mode.set('settings')` for these,
+ *  so $mode + the "+" button stay tied to whatever real mode the user is
+ *  in. `subKey` selects the inner Settings tab (e.g. 'account', 'ai',
+ *  'agent', 'agent:usage', 'agent:contexts', 'agent:plugins', 'workspace'). */
+export function openSettingsTab(subKey: string = 'general'): Tab {
+  const existing = get(tabs).find(t => t.mode === 'settings');
+  if (existing) {
+    if (existing.key !== subKey) updateTab(existing.id, { key: subKey });
+    activeTabId.set(existing.id);
+    return existing;
+  }
+  return addTab('Settings', 'settings', subKey, 'var(--t3)');
 }
 
 export function setDraft(tabId: number, data: Partial<DraftRequest>) {

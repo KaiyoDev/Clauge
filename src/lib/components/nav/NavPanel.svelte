@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { mode, navOpen, activeModal } from '$lib/stores/app';
+  import { mode, navOpen } from '$lib/stores/app';
   import RestNav from './RestNav.svelte';
   import SqlNav from '$lib/modes/sql/components/SqlNav.svelte';
   import NoSqlNav from '$lib/modes/nosql/components/NoSqlNav.svelte';
@@ -14,7 +14,7 @@
   import { showContextMenu } from '$lib/shared/primitives/contextmenu';
   import { get } from 'svelte/store';
   import { inboxUnreadCount, markInboxRead, coworkers } from '$lib/modes/workspace/stores';
-  import { tabs as sharedTabs, activeTabId, addTab, activateTab } from '$lib/shared/stores/tabs';
+  import { tabs as sharedTabs, activeTabId, addTab, activateTab, openSettingsTab } from '$lib/shared/stores/tabs';
 
   const inboxActive = $derived(
     $mode === 'workspace' && !!$sharedTabs.find(t => t.id === $activeTabId && t.key === 'inbox'),
@@ -265,11 +265,11 @@
         </button>
       </div>
       <div class="ah-grid">
-        <button class="ah-card" onclick={() => activeModal.set('settings:agent:contexts')}>
+        <button class="ah-card" onclick={() => openSettingsTab('agent:contexts')}>
           <svg class="ah-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>
           <span class="ah-card-label">Contexts</span>
         </button>
-        <button class="ah-card" onclick={() => activeModal.set('settings:agent:plugins')}>
+        <button class="ah-card" onclick={() => openSettingsTab('agent:plugins')}>
           <svg class="ah-card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11V9a2 2 0 00-2-2h-4V3a2 2 0 00-2-2h-4a2 2 0 00-2 2v4H4a2 2 0 00-2 2v2a4 4 0 010 8v2a2 2 0 002 2h4v-2a4 4 0 018 0v2h4a2 2 0 002-2v-4a4 4 0 010-8z"/></svg>
           <span class="ah-card-label">Plugins</span>
         </button>

@@ -3,7 +3,7 @@
   import { tabs, activeTabId, addTab, closeTab, activateTab, getDraft, markClean, clearDraft } from '$lib/shared/stores/tabs';
   import { activeRequestId, loadRequest, clearActiveRequest, commitRequest } from '$lib/modes/rest/stores';
   import { sqlIsConnected, activeConnection, disconnectFromDb, initSqlTab, clearSqlTabData, setSqlTabData, sqlScripts, saveSqlScript, updateSqlScript, deleteSqlScript, getSqlTabData, activeConnectionId, selectedDatabase, connectToDatabase, sqlPendingChanges, connectToDb, connectedIds, connections, loadConnections } from '$lib/modes/sql/stores';
-  import { clearNoSqlTabData, initNoSqlTab, openNoSqlCollection, setNoSqlTabData, activeNoSqlConnectionId } from '$lib/modes/nosql/stores';
+  import { clearNoSqlTabData, initNoSqlTab, openNoSqlCollection, setNoSqlTabData, activeNoSqlConnectionId, connectedNoSqlIds } from '$lib/modes/nosql/stores';
   import { showToast } from '$lib/shared/primitives/toast';
   import ConfirmDialog from '$lib/shared/primitives/ConfirmDialog.svelte';
   import { friendlyError } from '$lib/utils/errors';
@@ -291,6 +291,10 @@
       return;
     }
     if (m === 'nosql') {
+      if (get(connectedNoSqlIds).size === 0) {
+        showToast('Connect to a database first', 'info');
+        return;
+      }
       const tab = addTab('New Query', 'nosql', null, 'var(--nosql)');
       initNoSqlTab(tab.id);
       return;
@@ -471,6 +475,8 @@
           <svg class="tab-mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19a6.5 6.5 0 0113 0"/><circle cx="17" cy="6" r="2.4"/><path d="M14 13a4.5 4.5 0 018.5 2"/></svg>
         {:else if tab.mode === 'workspace'}
           <svg class="tab-mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="14 3 14 9 20 9"/></svg>
+        {:else if tab.mode === 'settings'}
+          <svg class="tab-mode-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
         {/if}
         <span class="tab-label">{tab.label}</span>
         <span
@@ -600,68 +606,100 @@
     display: flex;
     align-items: center;
     -webkit-app-region: no-drag;
-    gap: 4px;
+    gap: 2px;
     height: 100%;
     overflow-x: auto;
-    padding: 0 4px;
+    padding: 0 6px;
     flex-shrink: 1;
     min-width: 0;
   }
   .tabs::-webkit-scrollbar { display: none; }
   .tab {
-    height: 30px;
-    padding: 6px 14px;
-    border-radius: 7px;
-    border: none;
+    width: 200px;
+    height: 34px;
+    padding: 0 6px 0 12px;
+    border-radius: 8px;
+    border: 1px solid transparent;
     background: transparent;
     color: var(--t3);
     font-size: 12.5px;
-    font-family: var(--mono);
+    font-family: var(--ui);
+    font-weight: 500;
     cursor: default;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     white-space: nowrap;
-    transition: background 0.08s, color 0.08s;
+    position: relative;
+    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
     flex-shrink: 0;
     -webkit-app-region: no-drag;
   }
-  .tab:hover { color: var(--t2); }
+  .tab:hover {
+    color: var(--t2);
+    background: rgba(255, 255, 255, 0.035);
+  }
+  /* Active tab — accent-tinted fill + hairline border for a quiet
+     "selected pill" look. No underline; the icon picks up the accent
+     instead (rule below). Uses color-mix so it respects the active
+     theme accent. */
   .tab.on {
-    background: rgba(255,255,255,0.06);
+    background: color-mix(in srgb, var(--acc) 14%, transparent);
+    border-color: color-mix(in srgb, var(--acc) 28%, transparent);
     color: var(--t1);
   }
   .tab-agent-icon {
-    width: 12px;
-    height: 12px;
+    width: 13px;
+    height: 13px;
     flex-shrink: 0;
-    opacity: 0.7;
+    opacity: 0.75;
   }
   .tab-mode-icon {
-    width: 12px;
-    height: 12px;
+    width: 13px;
+    height: 13px;
     flex-shrink: 0;
-    opacity: 0.7;
+    opacity: 0.75;
     color: var(--t3);
+    transition: color 0.12s ease, opacity 0.12s ease;
   }
-  .tab.on .tab-mode-icon { color: var(--t1); opacity: 0.9; }
+  .tab.on .tab-mode-icon,
+  .tab.on .tab-agent-icon {
+    color: var(--acc);
+    opacity: 1;
+  }
   .tab-label {
-    max-width: 150px;
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    letter-spacing: 0.005em;
   }
   .tab.tab-dirty .tab-label { font-style: italic; }
   .tab-close {
-    font-size: 14px;
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    line-height: 1;
     color: var(--t3);
     cursor: default;
+    flex-shrink: 0;
+    margin-left: 2px;
     opacity: 0;
-    transition: opacity 0.1s, color 0.1s;
-    line-height: 1;
+    transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease;
   }
-  .tab:hover .tab-close { opacity: 1; }
-  .tab-close:hover { color: var(--t1); }
+  /* Keep the close button visible while the tab is active so the X
+     doesn't vanish the moment the cursor moves away. */
+  .tab:hover .tab-close,
+  .tab.on .tab-close { opacity: 1; }
+  .tab-close:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--t1);
+  }
 
   .tab-add-wrap {
     position: relative;

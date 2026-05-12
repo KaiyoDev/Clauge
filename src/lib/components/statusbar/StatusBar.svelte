@@ -3,7 +3,7 @@
   import { updateAvailable, showWhatsNewModal } from '$lib/utils/updater';
   import { mode } from '$lib/stores/app';
   import { agentGitBranchName, agentGitFiles, agentGitAhead, agentGitBehind, activeAgentSession, agentUsageLimits, agentUsageAuthStatus, agentShellOpen, agentSessionKey, agentCodexToken, agentFooterProvider } from '$lib/modes/agent/stores';
-  import { activeModal } from '$lib/stores/app';
+  import { openSettingsTab } from '$lib/shared/stores/tabs';
   import AgentGitPanel from '$lib/modes/agent/components/AgentGitPanel.svelte';
   import { USAGE_DANGER, USAGE_WARN } from '$lib/shared/constants/colors';
   import { mcpStatus } from '$lib/modes/workspace/stores';
@@ -21,7 +21,7 @@
   });
 
   function openMcpSettings() {
-    activeModal.set('settings:workspace');
+    openSettingsTab('workspace');
   }
 
   interface UsageChip { label: string; pct: number; color: string; }
@@ -86,7 +86,7 @@
   });
 
   function showUsageDashboard() {
-    activeModal.set('settings:agent:usage');
+    openSettingsTab('agent:usage');
   }
 
   function openUpdateModal() {
@@ -124,7 +124,7 @@
       </div>
     {:else if ($agentFooterProvider === 'codex' ? !$agentCodexToken : !$agentSessionKey) || $agentUsageAuthStatus.state === 'invalid'}
       <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-      <div class="si setup-usage" class:invalid={$agentUsageAuthStatus.state === 'invalid'} onclick={() => activeModal.set('settings:agent')} title={$agentUsageAuthStatus.message || `Configure ${$agentFooterProvider === 'codex' ? 'Codex' : 'Claude'} usage tracking`}>
+      <div class="si setup-usage" class:invalid={$agentUsageAuthStatus.state === 'invalid'} onclick={() => openSettingsTab('agent')} title={$agentUsageAuthStatus.message || `Configure ${$agentFooterProvider === 'codex' ? 'Codex' : 'Claude'} usage tracking`}>
         <svg style="width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
         <span>{$agentUsageAuthStatus.state === 'invalid' ? 'Usage key expired · reconfigure' : 'Set up usage tracking'}</span>
       </div>

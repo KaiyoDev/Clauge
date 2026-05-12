@@ -1,10 +1,9 @@
 <script lang="ts">
-    import Modal from "$lib/shared/primitives/Modal.svelte";
     import ConfirmDialog from "$lib/shared/primitives/ConfirmDialog.svelte";
     import AccountTabContent from "$lib/components/settings/AccountTabContent.svelte";
     import { getVersion } from "@tauri-apps/api/app";
+    import { tabs as sharedTabs, activeTabId } from "$lib/shared/stores/tabs";
     import {
-        activeModal,
         clearAllChatMessages,
         countAllChatMessages,
         chatHistorySizeBytes,
@@ -102,7 +101,6 @@
         | "workspace"
         | "about";
 
-    let show = $state(false);
     let activeTab = $state<SettingsTab>("general");
     let appVersion = $state("");
     let updateChannel = $state<UpdateChannel>(getUpdateChannel());
@@ -121,54 +119,38 @@
             appVersion = "";
         });
 
-    $effect(() => {
-        const modal = $activeModal;
-        if (
-            modal === "settings" ||
-            modal === "settings:account" ||
-            modal === "settings:ai" ||
-            modal === "settings:agent" ||
-            modal === "settings:agent:usage" ||
-            modal === "settings:agent:contexts" ||
-            modal === "settings:agent:plugins" ||
-            modal === "settings:workspace"
-        ) {
-            show = true;
-            if (modal === "settings:account") activeTab = "account";
-            if (modal === "settings:ai") activeTab = "ai";
-            if (modal === "settings:agent") activeTab = "agent";
-            if (modal === "settings:agent:usage") {
-                activeTab = "agent";
-                agentSubTab = "usage";
-            }
-            if (modal === "settings:agent:contexts") {
-                activeTab = "agent";
-                agentSubTab = "contexts";
-            }
-            if (modal === "settings:agent:plugins") {
-                activeTab = "agent";
-                agentSubTab = "plugins";
-            }
-            if (modal === "settings:workspace") activeTab = "workspace";
-        } else {
-            show = false;
-        }
-    });
+    // Settings is now a topbar tab (mode: 'settings'). Visibility +
+    // initial sub-tab are derived from the active tab; callers open it
+    // via `openSettingsTab(subKey)` which sets tab.key.
+    const settingsTab = $derived(
+        $sharedTabs.find((t) => t.id === $activeTabId && t.mode === "settings"),
+    );
+    let show = $derived(!!settingsTab);
 
     $effect(() => {
-        if (
-            !show &&
-            ($activeModal === "settings" ||
-                $activeModal === "settings:account" ||
-                $activeModal === "settings:ai" ||
-                $activeModal === "settings:agent" ||
-                $activeModal === "settings:agent:usage" ||
-                $activeModal === "settings:agent:contexts" ||
-                $activeModal === "settings:agent:plugins" ||
-                $activeModal === "settings:workspace")
-        ) {
-            activeModal.set(null);
-        }
+        const key = settingsTab?.key ?? null;
+        if (!key) return;
+        // Map sub-key → activeTab + (optional) agentSubTab. Mirrors the
+        // legacy `activeModal === 'settings:*'` mapping but flattened
+        // (the 'settings:' prefix is implicit now).
+        if (key === "account") activeTab = "account";
+        else if (key === "general") activeTab = "general";
+        else if (key === "appearance") activeTab = "appearance";
+        else if (key === "shortcuts") activeTab = "shortcuts";
+        else if (key === "ai") activeTab = "ai";
+        else if (key === "rest") activeTab = "rest";
+        else if (key === "agent") activeTab = "agent";
+        else if (key === "agent:usage") {
+            activeTab = "agent";
+            agentSubTab = "usage";
+        } else if (key === "agent:contexts") {
+            activeTab = "agent";
+            agentSubTab = "contexts";
+        } else if (key === "agent:plugins") {
+            activeTab = "agent";
+            agentSubTab = "plugins";
+        } else if (key === "workspace") activeTab = "workspace";
+        else if (key === "about") activeTab = "about";
     });
 
     // --- General ---
@@ -1007,14 +989,8 @@
     });
 </script>
 
-<Modal
-    bind:show
-    title="Settings"
-    width={activeTab === "agent" && agentSubTab === "usage"
-        ? "min(1180px, 92vw)"
-        : "min(1040px, 92vw)"}
-    onclose={handleClose}
->
+{#if show}
+<div class="stg-pane" role="region" aria-label="Settings">
     <div class="stg-layout">
         <!-- Tab sidebar -->
         <div class="stg-tabs">
@@ -3762,7 +3738,8 @@
             {/if}
         </div>
     </div>
-</Modal>
+</div>
+{/if}
 
 <ConfirmDialog
     bind:show={showClearChatHistoryConfirm}
@@ -3774,6 +3751,16 @@
 
 <style>
     @import "./SettingsModal.svelte.css";
+
+    /* Settings pane — rendered inside the 'settings' panel slot in
+       +page.svelte. Fills the panel (which is the workspace area). */
+    .stg-pane {
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        background: var(--c);
+    }
 
     /* ------- Settings cards ------- */
     /* Reusable across all settings tabs (General / REST / AI / Agent /

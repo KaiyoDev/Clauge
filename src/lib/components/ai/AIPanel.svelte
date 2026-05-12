@@ -1,10 +1,10 @@
 <script lang="ts">
   import { mod } from '$lib/utils/platform';
   const m = mod();
-  import { aiPanelOpen, aiPanelOpenPerMode, mode, activeModal, getModeChatMessages, setModeChatMessages, clearModeChatMessages, type AppMode } from '$lib/stores/app';
+  import { aiPanelOpen, aiPanelOpenPerMode, mode, getModeChatMessages, setModeChatMessages, clearModeChatMessages, type AppMode } from '$lib/stores/app';
   import { settings } from '$lib/stores/settings';
   import { loadCollections } from '$lib/modes/rest/stores';
-  import { activeTabId, draftRequests } from '$lib/shared/stores/tabs';
+  import { activeTabId, draftRequests, openSettingsTab } from '$lib/shared/stores/tabs';
   import { sendChatMessage, generateSessionId } from '$lib/services/ai-chat';
   import { REST_SYSTEM_PROMPT, REST_TOOLS } from '$lib/modes/rest/ai/prompt';
   import { SQL_SYSTEM_PROMPT, SQL_TOOLS } from '$lib/modes/sql/ai/prompt';
@@ -369,7 +369,7 @@
 
   function openAiSettings() {
     close();
-    activeModal.set('settings:ai');
+    openSettingsTab('ai');
   }
 
   function cancelStreaming() {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { mode } from '$lib/stores/app';
   import { activeHistoryEntry } from '$lib/modes/rest/stores';
+  import { tabs as sharedTabs, activeTabId } from '$lib/shared/stores/tabs';
   import AgentPanel from '$lib/modes/agent/components/AgentPanel.svelte';
   import RestPanel from '$lib/modes/rest/components/RestPanel.svelte';
   import SqlPanel from '$lib/modes/sql/components/SqlPanel.svelte';
@@ -9,6 +10,14 @@
   import ExplorerPanel from '$lib/modes/explorer/components/ExplorerPanel.svelte';
   import WorkspacePanel from '$lib/modes/workspace/components/WorkspacePanel.svelte';
   import HistoryViewer from '$lib/modes/rest/components/HistoryViewer.svelte';
+  import SettingsModal from '$lib/components/settings/SettingsModal.svelte';
+
+  // Settings is the only cross-mode "tab" — visibility is driven by the
+  // active topbar tab, not $mode (which stays tied to the user's real
+  // mode so the "+" button + AI panel stay correct).
+  const settingsActive = $derived(
+    !!$sharedTabs.find((t) => t.id === $activeTabId && t.mode === 'settings'),
+  );
 </script>
 
 <!--
@@ -67,6 +76,12 @@
   <div class="panel" class:active={$mode === 'workspace'}>
     <WorkspacePanel />
   </div>
+
+  <!-- Settings overlay panel — sits above all mode panels when its tab
+       is the active topbar tab (z-index: 2 in the .active rule below). -->
+  <div class="panel panel-settings" class:active={settingsActive}>
+    <SettingsModal />
+  </div>
 </div>
 
 <style>
@@ -94,6 +109,13 @@
     /* Float above siblings — needed because all panels share the same
        z-index plane otherwise. */
     z-index: 1;
+  }
+  /* Settings overlays whatever mode panel is also marked .active, so it
+     wins the stacking order while its tab is focused. Sidebar mode-click
+     handlers (realignActiveTabToMode) move focus off the settings tab,
+     so this only fires when settings is genuinely the active tab. */
+  .panel.panel-settings.active {
+    z-index: 2;
   }
   .history-empty {
     flex: 1;
