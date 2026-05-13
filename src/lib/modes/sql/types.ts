@@ -49,6 +49,21 @@ export interface SqlResultEntry {
   connectionId?: string;  // live pool ID — used when AI auto-connects to a different database
 }
 
+/** Per-tab binding: which `(connection, database)` this tab queries. */
+export interface Binding {
+  connectionId: string;
+  database: string;
+}
+
+/** Per-tab in-flight query metadata — drives Cancel + elapsed timer UI. */
+export interface InFlight {
+  queryId: string;
+  startedAt: number;
+}
+
+/** State of the `(connectionId, database)` pool keyed by `${connId}:${db}`. */
+export type PoolState = 'idle' | 'connecting' | 'connected' | 'error';
+
 export interface TableInfo {
   name: string;
   tableType: string;

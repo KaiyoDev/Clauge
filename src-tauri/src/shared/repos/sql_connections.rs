@@ -174,13 +174,25 @@ pub async fn update_script(
     name: &str,
     query: &str,
     database_name: Option<&str>,
+    connection_id: Option<&str>,
 ) -> Result<(), sqlx::Error> {
+    // COALESCE preserves the existing column when the caller passes None —
+    // so callers that only want to update name+query (without changing the
+    // saved binding) can still pass `None` for either field. Callers that
+    // want the tab's current binding to persist pass both.
     sqlx::query(
-        "UPDATE sql_scripts SET name = ?, query = ?, database_name = COALESCE(?, database_name), updated_at = datetime('now') WHERE id = ?",
+        "UPDATE sql_scripts SET \
+            name = ?, \
+            query = ?, \
+            database_name = COALESCE(?, database_name), \
+            connection_id = COALESCE(?, connection_id), \
+            updated_at = datetime('now') \
+         WHERE id = ?",
     )
     .bind(name)
     .bind(query)
     .bind(database_name)
+    .bind(connection_id)
     .bind(id)
     .execute(pool)
     .await?;

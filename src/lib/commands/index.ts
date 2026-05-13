@@ -57,8 +57,10 @@ export {
 } from './cloud';
 
 export {
-  sqlConnect,
-  sqlDisconnect,
+  sqlEnsurePool,
+  sqlDisconnectPool,
+  sqlDisconnectConnection,
+  sqlCancelQuery,
   sqlTestConnection,
   sqlExecuteQuery,
   sqlListDatabases,

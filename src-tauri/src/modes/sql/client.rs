@@ -3,9 +3,9 @@ use sqlx::sqlite::SqlitePool;
 use sqlx::{Column, Row, TypeInfo};
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::Instant;
-use tauri::State;
-use tokio::sync::Mutex;
+use std::time::{Duration, Instant};
+use tauri::{AppHandle, Emitter, State};
+use tokio::sync::{oneshot, Mutex, Semaphore};
 use uuid::Uuid;
 
 use super::clickhouse_client::ClickhouseClient;
@@ -121,12 +121,35 @@ impl Clone for DatabasePool {
 }
 
 pub struct SqlConnectionManager {
+    /// Pool keyspace: `"{savedConnectionId}:{database}"`. One pool per
+    /// `(connectionId, database)` pair. Replaces the previous split
+    /// between random-UUID instance pools and per-DB pools.
     pub connections: Mutex<HashMap<String, DatabasePool>>,
     /// Parallel map keyed by the same id as `connections`, holding any
     /// SSH tunnel that backs the connection. Removing a pool also removes
     /// the matching tunnel — its `Drop` closes the listener + SSH session.
-    /// Connections without a tunnel never appear here.
     pub tunnels: Mutex<HashMap<String, crate::modes::ssh::tunnel::SshTunnel>>,
+    /// Per-pool semaphore. 3 concurrent queries allowed across all tabs
+    /// sharing the same `(conn, db)`. 4th `try_acquire` returns immediately
+    /// as "Connection busy" rather than queueing.
+    pub permits: Mutex<HashMap<String, Arc<Semaphore>>>,
+    /// In-flight queries keyed by caller-supplied `query_id`. Drives
+    /// cooperative cancel via `oneshot` + server-side kill via `KillHandle`.
+    pub in_flight: Mutex<HashMap<String, InFlight>>,
+}
+
+pub struct InFlight {
+    pub pool_key: String,
+    pub cancel: oneshot::Sender<()>,
+    pub kill: KillHandle,
+}
+
+pub enum KillHandle {
+    Postgres { backend_pid: i32 },
+    MySql { connection_id: u64 },
+    Clickhouse { query_id: String },
+    Sqlite,
+    D1,
 }
 
 impl SqlConnectionManager {
@@ -134,8 +157,45 @@ impl SqlConnectionManager {
         Self {
             connections: Mutex::new(HashMap::new()),
             tunnels: Mutex::new(HashMap::new()),
+            permits: Mutex::new(HashMap::new()),
+            in_flight: Mutex::new(HashMap::new()),
         }
     }
+
+    pub async fn permit_for(&self, pool_key: &str) -> Arc<Semaphore> {
+        let mut g = self.permits.lock().await;
+        g.entry(pool_key.to_string())
+            .or_insert_with(|| Arc::new(Semaphore::new(3)))
+            .clone()
+    }
+
+    pub async fn register_in_flight(&self, query_id: String, info: InFlight) {
+        self.in_flight.lock().await.insert(query_id, info);
+    }
+
+    pub async fn deregister_in_flight(&self, query_id: &str) -> Option<InFlight> {
+        self.in_flight.lock().await.remove(query_id)
+    }
+}
+
+pub fn pool_key(conn_id: &str, database: &str) -> String {
+    format!("{}:{}", conn_id, database)
+}
+
+/// Heuristic to recognise dead-socket / closed-pool errors that warrant
+/// a one-shot pool rebuild + retry. Matches sqlx + reqwest text. Errs on
+/// the side of NOT retrying — false negatives just surface the error to
+/// the user; false positives could mask real query errors.
+pub fn looks_like_dead_connection(err: &str) -> bool {
+    let s = err.to_lowercase();
+    s.contains("connection closed")
+        || s.contains("connection reset")
+        || s.contains("broken pipe")
+        || s.contains("server closed")
+        || s.contains("tunnel")
+        || s.contains("communication link failure")
+        || s.contains("poolclosed")
+        || s.contains("pool timed out")
 }
 
 // --- Helper to build connection strings ---
@@ -271,7 +331,17 @@ async fn build_pool_inner(
                 })?;
             opts = opts.ssl_mode(ssl_mode);
             log::info!("[Clauge SQL] Connecting to PostgreSQL...");
-            let pool = sqlx::PgPool::connect_with(opts)
+            let pool = sqlx::postgres::PgPoolOptions::new()
+                .max_connections(5)
+                .min_connections(1)
+                .acquire_timeout(Duration::from_secs(10))
+                .idle_timeout(Some(Duration::from_secs(30 * 60)))
+                .max_lifetime(Some(Duration::from_secs(2 * 60 * 60)))
+                // Don't ping before every acquire — adds a roundtrip per
+                // query (especially painful over SSH tunnels). We catch
+                // dead pools post-hoc via `with_reconnect`'s retry path.
+                .test_before_acquire(false)
+                .connect_with(opts)
                 .await
                 .map_err(|e| {
                     log::error!("[Clauge SQL] PostgreSQL connection FAILED: {}", e);
@@ -281,13 +351,33 @@ async fn build_pool_inner(
             Ok(DatabasePool::Postgres(pool))
         }
         SqlDialect::MySql => {
-            let pool = sqlx::MySqlPool::connect(&url)
+            let pool = sqlx::mysql::MySqlPoolOptions::new()
+                .max_connections(5)
+                .min_connections(1)
+                .acquire_timeout(Duration::from_secs(10))
+                .idle_timeout(Some(Duration::from_secs(30 * 60)))
+                .max_lifetime(Some(Duration::from_secs(2 * 60 * 60)))
+                // Don't ping before every acquire — adds a roundtrip per
+                // query (especially painful over SSH tunnels). We catch
+                // dead pools post-hoc via `with_reconnect`'s retry path.
+                .test_before_acquire(false)
+                .connect(&url)
                 .await
                 .map_err(|e| format!("MySQL connection failed: {}", e))?;
             Ok(DatabasePool::MySql(pool))
         }
         SqlDialect::Sqlite => {
-            let pool = sqlx::SqlitePool::connect(&url)
+            let pool = sqlx::sqlite::SqlitePoolOptions::new()
+                .max_connections(5)
+                .min_connections(1)
+                .acquire_timeout(Duration::from_secs(10))
+                .idle_timeout(Some(Duration::from_secs(30 * 60)))
+                .max_lifetime(Some(Duration::from_secs(2 * 60 * 60)))
+                // Don't ping before every acquire — adds a roundtrip per
+                // query (especially painful over SSH tunnels). We catch
+                // dead pools post-hoc via `with_reconnect`'s retry path.
+                .test_before_acquire(false)
+                .connect(&url)
                 .await
                 .map_err(|e| format!("SQLite connection failed: {}", e))?;
             Ok(DatabasePool::Sqlite(pool))
@@ -526,76 +616,165 @@ fn sqlite_row_to_json(row: &sqlx::sqlite::SqliteRow) -> Vec<serde_json::Value> {
 
 // --- Tauri commands ---
 
-#[tauri::command]
-pub async fn sql_connect(
-    manager: State<'_, Arc<SqlConnectionManager>>,
-    app_pool: State<'_, SqlitePool>,
-    config: SqlConnectionConfig,
-) -> Result<String, String> {
-    let (pool, tunnel) = create_pool_with_tunnel(&config, Some(app_pool.inner())).await?;
-    let connection_id = Uuid::new_v4().to_string();
-    let mut connections = manager.connections.lock().await;
-    connections.insert(connection_id.clone(), pool);
-    if let Some(t) = tunnel {
-        manager.tunnels.lock().await.insert(connection_id.clone(), t);
-    }
-    Ok(connection_id)
+/// Build a `SqlConnectionConfig` from the saved-connection record.
+async fn load_saved_config(
+    app_pool: &SqlitePool,
+    conn_id: &str,
+    database_override: &str,
+) -> Result<SqlConnectionConfig, String> {
+    let saved = crate::shared::repos::sql_connections::get_by_id_optional(app_pool, conn_id)
+        .await
+        .map_err(|e| format!("DB error: {}", e))?
+        .ok_or_else(|| format!("Saved connection '{}' not found", conn_id))?;
+    Ok(SqlConnectionConfig {
+        name: saved.name,
+        driver: saved.driver,
+        host: saved.host,
+        port: saved.port as u16,
+        database: database_override.to_string(),
+        username: saved.username,
+        password: saved.password,
+        ssl: saved.ssl == 1,
+        ssh_profile_id: saved.ssh_profile_id,
+    })
 }
 
-#[tauri::command]
-pub async fn sql_connect_database(
-    manager: State<'_, Arc<SqlConnectionManager>>,
-    app_pool: State<'_, SqlitePool>,
-    config: SqlConnectionConfig,
-    database: String,
-    pool_key: Option<String>,
+async fn close_db_pool(pool: DatabasePool) {
+    match pool {
+        DatabasePool::Postgres(p) => p.close().await,
+        DatabasePool::MySql(p) => p.close().await,
+        DatabasePool::Sqlite(p) => p.close().await,
+        DatabasePool::Clickhouse(_) | DatabasePool::D1(_) => {}
+    }
+}
+
+/// Idempotent pool opener. Returns immediately if a pool for
+/// `(conn_id, database)` already exists; otherwise builds one (including
+/// SSH tunnel if the saved record references one) and stores it.
+pub async fn ensure_pool_inner(
+    manager: &Arc<SqlConnectionManager>,
+    app_pool: &SqlitePool,
+    conn_id: &str,
+    database: &str,
 ) -> Result<String, String> {
-    let mut db_config = config;
-    db_config.database = database;
-    let (pool, tunnel) = create_pool_with_tunnel(&db_config, Some(app_pool.inner())).await?;
-    let key = pool_key.unwrap_or_else(|| Uuid::new_v4().to_string());
-    let mut connections = manager.connections.lock().await;
-    // If pool already exists under this key, close the old one first
-    if let Some(old) = connections.remove(&key) {
-        match old {
-            DatabasePool::Postgres(p) => p.close().await,
-            DatabasePool::MySql(p) => p.close().await,
-            DatabasePool::Sqlite(p) => p.close().await,
-            // ClickHouse + D1 clients are stateless HTTP — nothing to close.
-            DatabasePool::Clickhouse(_) => {}
-            DatabasePool::D1(_) => {}
+    let key = pool_key(conn_id, database);
+    {
+        let conns = manager.connections.lock().await;
+        if conns.contains_key(&key) {
+            return Ok(key);
         }
     }
-    // Drop any prior tunnel under this key so the old SSH session closes
-    // before we insert the new one. Using `remove` triggers Drop.
-    let _ = manager.tunnels.lock().await.remove(&key);
-    connections.insert(key.clone(), pool);
+    let config = load_saved_config(app_pool, conn_id, database).await?;
+    let (pool, tunnel) = create_pool_with_tunnel(&config, Some(app_pool)).await?;
+    // Race-safe insert — if another caller raced ahead, drop the duplicate.
+    let mut conns = manager.connections.lock().await;
+    if conns.contains_key(&key) {
+        drop(pool);
+        drop(tunnel);
+        return Ok(key);
+    }
+    conns.insert(key.clone(), pool);
     if let Some(t) = tunnel {
         manager.tunnels.lock().await.insert(key.clone(), t);
     }
+    log::info!("[Clauge SQL] pool opened: {}", key);
     Ok(key)
 }
 
 #[tauri::command]
-pub async fn sql_disconnect(
+pub async fn sql_ensure_pool(
     manager: State<'_, Arc<SqlConnectionManager>>,
-    connection_id: String,
+    app_pool: State<'_, SqlitePool>,
+    conn_id: String,
+    database: String,
+) -> Result<String, String> {
+    ensure_pool_inner(manager.inner(), app_pool.inner(), &conn_id, &database).await
+}
+
+#[tauri::command]
+pub async fn sql_disconnect_pool(
+    manager: State<'_, Arc<SqlConnectionManager>>,
+    conn_id: String,
+    database: String,
 ) -> Result<(), String> {
-    let mut connections = manager.connections.lock().await;
-    if let Some(pool) = connections.remove(&connection_id) {
-        match pool {
-            DatabasePool::Postgres(p) => p.close().await,
-            DatabasePool::MySql(p) => p.close().await,
-            DatabasePool::Sqlite(p) => p.close().await,
-            DatabasePool::Clickhouse(_) => {}
-            DatabasePool::D1(_) => {}
-        }
-        // Drop any associated tunnel — its Drop closes the SSH session.
-        let _ = manager.tunnels.lock().await.remove(&connection_id);
-        Ok(())
-    } else {
-        Err("Connection not found".to_string())
+    let key = pool_key(&conn_id, &database);
+    let removed = {
+        let mut conns = manager.connections.lock().await;
+        conns.remove(&key)
+    };
+    if let Some(pool) = removed {
+        close_db_pool(pool).await;
     }
+    let _ = manager.tunnels.lock().await.remove(&key);
+    let _ = manager.permits.lock().await.remove(&key);
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn sql_disconnect_connection(
+    manager: State<'_, Arc<SqlConnectionManager>>,
+    conn_id: String,
+) -> Result<(), String> {
+    let prefix = format!("{}:", conn_id);
+    let drained: Vec<(String, DatabasePool)> = {
+        let mut conns = manager.connections.lock().await;
+        let keys: Vec<String> = conns.keys().filter(|k| k.starts_with(&prefix)).cloned().collect();
+        keys.into_iter()
+            .filter_map(|k| conns.remove(&k).map(|p| (k, p)))
+            .collect()
+    };
+    for (key, pool) in drained {
+        close_db_pool(pool).await;
+        let _ = manager.tunnels.lock().await.remove(&key);
+        let _ = manager.permits.lock().await.remove(&key);
+    }
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn sql_cancel_query(
+    manager: State<'_, Arc<SqlConnectionManager>>,
+    query_id: String,
+) -> Result<(), String> {
+    let Some(info) = manager.deregister_in_flight(&query_id).await else {
+        return Ok(()); // already completed
+    };
+    // Signal the awaiting select! to unwind first.
+    let _ = info.cancel.send(());
+    // Best-effort server-side kill on a side acquisition from the same pool.
+    let pool_clone = {
+        let conns = manager.connections.lock().await;
+        conns.get(&info.pool_key).cloned()
+    };
+    match (info.kill, pool_clone) {
+        (KillHandle::Postgres { backend_pid }, Some(DatabasePool::Postgres(p))) => {
+            if let Err(e) = sqlx::query("SELECT pg_cancel_backend($1)")
+                .bind(backend_pid)
+                .execute(&p)
+                .await
+            {
+                log::warn!("[Clauge SQL] pg_cancel_backend failed: {}", e);
+            }
+        }
+        (KillHandle::MySql { connection_id }, Some(DatabasePool::MySql(p))) => {
+            if let Err(e) = sqlx::query(&format!("KILL QUERY {}", connection_id))
+                .execute(&p)
+                .await
+            {
+                log::warn!("[Clauge SQL] KILL QUERY failed: {}", e);
+            }
+        }
+        (KillHandle::Clickhouse { query_id: ch_qid }, Some(DatabasePool::Clickhouse(c))) => {
+            let safe = ch_qid.replace('\'', "''");
+            let stmt = format!("KILL QUERY WHERE query_id='{}' SYNC", safe);
+            if let Err(e) = c.exec(&stmt).await {
+                log::warn!("[Clauge SQL] KILL QUERY WHERE failed: {}", e);
+            }
+        }
+        // SQLite + D1 + missing-pool cases: drop-future is the only mechanism.
+        _ => {}
+    }
+    Ok(())
 }
 
 #[tauri::command]
@@ -617,146 +796,294 @@ pub async fn sql_test_connection(
     Ok(())
 }
 
+/// Run the actual query against an already-checked-out pool. Pure dispatch
+/// by dialect; no in-flight bookkeeping. Postgres + MySQL receive a
+/// `PoolConnection` so the caller can attach `pg_cancel_backend(pid)` /
+/// `KILL QUERY conn_id` on the same physical connection.
+async fn run_query_pg(
+    conn: &mut sqlx::pool::PoolConnection<sqlx::Postgres>,
+    query: &str,
+) -> Result<SqlQueryResult, String> {
+    let start = Instant::now();
+    let rows = sqlx::query(query)
+        .fetch_all(&mut **conn)
+        .await
+        .map_err(|e| e.to_string())?;
+    let duration_ms = start.elapsed().as_millis() as u64;
+    let columns: Vec<String> = if rows.is_empty() {
+        use sqlx::Executor;
+        // describe() needs a `&mut *Connection`; PG describe doesn't need
+        // a live cursor so an empty result here just yields no columns.
+        (&mut **conn)
+            .describe(query)
+            .await
+            .map(|d| d.columns.iter().map(|c| c.name().to_string()).collect())
+            .unwrap_or_default()
+    } else {
+        rows[0]
+            .columns()
+            .iter()
+            .map(|c| c.name().to_string())
+            .collect()
+    };
+    let json_rows: Vec<Vec<serde_json::Value>> = rows.iter().map(pg_row_to_json).collect();
+    let affected = json_rows.len() as u64;
+    Ok(SqlQueryResult { columns, rows: json_rows, affected_rows: affected, duration_ms })
+}
+
+async fn run_query_mysql(
+    conn: &mut sqlx::pool::PoolConnection<sqlx::MySql>,
+    query: &str,
+) -> Result<SqlQueryResult, String> {
+    let start = Instant::now();
+    let rows = sqlx::query(query)
+        .fetch_all(&mut **conn)
+        .await
+        .map_err(|e| e.to_string())?;
+    let duration_ms = start.elapsed().as_millis() as u64;
+    let columns: Vec<String> = if rows.is_empty() {
+        use sqlx::Executor;
+        (&mut **conn)
+            .describe(query)
+            .await
+            .map(|d| d.columns.iter().map(|c| c.name().to_string()).collect())
+            .unwrap_or_default()
+    } else {
+        rows[0]
+            .columns()
+            .iter()
+            .map(|c| c.name().to_string())
+            .collect()
+    };
+    let json_rows: Vec<Vec<serde_json::Value>> = rows.iter().map(mysql_row_to_json).collect();
+    let affected = json_rows.len() as u64;
+    Ok(SqlQueryResult { columns, rows: json_rows, affected_rows: affected, duration_ms })
+}
+
+async fn run_query_sqlite(
+    p: &sqlx::SqlitePool,
+    query: &str,
+) -> Result<SqlQueryResult, String> {
+    let start = Instant::now();
+    let rows = sqlx::query(query)
+        .fetch_all(p)
+        .await
+        .map_err(|e| e.to_string())?;
+    let duration_ms = start.elapsed().as_millis() as u64;
+    let columns: Vec<String> = if rows.is_empty() {
+        use sqlx::Executor;
+        p.describe(query)
+            .await
+            .map(|d| d.columns.iter().map(|c| c.name().to_string()).collect())
+            .unwrap_or_default()
+    } else {
+        rows[0]
+            .columns()
+            .iter()
+            .map(|c| c.name().to_string())
+            .collect()
+    };
+    let json_rows: Vec<Vec<serde_json::Value>> = rows.iter().map(sqlite_row_to_json).collect();
+    let affected = json_rows.len() as u64;
+    Ok(SqlQueryResult { columns, rows: json_rows, affected_rows: affected, duration_ms })
+}
+
 #[tauri::command]
 pub async fn sql_execute_query(
+    app: AppHandle,
     manager: State<'_, Arc<SqlConnectionManager>>,
-    connection_id: String,
+    app_pool: State<'_, SqlitePool>,
+    conn_id: String,
+    database: String,
     query: String,
+    query_id: String,
 ) -> Result<SqlQueryResult, String> {
-    // Clone the pool reference and immediately release the mutex so other
-    // commands (tab switching, AI panel, sidebar refreshes, concurrent
-    // queries from other tabs) are not blocked for the duration of fetch_all.
-    // All sqlx pool types and ClickhouseClient are cheaply cloneable (they
-    // are internally reference-counted / stateless HTTP clients).
+    let key = pool_key(&conn_id, &database);
+    ensure_pool_inner(manager.inner(), app_pool.inner(), &conn_id, &database).await?;
+
+    // Per-pool concurrency cap. try_acquire fails immediately if 3 queries
+    // are already in flight on the same `(conn, db)` — anti-spam protection.
+    let sem = manager.permit_for(&key).await;
+    let _permit = sem
+        .clone()
+        .try_acquire_owned()
+        .map_err(|_| "Connection busy — wait for a query to finish or cancel one".to_string())?;
+
+    // First attempt. If it errors with a dead-pool signature, rebuild the
+    // pool ONCE and retry — emits `sql:reconnecting` so the UI can flash
+    // an amber badge on the affected tab.
+    match execute_once(&app, manager.inner(), &key, &query, &query_id).await {
+        Ok(r) => Ok(r),
+        Err(e) if looks_like_dead_connection(&e) => {
+            log::warn!("[Clauge SQL] dead-pool detected ({}), rebuilding {}", e, key);
+            // Drop pool + tunnel; ensure_pool_inner will rebuild.
+            {
+                let mut conns = manager.connections.lock().await;
+                if let Some(p) = conns.remove(&key) {
+                    close_db_pool(p).await;
+                }
+            }
+            let _ = manager.tunnels.lock().await.remove(&key);
+            let _ = app.emit("sql:reconnecting", &key);
+            ensure_pool_inner(manager.inner(), app_pool.inner(), &conn_id, &database).await?;
+            execute_once(&app, manager.inner(), &key, &query, &query_id).await
+        }
+        Err(e) => Err(e),
+    }
+}
+
+/// One attempt at executing a query — captures the dialect-specific kill
+/// handle, registers `InFlight`, races the query against a cancel oneshot,
+/// and tears down its bookkeeping on every exit path.
+async fn execute_once(
+    _app: &AppHandle,
+    manager: &Arc<SqlConnectionManager>,
+    key: &str,
+    query: &str,
+    query_id: &str,
+) -> Result<SqlQueryResult, String> {
     let pool = {
-        let connections = manager.connections.lock().await;
-        connections
-            .get(&connection_id)
+        let conns = manager.connections.lock().await;
+        conns
+            .get(key)
             .ok_or_else(|| "Connection not found".to_string())?
             .clone()
     };
 
-    let start = Instant::now();
+    let (cancel_tx, cancel_rx) = oneshot::channel::<()>();
 
-    match pool {
+    let result = match pool {
         DatabasePool::Postgres(p) => {
-            let rows = sqlx::query(&query)
-                .fetch_all(&p)
+            let mut conn = p.acquire().await.map_err(|e| e.to_string())?;
+            // Capture backend pid on the same connection that will run the
+            // user query. `pg_cancel_backend(pid)` from a side connection
+            // is the standard way to interrupt a long-running statement.
+            let pid: (i32,) = sqlx::query_as("SELECT pg_backend_pid()")
+                .fetch_one(&mut *conn)
                 .await
                 .map_err(|e| e.to_string())?;
-            let duration_ms = start.elapsed().as_millis() as u64;
-            // Column metadata only attaches to returned rows, so for a
-            // zero-row SELECT we describe the statement separately to
-            // recover the column list. Without this the UI can't tell an
-            // empty SELECT apart from a no-data statement (BEGIN/COMMIT/
-            // INSERT/etc.) and mislabels the result.
-            let columns: Vec<String> = if rows.is_empty() {
-                use sqlx::Executor;
-                p.describe(&query)
-                    .await
-                    .map(|d| d.columns.iter().map(|c| c.name().to_string()).collect())
-                    .unwrap_or_default()
-            } else {
-                rows[0].columns().iter().map(|c| c.name().to_string()).collect()
-            };
-            let json_rows: Vec<Vec<serde_json::Value>> =
-                rows.iter().map(|r| pg_row_to_json(r)).collect();
-            let affected = json_rows.len() as u64;
-            Ok(SqlQueryResult {
-                columns,
-                rows: json_rows,
-                affected_rows: affected,
-                duration_ms,
-            })
+            let kill = KillHandle::Postgres { backend_pid: pid.0 };
+            manager
+                .register_in_flight(
+                    query_id.to_string(),
+                    InFlight { pool_key: key.to_string(), cancel: cancel_tx, kill },
+                )
+                .await;
+            tokio::select! {
+                r = run_query_pg(&mut conn, query) => r,
+                _ = cancel_rx => Err("Query cancelled".to_string()),
+            }
         }
         DatabasePool::MySql(p) => {
-            let rows = sqlx::query(&query)
-                .fetch_all(&p)
+            let mut conn = p.acquire().await.map_err(|e| e.to_string())?;
+            let cid: (u64,) = sqlx::query_as("SELECT CONNECTION_ID()")
+                .fetch_one(&mut *conn)
                 .await
                 .map_err(|e| e.to_string())?;
-            let duration_ms = start.elapsed().as_millis() as u64;
-            let columns: Vec<String> = if rows.is_empty() {
-                use sqlx::Executor;
-                p.describe(&query)
-                    .await
-                    .map(|d| d.columns.iter().map(|c| c.name().to_string()).collect())
-                    .unwrap_or_default()
-            } else {
-                rows[0].columns().iter().map(|c| c.name().to_string()).collect()
-            };
-            let json_rows: Vec<Vec<serde_json::Value>> =
-                rows.iter().map(|r| mysql_row_to_json(r)).collect();
-            let affected = json_rows.len() as u64;
-            Ok(SqlQueryResult {
-                columns,
-                rows: json_rows,
-                affected_rows: affected,
-                duration_ms,
-            })
+            let kill = KillHandle::MySql { connection_id: cid.0 };
+            manager
+                .register_in_flight(
+                    query_id.to_string(),
+                    InFlight { pool_key: key.to_string(), cancel: cancel_tx, kill },
+                )
+                .await;
+            tokio::select! {
+                r = run_query_mysql(&mut conn, query) => r,
+                _ = cancel_rx => Err("Query cancelled".to_string()),
+            }
         }
         DatabasePool::Sqlite(p) => {
-            let rows = sqlx::query(&query)
-                .fetch_all(&p)
-                .await
-                .map_err(|e| e.to_string())?;
-            let duration_ms = start.elapsed().as_millis() as u64;
-            let columns: Vec<String> = if rows.is_empty() {
-                use sqlx::Executor;
-                p.describe(&query)
-                    .await
-                    .map(|d| d.columns.iter().map(|c| c.name().to_string()).collect())
-                    .unwrap_or_default()
-            } else {
-                rows[0].columns().iter().map(|c| c.name().to_string()).collect()
-            };
-            let json_rows: Vec<Vec<serde_json::Value>> =
-                rows.iter().map(|r| sqlite_row_to_json(r)).collect();
-            let affected = json_rows.len() as u64;
-            Ok(SqlQueryResult {
-                columns,
-                rows: json_rows,
-                affected_rows: affected,
-                duration_ms,
-            })
+            manager
+                .register_in_flight(
+                    query_id.to_string(),
+                    InFlight {
+                        pool_key: key.to_string(),
+                        cancel: cancel_tx,
+                        kill: KillHandle::Sqlite,
+                    },
+                )
+                .await;
+            tokio::select! {
+                r = run_query_sqlite(&p, query) => r,
+                _ = cancel_rx => Err("Query cancelled".to_string()),
+            }
         }
         DatabasePool::Clickhouse(c) => {
-            let result = c.query(&query).await?;
-            let duration_ms = start.elapsed().as_millis() as u64;
-            Ok(SqlQueryResult {
+            // The ClickHouse server-side `query_id` matches ours, so cancel
+            // dispatches `KILL QUERY WHERE query_id='<uuid>' SYNC`.
+            manager
+                .register_in_flight(
+                    query_id.to_string(),
+                    InFlight {
+                        pool_key: key.to_string(),
+                        cancel: cancel_tx,
+                        kill: KillHandle::Clickhouse { query_id: query_id.to_string() },
+                    },
+                )
+                .await;
+            let start = Instant::now();
+            let fut = c.query_with_id(query, Some(query_id));
+            let res = tokio::select! {
+                r = fut => r,
+                _ = cancel_rx => Err("Query cancelled".to_string()),
+            };
+            res.map(|result| SqlQueryResult {
                 columns: result.columns,
                 rows: result.rows,
                 affected_rows: result.affected,
-                duration_ms,
+                duration_ms: start.elapsed().as_millis() as u64,
             })
         }
         DatabasePool::D1(c) => {
-            // D1 returns its own per-statement `meta.duration` (seconds);
-            // use that when present so the UI reflects server-side time
-            // rather than including round-trip latency.
-            let result = c.query(&query).await?;
-            let duration_ms = if result.duration_ms > 0 {
-                result.duration_ms
-            } else {
-                start.elapsed().as_millis() as u64
+            manager
+                .register_in_flight(
+                    query_id.to_string(),
+                    InFlight {
+                        pool_key: key.to_string(),
+                        cancel: cancel_tx,
+                        kill: KillHandle::D1,
+                    },
+                )
+                .await;
+            let start = Instant::now();
+            let fut = c.query(query);
+            let res = tokio::select! {
+                r = fut => r,
+                _ = cancel_rx => Err("Query cancelled".to_string()),
             };
-            Ok(SqlQueryResult {
-                columns: result.columns,
-                rows: result.rows,
-                affected_rows: result.affected,
-                duration_ms,
+            res.map(|result| {
+                let duration_ms = if result.duration_ms > 0 {
+                    result.duration_ms
+                } else {
+                    start.elapsed().as_millis() as u64
+                };
+                SqlQueryResult {
+                    columns: result.columns,
+                    rows: result.rows,
+                    affected_rows: result.affected,
+                    duration_ms,
+                }
             })
         }
-    }
+    };
+
+    // Always deregister — covers success, error, and cancel paths.
+    let _ = manager.deregister_in_flight(query_id).await;
+    result
 }
 
 #[tauri::command]
 pub async fn sql_list_databases(
     manager: State<'_, Arc<SqlConnectionManager>>,
-    connection_id: String,
+    app_pool: State<'_, SqlitePool>,
+    conn_id: String,
+    database: String,
 ) -> Result<Vec<String>, String> {
+    ensure_pool_inner(manager.inner(), app_pool.inner(), &conn_id, &database).await?;
+    let key = pool_key(&conn_id, &database);
     let connections = manager.connections.lock().await;
     let pool = connections
-        .get(&connection_id)
+        .get(&key)
         .ok_or_else(|| "Connection not found".to_string())?;
 
     match pool {
@@ -804,12 +1131,16 @@ pub async fn sql_list_databases(
 #[tauri::command]
 pub async fn sql_create_database(
     manager: State<'_, Arc<SqlConnectionManager>>,
-    connection_id: String,
+    app_pool: State<'_, SqlitePool>,
+    conn_id: String,
+    database: String,
     name: String,
 ) -> Result<(), String> {
+    ensure_pool_inner(manager.inner(), app_pool.inner(), &conn_id, &database).await?;
+    let key = pool_key(&conn_id, &database);
     let connections = manager.connections.lock().await;
     let pool = connections
-        .get(&connection_id)
+        .get(&key)
         .ok_or_else(|| "Connection not found".to_string())?;
 
     // Validate name: only alphanumeric, underscores, hyphens allowed
@@ -855,11 +1186,15 @@ pub async fn sql_create_database(
 #[tauri::command]
 pub async fn sql_list_schemas(
     manager: State<'_, Arc<SqlConnectionManager>>,
-    connection_id: String,
+    app_pool: State<'_, SqlitePool>,
+    conn_id: String,
+    database: String,
 ) -> Result<Vec<String>, String> {
+    ensure_pool_inner(manager.inner(), app_pool.inner(), &conn_id, &database).await?;
+    let key = pool_key(&conn_id, &database);
     let connections = manager.connections.lock().await;
     let pool = connections
-        .get(&connection_id)
+        .get(&key)
         .ok_or_else(|| "Connection not found".to_string())?;
 
     match pool {
@@ -893,14 +1228,21 @@ pub async fn sql_list_schemas(
 #[tauri::command]
 pub async fn sql_list_tables(
     manager: State<'_, Arc<SqlConnectionManager>>,
-    connection_id: String,
-    database: Option<String>,
+    app_pool: State<'_, SqlitePool>,
+    conn_id: String,
+    database: String,
     schema: Option<String>,
 ) -> Result<Vec<TableInfo>, String> {
+    ensure_pool_inner(manager.inner(), app_pool.inner(), &conn_id, &database).await?;
+    let key = pool_key(&conn_id, &database);
     let connections = manager.connections.lock().await;
     let pool = connections
-        .get(&connection_id)
+        .get(&key)
         .ok_or_else(|| "Connection not found".to_string())?;
+    // Optional explicit-database override is only meaningful for MySQL/CH
+    // where one pool can introspect other databases on the same server.
+    // PG/SQLite/D1 always use the pool's own database.
+    let database_opt: Option<String> = Some(database.clone());
 
     match pool {
         DatabasePool::Postgres(p) => {
@@ -930,7 +1272,7 @@ pub async fn sql_list_tables(
                 .collect())
         }
         DatabasePool::MySql(p) => {
-            let db = database.unwrap_or_default();
+            let db = database_opt.clone().unwrap_or_default();
             let query = if db.is_empty() {
                 "SELECT table_name, table_type FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY table_name".to_string()
             } else {
@@ -980,7 +1322,7 @@ pub async fn sql_list_tables(
         DatabasePool::Clickhouse(c) => {
             // Pull both regular tables and views so the UI surfaces views
             // alongside tables — matches the other drivers' behaviour.
-            let db_name = database.unwrap_or_else(|| c.database.clone());
+            let db_name = database_opt.clone().unwrap_or_else(|| c.database.clone());
             let safe_db = db_name.replace('\'', "''");
             let stmt = format!(
                 "SELECT name, engine FROM system.tables WHERE database = '{}' ORDER BY name",
@@ -1040,13 +1382,17 @@ pub async fn sql_list_tables(
 #[tauri::command]
 pub async fn sql_describe_table(
     manager: State<'_, Arc<SqlConnectionManager>>,
-    connection_id: String,
+    app_pool: State<'_, SqlitePool>,
+    conn_id: String,
+    database: String,
     table: String,
     schema: Option<String>,
 ) -> Result<Vec<ColumnInfo>, String> {
+    ensure_pool_inner(manager.inner(), app_pool.inner(), &conn_id, &database).await?;
+    let key = pool_key(&conn_id, &database);
     let connections = manager.connections.lock().await;
     let pool = connections
-        .get(&connection_id)
+        .get(&key)
         .ok_or_else(|| "Connection not found".to_string())?;
 
     match pool {
@@ -1407,11 +1753,19 @@ pub async fn sql_update_script(
     name: String,
     query: String,
     database_name: Option<String>,
+    connection_id: Option<String>,
 ) -> Result<SqlScript, String> {
     use crate::shared::repos::sql_connections as sql_conn_repo;
-    sql_conn_repo::update_script(pool.inner(), &id, &name, &query, database_name.as_deref())
-        .await
-        .map_err(|e| e.to_string())?;
+    sql_conn_repo::update_script(
+        pool.inner(),
+        &id,
+        &name,
+        &query,
+        database_name.as_deref(),
+        connection_id.as_deref(),
+    )
+    .await
+    .map_err(|e| e.to_string())?;
 
     crate::cloud::scheduler::bump("sql");
 

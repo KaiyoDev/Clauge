@@ -153,7 +153,7 @@ impl ClickhouseClient {
 
     /// Verify reachability + credentials by issuing a `SELECT 1`.
     pub async fn ping(&self) -> Result<(), String> {
-        let _ = self.execute_format_json("SELECT 1").await?;
+        let _ = self.execute_format_json("SELECT 1", None).await?;
         Ok(())
     }
 
@@ -163,8 +163,26 @@ impl ClickhouseClient {
     /// (e.g. INSERT, ALTER) come back with empty `meta`/`data` and that's
     /// fine.
     pub async fn query(&self, sql: &str) -> Result<ClickhouseQueryRows, String> {
-        let resp = self.execute_format_json(sql).await?;
+        let resp = self.execute_format_json(sql, None).await?;
         Ok(map_response_to_rows(resp))
+    }
+
+    /// Run a query with an explicit `query_id` (URL param `query_id=`).
+    /// Used so `KILL QUERY WHERE query_id='<id>' SYNC` can target it for
+    /// cancellation. Same response semantics as `query`.
+    pub async fn query_with_id(
+        &self,
+        sql: &str,
+        query_id: Option<&str>,
+    ) -> Result<ClickhouseQueryRows, String> {
+        let resp = self.execute_format_json(sql, query_id).await?;
+        Ok(map_response_to_rows(resp))
+    }
+
+    /// Fire-and-forget statement (KILL QUERY, OPTIMIZE TABLE, etc.).
+    /// Discards the response body — only the HTTP status is checked.
+    pub async fn exec(&self, sql: &str) -> Result<(), String> {
+        self.execute_format_json(sql, None).await.map(|_| ())
     }
 
     /// POST the SQL to ClickHouse and parse the response.
@@ -178,7 +196,11 @@ impl ClickhouseClient {
     ///     error. Sending it would succeed at the server but our JSON
     ///     parse would then fail with a baffling "JSON parse failed"
     ///     message; the explicit reject is more honest.
-    async fn execute_format_json(&self, sql: &str) -> Result<ClickhouseJsonResponse, String> {
+    async fn execute_format_json(
+        &self,
+        sql: &str,
+        query_id: Option<&str>,
+    ) -> Result<ClickhouseJsonResponse, String> {
         // ClickHouse's HTTP parser is strict about what comes after a FORMAT
         // clause — even a trailing `;` will produce a syntax error. So we
         // strip trailing `;`/whitespace in BOTH branches that send a query
@@ -221,6 +243,12 @@ impl ClickhouseClient {
             .post(&self.base_url)
             .query(&[("database", self.database.as_str())])
             .header("Content-Type", "text/plain; charset=UTF-8");
+        // When a caller-supplied `query_id` is present, attach it as a URL
+        // param so the server identifies this exact statement for
+        // `KILL QUERY WHERE query_id=...`.
+        if let Some(qid) = query_id {
+            req = req.query(&[("query_id", qid)]);
+        }
 
         // Send credentials via headers (avoids putting password in URL).
         req = req.header("X-ClickHouse-User", &self.username);

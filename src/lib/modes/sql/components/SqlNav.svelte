@@ -9,6 +9,18 @@
     sqlConnectionStates, sqlConnectionErrors, resetSqlConnState
   } from '../stores';
   import { sqlListSchemas, sqlDescribeTable, sqlExecuteQuery, sqlCreateDatabase } from '../commands';
+
+  // Pool keys are `${connId}:${db}` strings everywhere on the new model.
+  // Helper to split them back into the (connId, db) shape the new IPC
+  // commands expect. Returns null on malformed inputs.
+  function splitLid(lid: string): { connId: string; db: string } | null {
+    const i = lid.indexOf(':');
+    if (i <= 0) return null;
+    return { connId: lid.slice(0, i), db: lid.slice(i + 1) };
+  }
+  function makeQueryId(): string {
+    return globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
   import { showToast } from '$lib/shared/primitives/toast';
   import { friendlyError } from '$lib/utils/errors';
   import { writeText } from '@tauri-apps/plugin-clipboard-manager';
@@ -76,12 +88,14 @@
     try {
       const lid = getLiveId(createDbConnId);
       if (!lid) throw new Error('Not connected');
-      await sqlCreateDatabase(lid, createDbName.trim());
+      const parts = splitLid(lid);
+      if (!parts) throw new Error('Invalid connection key');
+      await sqlCreateDatabase(parts.connId, parts.db, createDbName.trim());
       showToast(`Database "${createDbName.trim()}" created`, 'success');
       createDbShow = false;
       // Refresh connection's database list from server
       clearConnectionCaches(createDbConnId);
-      const dbs = await (await import('../commands')).sqlListDatabases(lid);
+      const dbs = await (await import('../commands')).sqlListDatabases(parts.connId, parts.db);
       connectionDatabases.update(m => {
         const next = new Map(m);
         next.set(createDbConnId, dbs);
@@ -197,8 +211,8 @@
     if (!schemaCache.has(key)) {
       loadingSchemas = new Set([...loadingSchemas, key]);
       try {
-        const dbLiveId = await connectToDatabase(connId, db);
-        const schemas = await sqlListSchemas(dbLiveId);
+        await connectToDatabase(connId, db);
+        const schemas = await sqlListSchemas(connId, db);
         schemaCache = new Map([...schemaCache, [key, schemas]]);
       } catch {
         schemaCache = new Map([...schemaCache, [key, ['public']]]);
@@ -217,14 +231,14 @@
 
     loadingSchemas = new Set([...loadingSchemas, dbKey]);
     try {
-      const dbLiveId = await connectToDatabase(connId, db);
-      const schemas = await sqlListSchemas(dbLiveId);
+      await connectToDatabase(connId, db);
+      const schemas = await sqlListSchemas(connId, db);
       schemaCache = new Map([...schemaCache, [dbKey, schemas]]);
       // Reload tables for expanded schemas
       for (const schema of schemas) {
         const sKey = `${dbKey}:${schema}`;
         if (expandedSchemas.has(sKey)) {
-          const tables = await (await import('../commands')).sqlListTables(dbLiveId, db, schema);
+          const tables = await (await import('../commands')).sqlListTables(connId, db, schema);
           tableCache = new Map([...tableCache, [sKey, tables]]);
         }
       }
@@ -250,11 +264,9 @@
     if (!tableCache.has(key)) {
       loadingTables = new Set([...loadingTables, key]);
       try {
-        const dbLiveId = getDbLiveId(connId, db) ?? getLiveId(connId);
-        if (dbLiveId) {
-          const tables = await (await import('../commands')).sqlListTables(dbLiveId, db, schema);
-          tableCache = new Map([...tableCache, [key, tables]]);
-        }
+        await connectToDatabase(connId, db);
+        const tables = await (await import('../commands')).sqlListTables(connId, db, schema);
+        tableCache = new Map([...tableCache, [key, tables]]);
       } catch {
         tableCache = new Map([...tableCache, [key, []]]);
       }
@@ -277,11 +289,9 @@
     if (!columnCache.has(key)) {
       loadingColumns = new Set([...loadingColumns, key]);
       try {
-        const dbLiveId = getDbLiveId(connId, db) ?? getLiveId(connId);
-        if (dbLiveId) {
-          const columns = await sqlDescribeTable(dbLiveId, table, schema);
-          columnCache = new Map([...columnCache, [key, columns]]);
-        }
+        await connectToDatabase(connId, db);
+        const columns = await sqlDescribeTable(connId, db, table, schema);
+        columnCache = new Map([...columnCache, [key, columns]]);
       } catch {
         columnCache = new Map([...columnCache, [key, []]]);
       }
@@ -367,8 +377,9 @@ ORDER BY ordinal_position;`);
           // Re-fetch database list from server
           try {
             const lid = getLiveId(conn.id);
-            if (lid) {
-              const dbs = await (await import('../commands')).sqlListDatabases(lid);
+            const parts = lid ? splitLid(lid) : null;
+            if (parts) {
+              const dbs = await (await import('../commands')).sqlListDatabases(parts.connId, parts.db);
               connectionDatabases.update(m => {
                 const next = new Map(m);
                 next.set(conn.id, dbs);
@@ -484,14 +495,16 @@ ORDER BY ordinal_position;`);
           try {
             const lid = getLiveId(connId);
             if (!lid) throw new Error('Not connected');
+            const parts = splitLid(lid);
+            if (!parts) throw new Error('Invalid connection key');
             const conn = $connections.find(c => c.id === connId);
             const q = descriptorFor(conn?.driver ?? '')?.identifierQuote ?? '"';
             const dropStmt = `DROP DATABASE ${q}${db}${q}`;
-            await sqlExecuteQuery(lid, dropStmt);
+            await sqlExecuteQuery(parts.connId, parts.db, dropStmt, makeQueryId());
             showToast(`Dropped database "${db}"`, 'success');
             // Refresh connection's database list from server
             clearConnectionCaches(connId);
-            const dbs = await (await import('../commands')).sqlListDatabases(lid);
+            const dbs = await (await import('../commands')).sqlListDatabases(parts.connId, parts.db);
             connectionDatabases.update(m => {
               const next = new Map(m);
               next.set(connId, dbs);
@@ -551,11 +564,9 @@ ORDER BY ordinal_position;`);
         danger: true,
         action: () => showConfirm('Truncate Table', `Truncate "${table}"? All rows will be permanently deleted. The table structure will remain.`, true, async () => {
           try {
-            const lid = getDbLiveId(connId, db) ?? getLiveId(connId);
-            if (lid) {
-              await sqlExecuteQuery(lid, `TRUNCATE TABLE ${qualifiedName(schema, table)}`);
-              showToast(`Truncated ${table}`, 'success');
-            }
+            await connectToDatabase(connId, db);
+            await sqlExecuteQuery(connId, db, `TRUNCATE TABLE ${qualifiedName(schema, table)}`, makeQueryId());
+            showToast(`Truncated ${table}`, 'success');
           } catch (e: any) { showToast(friendlyError(e), 'error'); }
         }, 'Truncate'),
       },
@@ -565,16 +576,14 @@ ORDER BY ordinal_position;`);
         danger: true,
         action: () => showConfirm('Drop Table', `Drop "${table}"? The table and all its data will be permanently deleted.`, true, async () => {
           try {
-            const lid = getDbLiveId(connId, db) ?? getLiveId(connId);
-            if (lid) {
-              await sqlExecuteQuery(lid, `DROP TABLE ${qualifiedName(schema, table)}`);
-              // Refresh the schema to remove the table from nav
-              const sKey = `${connId}:${db}:${schema}`;
-              tableCache = new Map([...tableCache].filter(([k]) => k !== sKey));
-              const tables = await (await import('../commands')).sqlListTables(lid, db, schema);
-              tableCache = new Map([...tableCache, [sKey, tables]]);
-              showToast(`Dropped ${table}`, 'success');
-            }
+            await connectToDatabase(connId, db);
+            await sqlExecuteQuery(connId, db, `DROP TABLE ${qualifiedName(schema, table)}`, makeQueryId());
+            // Refresh the schema to remove the table from nav
+            const sKey = `${connId}:${db}:${schema}`;
+            tableCache = new Map([...tableCache].filter(([k]) => k !== sKey));
+            const tables = await (await import('../commands')).sqlListTables(connId, db, schema);
+            tableCache = new Map([...tableCache, [sKey, tables]]);
+            showToast(`Dropped ${table}`, 'success');
           } catch (e: any) { showToast(friendlyError(e), 'error'); }
         }, 'Drop'),
       },

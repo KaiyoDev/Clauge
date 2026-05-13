@@ -53,7 +53,7 @@ export async function gatherSqlContext(): Promise<ChatContext> {
     }
 
     // Send pool key that both UI and AI use (savedId:dbName format)
-    const db = tabData.database || activeConn.databaseName || '';
+    const db = tabData.binding?.database || activeConn.databaseName || '';
     const dbKey = `${activeConn.id}:${db}`;
     const poolId = get(dbLiveConnections)[dbKey] || getLiveId(activeConn.id) || activeConn.id;
     envVars.push({ key: 'connection_id', value: poolId, isSecret: false });

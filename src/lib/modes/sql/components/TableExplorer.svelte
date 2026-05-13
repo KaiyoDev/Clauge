@@ -34,12 +34,20 @@
     }
   });
 
+  // Helper: split a `${connId}:${db}` pool key into its parts.
+  function splitLid(lid: string | null): { connId: string; db: string } | null {
+    if (!lid) return null;
+    const i = lid.indexOf(':');
+    if (i <= 0) return null;
+    return { connId: lid.slice(0, i), db: lid.slice(i + 1) };
+  }
+
   async function loadDatabases() {
     if (!$activeConnection) return;
-    const lid = getLiveId($activeConnection.id);
-    if (!lid) return;
+    const parts = splitLid(getLiveId($activeConnection.id));
+    if (!parts) return;
     try {
-      databases = await sqlListDatabases(lid);
+      databases = await sqlListDatabases(parts.connId, parts.db);
     } catch {
       databases = [];
     }
@@ -47,11 +55,11 @@
 
   async function loadTables() {
     if (!$activeConnection) return;
-    const lid = getLiveId($activeConnection.id);
-    if (!lid) return;
+    const parts = splitLid(getLiveId($activeConnection.id));
+    if (!parts) return;
     loadingTables = true;
     try {
-      tables = await sqlListTables(lid, selectedDatabase || undefined);
+      tables = await sqlListTables(parts.connId, selectedDatabase || parts.db);
     } catch (err: any) {
       showToast('Failed to load tables: ' + err.toString(), 'error');
       tables = [];
@@ -66,11 +74,11 @@
       return;
     }
     expandedTable = tableName;
-    const lid = $activeConnection ? getLiveId($activeConnection.id) : null;
-    if (!tableColumns[tableName] && lid) {
+    const parts = $activeConnection ? splitLid(getLiveId($activeConnection.id)) : null;
+    if (!tableColumns[tableName] && parts) {
       loadingColumns = tableName;
       try {
-        const cols = await sqlDescribeTable(lid, tableName);
+        const cols = await sqlDescribeTable(parts.connId, selectedDatabase || parts.db, tableName);
         tableColumns = { ...tableColumns, [tableName]: cols };
       } catch (err: any) {
         showToast('Failed to describe table: ' + err.toString(), 'error');

@@ -93,7 +93,17 @@
     if (closingTab?.mode === 'sql' && closingTab.key) {
       try {
         const tabData = getSqlTabData(tabId);
-        await updateSqlScript(closingTab.key, closingTab.label, tabData.query, tabData.database);
+        // Persist the tab's CURRENT binding alongside query/name so
+        // the script reopens at the same (connection, database) the
+        // user left it on. Backend COALESCE keeps them atomic — they
+        // can never get out of sync from this path.
+        await updateSqlScript(
+          closingTab.key,
+          closingTab.label,
+          tabData.query,
+          tabData.binding?.database,
+          tabData.binding?.connectionId,
+        );
       } catch (e) {
         console.error('Failed to auto-save SQL script:', e);
       }
@@ -306,11 +316,21 @@
   async function handleCreateSqlScript() {
     const name = sqlScriptName.trim() || 'Untitled Query';
     try {
-      const connId = get(activeConnectionId) || null;
-      const dbName = get(selectedDatabase) || '';
-      const script = await saveSqlScript(name, connId, dbName, '');
+      // Brand-new scripts start UNBOUND. The user picks the target
+      // connection + database from the pill on the new tab; their
+      // selection is then atomically persisted via the autosave path
+      // (which writes connection_id and database_name together).
+      const script = await saveSqlScript(name, null, '', '');
       const tab = addTab(name, 'sql', script.id, 'var(--sql)');
-      initSqlTab(tab.id);
+      setSqlTabData(tab.id, {
+        binding: null,
+        query: '',
+        results: [],
+        activeResultIdx: 0,
+        inFlight: null,
+        error: null,
+        result: null,
+      });
     } catch (e) {
       console.error('Failed to save SQL script:', e);
       const tab = addTab(name, 'sql', null, 'var(--sql)');
@@ -321,55 +341,72 @@
   }
 
   async function handleOpenScript(script: import('$lib/modes/sql/types').SqlScript) {
-    // Check if already open in a tab
+    // Already open? Activate it (and switch mode if needed).
     const allTabs = get(tabs);
     const existing = allTabs.find(t => t.mode === 'sql' && t.key === script.id);
     if (existing) {
-      activateTab(existing.id);
+      await activateTabAcrossMode(existing.id);
       showSqlScriptModal = false;
       return;
     }
+
+    // Create the tab; activeTabId flips inside addTab.
     const tab = addTab(script.name, 'sql', script.id, 'var(--sql)');
-    initSqlTab(tab.id);
-    // Open the tab with the query content but no database pre-attached.
-    // We promote the script's database below ONLY if its saved connection
-    // still exists; otherwise the dropdown stays empty and the existing
-    // "Connect to a database first" toast on Run is the user's signal.
-    setSqlTabData(tab.id, { query: script.query, database: '' });
     showSqlScriptModal = false;
+    mode.set('sql');
 
-    if (script.connectionId && script.databaseName) {
-      try {
-        // Validate the script's connection_id BEFORE setting any active
-        // state. Scripts outlive the connections they were saved with —
-        // delete+recreate gives a new UUID and leaves the script with a
-        // dangling reference. loadConnections() is idempotent (cheap if
-        // already loaded). If the connection is gone, leave the tab
-        // unattached: query is set, dropdown stays empty, user picks a
-        // fresh connection. No toast needed — the empty dropdown is the
-        // signal, and "Connect to a database first" already toasts on
-        // attempted Run.
-        await loadConnections();
-        const conn = get(connections).find(c => c.id === script.connectionId);
-        if (!conn) return;
+    // Resolve binding:
+    //   - If the script's saved connection still exists, bind to its
+    //     `(connId, db)`.
+    //   - If the script's connection has been deleted, fall back to the
+    //     first available saved connection's default DB and toast.
+    //   - If there are zero saved connections, leave binding null and
+    //     show the unbound banner in SqlPanel.
+    await loadConnections();
+    const allConns = get(connections);
 
-        // Connection still valid — pre-attach as before.
-        setSqlTabData(tab.id, { database: script.databaseName });
-        activeConnectionId.set(script.connectionId);
-        selectedDatabase.set(script.databaseName);
-
-        if (!get(connectedIds).has(script.connectionId)) {
-          await connectToDb(script.connectionId);
-        }
-        await connectToDatabase(script.connectionId, script.databaseName);
-      } catch (e: any) {
-        // Real connect failure (network, auth, tunnel, etc.) — show this.
-        // The earlier validation already weeded out stale-id cases so
-        // anything that lands here is a genuine error worth surfacing.
-        // The tab stays open so the user can retry via the dropdown.
-        showToast(`Couldn't open ${script.name}: ${friendlyError(e)}`, 'error');
+    // Resolve the binding:
+    //
+    //   1. Script intentionally has no connection_id (new scripts are
+    //      created unbound) → open unbound, user picks from pill.
+    //   2. Script has a connection_id AND that connection still exists →
+    //      bind to (script.connectionId, script.databaseName).
+    //   3. Script has a connection_id but that connection was DELETED →
+    //      toast + fall back to first available connection.
+    //   4. Script has a connection_id, connection is gone, and no other
+    //      connections exist → leave unbound.
+    let nextBinding: { connectionId: string; database: string } | null = null;
+    if (!script.connectionId) {
+      // Case 1 — intentionally unbound. No toast.
+      nextBinding = null;
+    } else {
+      const targetConn = allConns.find(c => c.id === script.connectionId);
+      if (targetConn) {
+        // Case 2.
+        nextBinding = { connectionId: targetConn.id, database: script.databaseName };
+      } else if (allConns.length > 0) {
+        // Case 3 — saved conn was deleted. Toast + fallback.
+        const fb = allConns[0];
+        nextBinding = { connectionId: fb.id, database: fb.databaseName };
+        showToast(
+          `Original connection deleted — switched to ${fb.name} / ${fb.databaseName}.`,
+          'info',
+        );
       }
+      // Case 4 falls through with nextBinding still null.
     }
+
+    setSqlTabData(tab.id, {
+      binding: nextBinding,
+      query: script.query,
+      results: [],
+      activeResultIdx: 0,
+      inFlight: null,
+      error: null,
+      result: null,
+    });
+    // SqlPanel's binding-watcher effect triggers ensureConnected on its own;
+    // the loader appears in the editor area while the pool opens.
   }
 
   async function handleDeleteScript(e: MouseEvent, scriptId: string) {

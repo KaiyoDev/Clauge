@@ -16,11 +16,37 @@
     loading: boolean;
     tabId?: number;
     query?: string;
+    /** `${connectionId}:${database}` — preserved name; parsed for the
+     *  cell-edit save path (which calls `sql_execute_query` separately
+     *  from the editor's own Run). */
     liveConnectionId?: string;
     databaseName?: string;
+    /** Pool state surfaced for empty-state rendering: `connecting` shows
+     *  a centered "Connecting to <name>…" spinner; `error` shows the
+     *  pool error with a Retry button. */
+    poolState?: 'idle' | 'connecting' | 'connected' | 'error';
+    connectingLabel?: string;
+    connectError?: string | null;
+    elapsedMs?: number;
+    oncancel?: () => void;
+    onretry?: () => void;
   }
 
-  let { result, error, loading, tabId = -1, query = '', liveConnectionId = '', databaseName = '' }: Props = $props();
+  let {
+    result,
+    error,
+    loading,
+    tabId = -1,
+    query = '',
+    liveConnectionId = '',
+    databaseName = '',
+    poolState = 'idle',
+    connectingLabel = '',
+    connectError = null,
+    elapsedMs = 0,
+    oncancel,
+    onretry,
+  }: Props = $props();
 
   // Virtual scrolling — only the rows in the visible viewport (+ overscan)
   // are in the DOM. Spacer rows above/below maintain the correct scroll height.
@@ -295,13 +321,23 @@
 
   async function executeSave() {
     if (!liveConnectionId || saveStatements.length === 0) return;
+    // liveConnectionId is `${connId}:${database}` — split for the new
+    // sqlExecuteQuery signature. If the split fails (no `:`), bail.
+    const colon = liveConnectionId.indexOf(':');
+    if (colon < 0) {
+      showToast('Connection target unset — pick a database first', 'error');
+      return;
+    }
+    const connId = liveConnectionId.slice(0, colon);
+    const database = liveConnectionId.slice(colon + 1);
     savingChanges = true;
     let successCount = 0;
     let errorCount = 0;
 
     for (const sql of saveStatements) {
       try {
-        await sqlExecuteQuery(liveConnectionId, sql);
+        const qid = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        await sqlExecuteQuery(connId, database, sql, qid);
         successCount++;
       } catch (e: any) {
         errorCount++;
@@ -447,9 +483,33 @@
 <svelte:window onclick={closeContextMenu} />
 
 <div class="results-table">
-  {#if loading}
+  {#if poolState === 'connecting'}
     <div class="rt-empty">
-      <span class="rt-loading">Executing query<span class="loading-dots"></span></span>
+      <div class="rt-connecting">
+        <span class="rt-spinner"></span>
+        <span class="rt-connecting-text">
+          Connecting{connectingLabel ? ` to ${connectingLabel}` : ''}…
+        </span>
+      </div>
+    </div>
+  {:else if poolState === 'error'}
+    <div class="rt-empty">
+      <div class="rt-conn-error">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+          ><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <div class="rt-conn-error-msg">
+          {connectError ?? 'Connection failed'}
+        </div>
+        <button class="rt-retry-btn" onclick={() => onretry?.()}>Retry</button>
+      </div>
+    </div>
+  {:else if loading}
+    <div class="rt-empty">
+      <div class="rt-running">
+        <span class="rt-spinner"></span>
+        <span class="rt-running-text">Running query… ⏱ {(elapsedMs / 1000).toFixed(1)}s</span>
+        <button class="rt-cancel-btn" onclick={() => oncancel?.()}>Cancel</button>
+      </div>
     </div>
   {:else if error}
     <div class="rt-error">
@@ -484,12 +544,12 @@
       bind:clientHeight={viewportHeight}
       onscroll={(e) => { scrollTop = (e.currentTarget as HTMLElement).scrollTop; }}
     >
-      <table class="rt-table" style="min-width:{totalWidth}px">
+      <table class="rt-table" style="width:{totalWidth}px;min-width:{totalWidth}px;max-width:{totalWidth}px">
         <thead>
           <tr>
             <th class="rt-row-num">#</th>
             {#each result.columns as col, colIdx}
-              <th style="width:{columnWidths[colIdx]}px;min-width:{columnWidths[colIdx]}px">
+              <th style="width:{columnWidths[colIdx]}px;min-width:{columnWidths[colIdx]}px;max-width:{columnWidths[colIdx]}px">
                 <span class="rt-th-text">{col}</span>
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div
@@ -523,7 +583,7 @@
                 {@const editing = editingCell?.row === rowIdx && editingCell?.col === colIdx}
                 {@const dirty = isCellDirty(rowIdx, colIdx)}
                 {#if editing}
-                  <td class="rt-editing" style="width:{columnWidths[colIdx]}px">
+                  <td class="rt-editing" style="width:{columnWidths[colIdx]}px;max-width:{columnWidths[colIdx]}px">
                     <textarea
                       class="rt-edit-input"
                       value={editValue}
@@ -538,7 +598,7 @@
                   <td
                     class="rt-cell rt-type-{vtype}"
                     class:rt-dirty={dirty}
-                    style="width:{columnWidths[colIdx]}px"
+                    style="width:{columnWidths[colIdx]}px;max-width:{columnWidths[colIdx]}px"
                     ondblclick={() => handleCellDblClick(rowIdx, colIdx)}
                     oncontextmenu={(e) => handleCellContextMenu(e, rowIdx, colIdx)}
                   >
@@ -677,6 +737,45 @@
   }
   .rt-empty-text { font-size: 12px; color: var(--t3); font-family: var(--mono); }
   .rt-loading { font-size: 12px; color: var(--t3); font-family: var(--mono); }
+
+  /* Connecting / running / error empty states */
+  .rt-connecting, .rt-running {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 12px; color: var(--t2); font-family: var(--mono);
+  }
+  .rt-connecting-text, .rt-running-text { color: var(--t2); }
+  .rt-spinner {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid var(--b1); border-top-color: var(--acc);
+    animation: spin 0.8s linear infinite;
+    display: inline-block; flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .rt-cancel-btn {
+    padding: 4px 12px; border-radius: 6px;
+    border: 1px solid color-mix(in srgb, var(--err) 50%, transparent);
+    background: transparent; color: var(--err);
+    font-size: 11px; font-family: var(--ui); font-weight: 600;
+    cursor: default; transition: background 0.12s;
+  }
+  .rt-cancel-btn:hover { background: color-mix(in srgb, var(--err) 12%, transparent); }
+  .rt-conn-error {
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    max-width: 480px; padding: 16px;
+  }
+  .rt-conn-error svg { color: var(--err); }
+  .rt-conn-error-msg {
+    color: var(--t2); font-size: 12px; font-family: var(--mono);
+    text-align: center; word-break: break-word; line-height: 1.5;
+  }
+  .rt-retry-btn {
+    padding: 6px 16px; border-radius: 6px;
+    border: 1px solid var(--acc);
+    background: transparent; color: var(--acc);
+    font-size: 11px; font-family: var(--ui); font-weight: 600;
+    cursor: default; transition: background 0.12s;
+  }
+  .rt-retry-btn:hover { background: color-mix(in srgb, var(--acc) 12%, transparent); }
 
   .loading-dots::after { content: ''; animation: dots 1.4s steps(4, end) infinite; }
   @keyframes dots { 0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; } }

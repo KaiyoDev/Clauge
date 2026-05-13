@@ -1,163 +1,189 @@
 import { writable, derived, get } from 'svelte/store';
-import type { SqlConnection, SqlConnectionConfig, TableInfo, SqlQueryResult, SqlResultEntry, SqlScript } from './types';
+import { listen } from '@tauri-apps/api/event';
+import type {
+  SqlConnection,
+  SqlConnectionConfig,
+  TableInfo,
+  SqlQueryResult,
+  SqlResultEntry,
+  SqlScript,
+  Binding,
+  InFlight,
+  PoolState,
+} from './types';
 import * as sqlCmd from './commands';
 import { getSqlRowLimit, setSqlRowLimit } from '$lib/shared/constants/storage';
+import { tabs, activeTabId } from '$lib/shared/stores/tabs';
+
+// --- Saved connection profiles ------------------------------------------------
 
 export const connections = writable<SqlConnection[]>([]);
+
+// Sidebar UX only — what row is currently expanded. These NO LONGER drive
+// query execution; that's the per-tab `binding` field.
 export const activeConnectionId = writable<string | null>(null);
-export const connectedIds = writable<Set<string>>(new Set());
-// Maps saved connection ID -> live connection ID (from Rust pool)
-export const liveConnectionIds = writable<Record<string, string>>({});
-// Maps "savedConnId:dbName" -> live connection ID for per-database connections
-export const dbLiveConnections = writable<Record<string, string>>({});
-
-// Per-connection-row state machine, surfaced in nav for visual feedback during
-// the (potentially slow, 5-15s) connect path. Mirrors `sshConnStates` in
-// `modes/ssh/stores.ts` so the visual language is consistent across modes.
-export type SqlConnectionState = 'idle' | 'connecting' | 'connected' | 'error';
-export const sqlConnectionStates = writable<Map<string, SqlConnectionState>>(new Map());
-export const sqlConnectionErrors = writable<Map<string, string>>(new Map());
-
-function setSqlConnState(id: string, state: SqlConnectionState) {
-  sqlConnectionStates.update(m => {
-    const next = new Map(m);
-    if (state === 'idle') next.delete(id);
-    else next.set(id, state);
-    return next;
-  });
-}
-
-function setSqlConnError(id: string, message: string | null) {
-  sqlConnectionErrors.update(m => {
-    const next = new Map(m);
-    if (message) next.set(id, message);
-    else next.delete(id);
-    return next;
-  });
-}
-
-export function getSqlConnState(id: string): SqlConnectionState {
-  return get(sqlConnectionStates).get(id) ?? 'idle';
-}
-
-export function resetSqlConnState(id: string) {
-  setSqlConnState(id, 'idle');
-  setSqlConnError(id, null);
-}
-export const sqlScripts = writable<SqlScript[]>([]);
-export const showSqlConnectionDialog = writable(false);
-export const editingSqlConnection = writable<SqlConnection | null>(null);
-export const showSqlDisconnectConfirm = writable(false);
-export const sqlDisconnectTarget = writable<SqlConnection | null>(null);
-
-// New stores for tree nav
 export const expandedConnectionId = writable<string | null>(null);
-export const selectedDatabase = writable<string>('');
+
+// Cached metadata per `(conn, db)` key — fetched lazily by SqlNav / SqlPanel.
 export const connectionDatabases = writable<Map<string, string[]>>(new Map());
 export const databaseTables = writable<Map<string, TableInfo[]>>(new Map());
 
-// Derived: is the active connection connected?
-export const sqlIsConnected = derived(
-  [activeConnectionId, connectedIds],
-  ([$activeConnectionId, $connectedIds]) =>
-    $activeConnectionId ? $connectedIds.has($activeConnectionId) : false
-);
+// --- Pool state (keyed by `${connId}:${db}`) ---------------------------------
 
-// Default row limit for SELECT queries (0 = no limit).
-// `getSqlRowLimit` migrates the legacy `sqlRowLimit` key on first read.
-const SQL_ROW_LIMIT_DEFAULT = 100;
-export const sqlRowLimit = writable<number>(getSqlRowLimit(SQL_ROW_LIMIT_DEFAULT));
-sqlRowLimit.subscribe(v => setSqlRowLimit(v));
+export const poolStates = writable<Map<string, PoolState>>(new Map());
+export const poolErrors = writable<Map<string, string>>(new Map());
+/** `${connId}:${db}` → expiry timestamp (ms). Drives the amber
+ *  "reconnecting…" badge for ~2s after a dead-pool rebuild fires. */
+export const reconnectingFlash = writable<Map<string, number>>(new Map());
 
-// Event for inserting query from nav tree or AI
-export const insertQueryText = writable<string>('');
-
-// AI helper — insert query into active SQL editor
-export function applyAiQuery(query: string) {
-  insertQueryText.set(query);
+export function poolKey(connId: string, database: string): string {
+  return `${connId}:${database}`;
 }
 
-// --- SQL Tab State (per global tab) ---
+function setPoolState(key: string, s: PoolState) {
+  poolStates.update((m) => {
+    const n = new Map(m);
+    if (s === 'idle') n.delete(key);
+    else n.set(key, s);
+    return n;
+  });
+}
+
+function setPoolError(key: string, msg: string | null) {
+  poolErrors.update((m) => {
+    const n = new Map(m);
+    if (msg) n.set(key, msg);
+    else n.delete(key);
+    return n;
+  });
+}
+
+export function getPoolState(connId: string, db: string): PoolState {
+  return get(poolStates).get(poolKey(connId, db)) ?? 'idle';
+}
+
+// One Promise per in-flight ensure call so 10 simultaneous triggers
+// (nav click, tab effect, Run press) collapse to a single backend handshake.
+const inflightEnsures = new Map<string, Promise<void>>();
+
+/**
+ * Idempotent, deduplicated pool opener. Sets the pool state to
+ * `connecting` for the duration; flips to `connected` on success or
+ * `error` on failure. Repeated calls for the same `(connId, db)` while
+ * one is in flight share the same Promise.
+ */
+export function ensureConnected(connId: string, db: string): Promise<void> {
+  const key = poolKey(connId, db);
+  if (get(poolStates).get(key) === 'connected') return Promise.resolve();
+  const existing = inflightEnsures.get(key);
+  if (existing) return existing;
+
+  setPoolState(key, 'connecting');
+  setPoolError(key, null);
+  const p = (async () => {
+    try {
+      await sqlCmd.sqlEnsurePool(connId, db);
+      setPoolState(key, 'connected');
+    } catch (e: any) {
+      setPoolState(key, 'error');
+      setPoolError(key, String(e));
+      throw e;
+    } finally {
+      inflightEnsures.delete(key);
+    }
+  })();
+  inflightEnsures.set(key, p);
+  return p;
+}
+
+export async function disconnectConnection(connId: string) {
+  await sqlCmd.sqlDisconnectConnection(connId);
+  // Clear every pool entry under this connection.
+  const prefix = `${connId}:`;
+  poolStates.update((m) => {
+    const n = new Map(m);
+    for (const k of [...n.keys()]) if (k.startsWith(prefix)) n.delete(k);
+    return n;
+  });
+  poolErrors.update((m) => {
+    const n = new Map(m);
+    for (const k of [...n.keys()]) if (k.startsWith(prefix)) n.delete(k);
+    return n;
+  });
+  connectionDatabases.update((m) => {
+    const n = new Map(m);
+    n.delete(connId);
+    return n;
+  });
+  databaseTables.update((m) => {
+    const n = new Map(m);
+    for (const k of [...n.keys()]) if (k.startsWith(prefix)) n.delete(k);
+    return n;
+  });
+}
+
+// --- Tab state ---------------------------------------------------------------
+
 export interface SqlTabData {
+  binding: Binding | null;
   query: string;
   result: SqlQueryResult | null;
   error: string | null;
-  loading: boolean;
-  database: string;
-  // Multi-query results
+  inFlight: InFlight | null;
+  /** Multi-result tabs (one query → one result entry; multi-statement → many). */
   results: SqlResultEntry[];
   activeResultIdx: number;
 }
 
 export const sqlTabState = writable<Map<number, SqlTabData>>(new Map());
-// Track which SQL tabs have unsaved result edits
-export const sqlPendingChanges = writable<Set<number>>(new Set());
-
-export function setSqlPending(tabId: number, hasPending: boolean) {
-  sqlPendingChanges.update(s => {
-    const next = new Set(s);
-    if (hasPending) next.add(tabId);
-    else next.delete(tabId);
-    return next;
-  });
-}
 
 const defaultSqlTabData = (): SqlTabData => ({
-  query: '', result: null, error: null, loading: false,
-  database: get(selectedDatabase) || '',
-  results: [], activeResultIdx: 0,
+  binding: null,
+  query: '',
+  result: null,
+  error: null,
+  inFlight: null,
+  results: [],
+  activeResultIdx: 0,
 });
 
 export function getSqlTabData(tabId: number): SqlTabData {
-  const map = get(sqlTabState);
-  return map.get(tabId) ?? defaultSqlTabData();
+  return get(sqlTabState).get(tabId) ?? defaultSqlTabData();
 }
 
-export function setSqlTabData(tabId: number, data: Partial<SqlTabData>) {
-  sqlTabState.update(m => {
-    const next = new Map(m);
+export function setSqlTabData(tabId: number, patch: Partial<SqlTabData>) {
+  sqlTabState.update((m) => {
+    const n = new Map(m);
     const existing = m.get(tabId) ?? defaultSqlTabData();
-    next.set(tabId, { ...existing, ...data });
-    return next;
+    n.set(tabId, { ...existing, ...patch });
+    return n;
   });
 }
 
 export function clearSqlTabData(tabId: number) {
-  sqlTabState.update(m => {
-    const next = new Map(m);
-    next.delete(tabId);
-    return next;
+  sqlTabState.update((m) => {
+    const n = new Map(m);
+    n.delete(tabId);
+    return n;
   });
 }
 
 export function initSqlTab(tabId: number) {
-  const db = get(selectedDatabase) || '';
-  setSqlTabData(tabId, { query: '', result: null, error: null, loading: false, database: db, results: [], activeResultIdx: 0 });
+  setSqlTabData(tabId, defaultSqlTabData());
 }
 
-export async function handleSqlConnectionSave(config: SqlConnectionConfig) {
-  const editing = get(editingSqlConnection);
-  if (editing) {
-    const updated = await sqlCmd.sqlUpdateSavedConnection(editing.id, config);
-    connections.update(c => c.map(x => x.id === editing.id ? updated : x));
-  } else {
-    const conn = await saveConnection(config);
-    // Auto-connect after saving new connection
-    try {
-      await connectToDb(conn.id);
-    } catch {
-      // Connection saved but couldn't auto-connect
-    }
-  }
-  showSqlConnectionDialog.set(false);
-  editingSqlConnection.set(null);
+/** Track which SQL tabs have unsaved result edits (cell-edit feature). */
+export const sqlPendingChanges = writable<Set<number>>(new Set());
+export function setSqlPending(tabId: number, hasPending: boolean) {
+  sqlPendingChanges.update((s) => {
+    const n = new Set(s);
+    if (hasPending) n.add(tabId);
+    else n.delete(tabId);
+    return n;
+  });
 }
 
-export const activeConnection = derived(
-  [connections, activeConnectionId],
-  ([$connections, $activeConnectionId]) =>
-    $connections.find(c => c.id === $activeConnectionId) ?? null
-);
+// --- Saved-connection management --------------------------------------------
 
 export async function loadConnections() {
   try {
@@ -170,227 +196,165 @@ export async function loadConnections() {
 
 export async function saveConnection(config: SqlConnectionConfig): Promise<SqlConnection> {
   const conn = await sqlCmd.sqlSaveConnection(config);
-  connections.update(c => [...c, conn]);
+  connections.update((c) => [...c, conn]);
   activeConnectionId.set(conn.id);
   return conn;
 }
 
 export async function updateConnection(id: string, config: SqlConnectionConfig): Promise<SqlConnection> {
   const updated = await sqlCmd.sqlUpdateSavedConnection(id, config);
-  connections.update(c => c.map(x => x.id === id ? updated : x));
+  connections.update((c) => c.map((x) => (x.id === id ? updated : x)));
   return updated;
 }
 
 export async function deleteConnection(id: string) {
   await sqlCmd.sqlDeleteSavedConnection(id);
-  connections.update(c => c.filter(x => x.id !== id));
-  if (get(activeConnectionId) === id) {
-    activeConnectionId.set(null);
-  }
-  connectedIds.update(s => {
-    const next = new Set(s);
-    next.delete(id);
-    return next;
-  });
-  // Clear cached data
-  connectionDatabases.update(m => {
-    const next = new Map(m);
-    next.delete(id);
-    return next;
-  });
-  resetSqlConnState(id);
-}
-
-export async function connectToDb(connectionId: string) {
-  // Guard against duplicate clicks while a connect attempt is already in flight.
-  // The connect path can take 5-15s (russh handshake + auth + DB connect), and
-  // without this the user clicking again would fire another `sqlConnect` and
-  // open a parallel tunnel.
-  if (getSqlConnState(connectionId) === 'connecting') {
-    return get(liveConnectionIds)[connectionId] ?? null;
-  }
-
-  // Load saved connections if the store hasn't been populated yet.
-  // SqlPanel calls loadConnections() fire-and-forget on mount, so any
-  // user action (e.g. opening a script via Topbar before SqlPanel's
-  // load resolves) lands here with an empty `connections` store. Auto-
-  // load and retry once.
-  let allConns = get(connections);
-  let conn = allConns.find(c => c.id === connectionId);
-  if (!conn) {
-    await loadConnections();
-    allConns = get(connections);
-    conn = allConns.find(c => c.id === connectionId);
-    if (!conn) {
-      // Saved-connection record is permanently missing (typically a stale
-      // reference from a deleted+recreated connection). Distinct from
-      // both the Rust-side "Connection not found" (live pool lost) and
-      // any transient load issue — message phrased to NOT match
-      // friendlyError's "Connection not found"/"connection not found"
-      // patterns so it surfaces verbatim instead of being mistranslated
-      // into "Connection lost — please disconnect and reconnect".
-      throw new Error(`Saved connection record missing (id ${connectionId})`);
-    }
-  }
-
-  setSqlConnState(connectionId, 'connecting');
-  setSqlConnError(connectionId, null);
-  let liveId: string;
-  try {
-    liveId = await sqlCmd.sqlConnect({
-      name: conn.name,
-      driver: conn.driver as any,
-      host: conn.host,
-      port: conn.port,
-      database: conn.databaseName,
-      username: conn.username,
-      password: conn.password,
-      ssl: !!conn.ssl,
-      // Forward the saved SSH profile so the backend opens the tunnel.
-      // Without this the rewritten host/port (127.0.0.1:<bound>) is never
-      // applied and the driver dials the original host directly.
-      sshProfileId: conn.sshProfileId ?? null,
-    });
-  } catch (e) {
-    setSqlConnState(connectionId, 'error');
-    setSqlConnError(connectionId, String(e));
-    throw e;
-  }
-  setSqlConnState(connectionId, 'connected');
-  activeConnectionId.set(connectionId);
-  connectedIds.update(s => {
-    const next = new Set(s);
-    next.add(connectionId);
-    return next;
-  });
-  liveConnectionIds.update(m => ({ ...m, [connectionId]: liveId }));
-
-  // Auto-expand and load databases
-  expandedConnectionId.set(connectionId);
-  try {
-    const dbs = await sqlCmd.sqlListDatabases(liveId);
-    connectionDatabases.update(m => {
-      const next = new Map(m);
-      next.set(connectionId, dbs);
-      return next;
-    });
-    // Auto-select the configured database or first one
-    if (dbs.length > 0) {
-      const dbName = conn.databaseName || dbs[0];
-      selectedDatabase.set(dbName);
-      // Load tables for selected database
-      await loadTablesForDb(connectionId, dbName);
-    }
-  } catch {
-    // databases load failed — non-fatal
-  }
-
-  return liveId;
-}
-
-export async function loadTablesForDb(connectionId: string, database: string, schema?: string) {
-  // For per-database loading, try to get a database-specific connection first
-  let liveId = getDbLiveId(connectionId, database);
-  if (!liveId) {
-    // Fall back to the instance connection (works for initial database)
-    liveId = getLiveId(connectionId);
-  }
-  if (!liveId) return;
-  const key = schema ? `${connectionId}:${database}:${schema}` : `${connectionId}:${database}`;
-  try {
-    const tables = await sqlCmd.sqlListTables(liveId, database, schema);
-    databaseTables.update(m => {
-      const next = new Map(m);
-      next.set(key, tables);
-      return next;
-    });
-  } catch {
-    databaseTables.update(m => {
-      const next = new Map(m);
-      next.set(key, []);
-      return next;
-    });
-  }
-}
-
-export function getLiveId(savedId: string): string | null {
-  return get(liveConnectionIds)[savedId] ?? null;
-}
-
-export function getDbLiveId(savedConnId: string, database: string): string | null {
-  const key = `${savedConnId}:${database}`;
-  return get(dbLiveConnections)[key] ?? null;
-}
-
-// In-flight `connectToDatabase` calls keyed by `${savedConnId}:${database}`.
-// Multiple subscribers can request the same per-database pool concurrently
-// (e.g. Topbar.handleOpenScript awaits one while SqlPanel's self-heal
-// effect also fires after `connectedIds` flips). Without dedup, both
-// callers race to build a fresh pool — the Rust side serializes via
-// mutex but still does two real connect handshakes, and the loser can
-// surface a misleading "Connection not found" once the winner's
-// `connections.remove(&key)` step closes its pool. Sharing one Promise
-// per key collapses the race to a single round-trip.
-const inflightDbConnects = new Map<string, Promise<string>>();
-
-export async function connectToDatabase(savedConnId: string, database: string): Promise<string> {
-  const key = `${savedConnId}:${database}`;
-
-  // Already pooled — short-circuit.
-  const existing = get(dbLiveConnections)[key];
-  if (existing) return existing;
-
-  // Already connecting — share the in-flight Promise.
-  const inflight = inflightDbConnects.get(key);
-  if (inflight) return inflight;
-
-  const promise = (async () => {
-    try {
-      // Load saved connections if the store hasn't been populated yet.
-      // Happens when a script tab is opened immediately after the SQL
-      // panel mounts (loadConnections() is fire-and-forget on mount).
-      let allConns = get(connections);
-      let conn = allConns.find(c => c.id === savedConnId);
-      if (!conn) {
-        await loadConnections();
-        allConns = get(connections);
-        conn = allConns.find(c => c.id === savedConnId);
-        if (!conn) {
-          // Same as connectToDb: saved-connection record is permanently
-          // missing. Wording avoids friendlyError's "Connection not
-          // found" pattern so it surfaces verbatim.
-          throw new Error(`Saved connection record missing (id ${savedConnId})`);
-        }
+  await disconnectConnection(id);
+  connections.update((c) => c.filter((x) => x.id !== id));
+  if (get(activeConnectionId) === id) activeConnectionId.set(null);
+  // Any tab bound to this connection falls back to the first remaining
+  // connection's default DB. If none remain, binding becomes null and the
+  // tab shows the "Pick a connection" banner.
+  const remaining = get(connections);
+  const fallback = remaining[0] ?? null;
+  sqlTabState.update((m) => {
+    const n = new Map(m);
+    let changed = false;
+    for (const [tabId, tab] of n) {
+      if (tab.binding?.connectionId === id) {
+        const next: Binding | null = fallback
+          ? { connectionId: fallback.id, database: fallback.databaseName }
+          : null;
+        n.set(tabId, { ...tab, binding: next, inFlight: null });
+        changed = true;
       }
-
-      const config = {
-        name: conn.name,
-        driver: conn.driver as any,
-        host: conn.host,
-        port: conn.port,
-        database: conn.databaseName,
-        username: conn.username,
-        password: conn.password,
-        ssl: !!conn.ssl,
-        // Forward the saved SSH profile so per-database pools tunnel too.
-        // The nav-expand path (loading databases/schemas/tables) lands here.
-        sshProfileId: conn.sshProfileId ?? null,
-      };
-
-      // Use savedId:dbName as the pool key — same format as AI's ensure_pool
-      const poolId = await sqlCmd.sqlConnectDatabase(config, database, key);
-      dbLiveConnections.update(m => ({ ...m, [key]: poolId }));
-      return poolId;
-    } finally {
-      inflightDbConnects.delete(key);
     }
-  })();
-
-  inflightDbConnects.set(key, promise);
-  return promise;
+    return changed ? n : m;
+  });
 }
 
-// --- SQL Script persistence ---
+export async function handleSqlConnectionSave(config: SqlConnectionConfig) {
+  const editing = get(editingSqlConnection);
+  if (editing) {
+    const updated = await sqlCmd.sqlUpdateSavedConnection(editing.id, config);
+    connections.update((c) => c.map((x) => (x.id === editing.id ? updated : x)));
+  } else {
+    const conn = await saveConnection(config);
+    // Auto-bind the active tab to the newly saved connection's default DB.
+    const tabId = get(activeTabId);
+    if (tabId >= 0) {
+      const tab = get(tabs).find((t) => t.id === tabId);
+      if (tab?.mode === 'sql') {
+        setSqlTabData(tabId, { binding: { connectionId: conn.id, database: conn.databaseName } });
+      }
+    }
+  }
+  showSqlConnectionDialog.set(false);
+  editingSqlConnection.set(null);
+}
+
+// --- UI singletons (dialog open state, etc.) --------------------------------
+
+export const showSqlConnectionDialog = writable(false);
+export const editingSqlConnection = writable<SqlConnection | null>(null);
+export const showSqlDisconnectConfirm = writable(false);
+export const sqlDisconnectTarget = writable<SqlConnection | null>(null);
+
+// Default row limit for SELECT queries (0 = no limit). `getSqlRowLimit`
+// migrates the legacy `sqlRowLimit` key on first read.
+const SQL_ROW_LIMIT_DEFAULT = 100;
+export const sqlRowLimit = writable<number>(getSqlRowLimit(SQL_ROW_LIMIT_DEFAULT));
+sqlRowLimit.subscribe((v) => setSqlRowLimit(v));
+
+// --- Active-tab derived helpers ---------------------------------------------
+
+export const activeSqlTabData = derived(
+  [sqlTabState, activeTabId, tabs],
+  ([$sqlTabState, $activeTabId, $tabs]) => {
+    const tab = $tabs.find((t) => t.id === $activeTabId && t.mode === 'sql');
+    if (!tab) return null;
+    return $sqlTabState.get(tab.id) ?? defaultSqlTabData();
+  },
+);
+
+export const activeBinding = derived(activeSqlTabData, (d) => d?.binding ?? null);
+
+export const activeConnection = derived([connections, activeBinding], ([$connections, $binding]) =>
+  $binding ? $connections.find((c) => c.id === $binding.connectionId) ?? null : null,
+);
+
+// --- Setting a tab's binding -------------------------------------------------
+
+/**
+ * Update a tab's `(connection, database)` selection. Fire-and-forget triggers
+ * `ensureConnected` so the loader appears immediately. Failures surface via
+ * `poolErrors` and the per-pool state turning `error` — the tab itself stays
+ * bound (user can retry).
+ */
+export function setBinding(tabId: number, connId: string, database: string) {
+  setSqlTabData(tabId, {
+    binding: { connectionId: connId, database },
+    inFlight: null,
+    error: null,
+  });
+  ensureConnected(connId, database).catch(() => {
+    /* surfaced via poolErrors */
+  });
+}
+
+// --- Insert-from-nav / AI execute --------------------------------------------
+
+export const insertQueryText = writable<string>('');
+
+export function applyAiQuery(query: string) {
+  insertQueryText.set(query);
+}
+
+export interface AiSqlExecution {
+  query: string;
+  connectionId: string;
+  database: string;
+}
+
+export const aiExecuteQuery = writable<AiSqlExecution | null>(null);
+
+/**
+ * AI/MCP-triggered query. Reuses the active tab IFF its binding matches the
+ * AI's target `(conn, db)`; otherwise opens a new tab. The target is always
+ * bound to the AI's `(connId, database)` so multi-instance setups behave
+ * predictably.
+ */
+export async function triggerAiSqlExecution(query: string, connectionId: string, database: string) {
+  const { addTab } = await import('$lib/shared/stores/tabs');
+  const activeId = get(activeTabId);
+  const activeTab = get(tabs).find((t) => t.id === activeId && t.mode === 'sql');
+  const activeData = activeTab ? get(sqlTabState).get(activeTab.id) : null;
+  const matches =
+    activeData?.binding?.connectionId === connectionId &&
+    activeData?.binding?.database === database;
+  const targetTab = activeTab && matches ? activeTab : addTab('AI Query', 'sql', null, 'var(--sql)');
+  setSqlTabData(targetTab.id, {
+    binding: { connectionId, database },
+    query,
+    results: [],
+    activeResultIdx: 0,
+    inFlight: null,
+    error: null,
+  });
+  aiExecuteQuery.set({ query, connectionId, database });
+}
+
+// --- Cancel ------------------------------------------------------------------
+
+export async function cancelQuery(tabId: number) {
+  const data = get(sqlTabState).get(tabId);
+  if (!data?.inFlight) return;
+  await sqlCmd.sqlCancelQuery(data.inFlight.queryId);
+}
+
+// --- SQL script CRUD --------------------------------------------------------
+
+export const sqlScripts = writable<SqlScript[]>([]);
 
 export async function loadSqlScripts() {
   try {
@@ -401,75 +365,238 @@ export async function loadSqlScripts() {
   }
 }
 
-export async function saveSqlScript(name: string, connectionId: string | null, databaseName: string, query: string): Promise<SqlScript> {
+export async function saveSqlScript(
+  name: string,
+  connectionId: string | null,
+  databaseName: string,
+  query: string,
+): Promise<SqlScript> {
   const script = await sqlCmd.sqlSaveScript(name, connectionId, databaseName, query);
-  sqlScripts.update(s => [...s, script]);
+  sqlScripts.update((s) => [...s, script]);
   return script;
 }
 
-export async function updateSqlScript(id: string, name: string, query: string, databaseName?: string): Promise<SqlScript> {
-  const updated = await sqlCmd.sqlUpdateScript(id, name, query, databaseName);
-  sqlScripts.update(s => s.map(x => x.id === id ? updated : x));
+export async function updateSqlScript(
+  id: string,
+  name: string,
+  query: string,
+  databaseName?: string,
+  connectionId?: string,
+): Promise<SqlScript> {
+  const updated = await sqlCmd.sqlUpdateScript(id, name, query, databaseName, connectionId);
+  sqlScripts.update((s) => s.map((x) => (x.id === id ? updated : x)));
   return updated;
 }
 
 export async function deleteSqlScript(id: string) {
   await sqlCmd.sqlDeleteScript(id);
-  sqlScripts.update(s => s.filter(x => x.id !== id));
+  sqlScripts.update((s) => s.filter((x) => x.id !== id));
 }
 
-export async function disconnectFromDb(connectionId: string) {
-  const liveId = getLiveId(connectionId);
-  if (liveId) {
-    await sqlCmd.sqlDisconnect(liveId);
+// --- Database/table metadata loaders ---------------------------------------
+
+/** Load + cache the database list for a saved connection. Requires the
+ *  default `(connId, conn.databaseName)` pool to be reachable. */
+export async function loadDatabaseList(connId: string): Promise<string[]> {
+  const conn = get(connections).find((c) => c.id === connId);
+  if (!conn) return [];
+  try {
+    await ensureConnected(connId, conn.databaseName);
+    const dbs = await sqlCmd.sqlListDatabases(connId, conn.databaseName);
+    connectionDatabases.update((m) => {
+      const n = new Map(m);
+      n.set(connId, dbs);
+      return n;
+    });
+    return dbs;
+  } catch {
+    return [];
   }
-  // Disconnect all per-database connections for this saved connection
-  const dbConns = get(dbLiveConnections);
-  const prefix = `${connectionId}:`;
-  for (const [key, dbLiveId] of Object.entries(dbConns)) {
-    if (key.startsWith(prefix)) {
-      try { await sqlCmd.sqlDisconnect(dbLiveId); } catch { /* ignore */ }
+}
+
+/** Refresh the table list for `(connId, database[, schema])`. Cached under
+ *  `${connId}:${database}[:${schema}]` so SqlPanel + SqlNav share data. */
+export async function loadTablesForDb(connId: string, database: string, schema?: string) {
+  try {
+    await ensureConnected(connId, database);
+    const tables = await sqlCmd.sqlListTables(connId, database, schema);
+    const key = schema ? `${connId}:${database}:${schema}` : `${connId}:${database}`;
+    databaseTables.update((m) => {
+      const n = new Map(m);
+      n.set(key, tables);
+      return n;
+    });
+  } catch {
+    /* leave cache as-is */
+  }
+}
+
+// --- Compatibility shims for sidebar/nav consumers --------------------------
+//
+// SqlNav was written against the previous globally-keyed model
+// (`connectedIds: Set<savedId>`, `connectToDb`, `disconnectFromDb`,
+// `getLiveId`, `getDbLiveId`, `connectToDatabase`, `dbLiveConnections`,
+// `sqlConnectionStates`, `sqlConnectionErrors`, `resetSqlConnState`).
+// These shims preserve the sidebar's click-handler logic while routing
+// everything through the new per-`(connId, db)` pool keyspace. They are
+// derived from `poolStates` / `poolErrors`; setters mutate those.
+
+/** Saved-connection IDs that have at least one open pool. Used by nav
+ *  for the "connected" indicator. */
+export const connectedIds = derived(poolStates, ($poolStates) => {
+  const set = new Set<string>();
+  for (const [k, s] of $poolStates) {
+    if (s === 'connected') {
+      const idx = k.indexOf(':');
+      if (idx > 0) set.add(k.slice(0, idx));
     }
   }
-  dbLiveConnections.update(m => {
-    const next = { ...m };
-    for (const key of Object.keys(next)) {
-      if (key.startsWith(prefix)) delete next[key];
-    }
-    return next;
-  });
-  connectedIds.update(s => {
-    const next = new Set(s);
-    next.delete(connectionId);
-    return next;
-  });
-  liveConnectionIds.update(m => {
-    const next = { ...m };
-    delete next[connectionId];
-    return next;
-  });
-  // Clear cached data for this connection
-  connectionDatabases.update(m => {
-    const next = new Map(m);
-    next.delete(connectionId);
-    return next;
-  });
-  // Clear expanded state if this was expanded
-  if (get(expandedConnectionId) === connectionId) {
-    expandedConnectionId.set(null);
+  return set;
+});
+
+/** Rolled-up state per saved-connection: connecting > error > connected > idle. */
+export const sqlConnectionStates = derived(poolStates, ($poolStates) => {
+  const m = new Map<string, PoolState>();
+  for (const [k, s] of $poolStates) {
+    const idx = k.indexOf(':');
+    if (idx < 0) continue;
+    const connId = k.slice(0, idx);
+    const prev = m.get(connId);
+    if (s === 'connecting') m.set(connId, 'connecting');
+    else if (prev !== 'connecting' && s === 'error') m.set(connId, 'error');
+    else if (prev !== 'connecting' && prev !== 'error' && s === 'connected') m.set(connId, 'connected');
+    else if (!prev) m.set(connId, s);
   }
-  selectedDatabase.set('');
-  resetSqlConnState(connectionId);
+  return m;
+});
+
+export const sqlConnectionErrors = derived(poolErrors, ($poolErrors) => {
+  const m = new Map<string, string>();
+  for (const [k, msg] of $poolErrors) {
+    const idx = k.indexOf(':');
+    if (idx < 0) continue;
+    m.set(k.slice(0, idx), msg);
+  }
+  return m;
+});
+
+export function resetSqlConnState(connId: string) {
+  const prefix = `${connId}:`;
+  poolStates.update((m) => {
+    const n = new Map(m);
+    for (const k of [...n.keys()]) if (k.startsWith(prefix)) n.delete(k);
+    return n;
+  });
+  poolErrors.update((m) => {
+    const n = new Map(m);
+    for (const k of [...n.keys()]) if (k.startsWith(prefix)) n.delete(k);
+    return n;
+  });
 }
 
-// AI execution trigger — AI writes query + connection info, SqlPanel auto-executes
-export interface AiSqlExecution {
-  query: string;
-  connectionId: string;
-  database: string;
+/** Legacy `connectToDb(connId)` — connect to the saved record's default
+ *  database. Routes through `ensureConnected` and then performs the
+ *  side-effects SqlNav relies on for the sidebar expansion: marks this
+ *  connection as expanded and fetches the database list so the tree
+ *  has children to render. Both side-effects are best-effort. */
+export async function connectToDb(connId: string): Promise<string> {
+  const conn = get(connections).find((c) => c.id === connId);
+  if (!conn) throw new Error(`Saved connection record missing (id ${connId})`);
+  await ensureConnected(conn.id, conn.databaseName);
+  expandedConnectionId.set(connId);
+  // Best-effort: populate the connection's database list so the sidebar
+  // tree has rows to render. Already-cached lists short-circuit.
+  if (!get(connectionDatabases).has(connId)) {
+    loadDatabaseList(connId).catch(() => {
+      /* surfaced via toast in caller */
+    });
+  }
+  return poolKey(conn.id, conn.databaseName);
 }
-export const aiExecuteQuery = writable<AiSqlExecution | null>(null);
 
-export function triggerAiSqlExecution(query: string, connectionId: string, database: string) {
-  aiExecuteQuery.set({ query, connectionId, database });
+/** Legacy `connectToDatabase(connId, db)` — open the per-database pool.
+ *  Returns the same `${connId}:${db}` key shape as before. */
+export async function connectToDatabase(connId: string, db: string): Promise<string> {
+  await ensureConnected(connId, db);
+  return poolKey(connId, db);
+}
+
+/** Legacy `disconnectFromDb(connId)` — close every pool under this
+ *  saved connection. */
+export async function disconnectFromDb(connId: string): Promise<void> {
+  await disconnectConnection(connId);
+}
+
+/** Legacy `getLiveId(connId)` — was a UUID; now returns the canonical
+ *  `${connId}:${conn.databaseName}` if that pool is open, else null. */
+export function getLiveId(connId: string): string | null {
+  const conn = get(connections).find((c) => c.id === connId);
+  if (!conn) return null;
+  const k = poolKey(connId, conn.databaseName);
+  return get(poolStates).get(k) === 'connected' ? k : null;
+}
+
+/** Legacy `getDbLiveId(connId, db)` — returns `${connId}:${db}` if that
+ *  pool is open, else null. */
+export function getDbLiveId(connId: string, db: string): string | null {
+  const k = poolKey(connId, db);
+  return get(poolStates).get(k) === 'connected' ? k : null;
+}
+
+/** Legacy `dbLiveConnections: Record<string, string>` — the keys ARE the
+ *  pool-keys now, so we just project a key→key map for any connected pool. */
+export const dbLiveConnections = derived(poolStates, ($poolStates) => {
+  const m: Record<string, string> = {};
+  for (const [k, s] of $poolStates) if (s === 'connected') m[k] = k;
+  return m;
+});
+
+/** Legacy `liveConnectionIds: Record<savedId, string>` — defaults to the
+ *  saved record's default-DB pool key. */
+export const liveConnectionIds = derived(
+  [poolStates, connections],
+  ([$poolStates, $connections]) => {
+    const m: Record<string, string> = {};
+    for (const c of $connections) {
+      const k = poolKey(c.id, c.databaseName);
+      if ($poolStates.get(k) === 'connected') m[c.id] = k;
+    }
+    return m;
+  },
+);
+
+/** Selected sidebar database — kept for nav UX state only. */
+export const selectedDatabase = writable<string>('');
+
+/** Is *any* pool open for the currently-active sidebar connection? Used
+ *  by the Topbar disconnect indicator. */
+export const sqlIsConnected = derived(
+  [activeConnectionId, connectedIds],
+  ([$activeConnectionId, $connectedIds]) =>
+    $activeConnectionId ? $connectedIds.has($activeConnectionId) : false,
+);
+
+// --- Tauri event listeners (registered once at app boot) --------------------
+
+let listenersRegistered = false;
+export function registerSqlEventListeners() {
+  if (listenersRegistered) return;
+  listenersRegistered = true;
+  listen<string>('sql:reconnecting', (e) => {
+    const key = e.payload;
+    const expires = Date.now() + 2000;
+    reconnectingFlash.update((m) => {
+      const n = new Map(m);
+      n.set(key, expires);
+      return n;
+    });
+    setTimeout(() => {
+      reconnectingFlash.update((m) => {
+        const n = new Map(m);
+        const t = n.get(key);
+        if (t && t <= Date.now()) n.delete(key);
+        return n;
+      });
+    }, 2100);
+  });
 }

@@ -19,12 +19,16 @@
     query: string;
     tables?: TableInfo[];
     columnMap?: Record<string, string[]>;
+    /** True while a query is in flight OR while the pool is connecting.
+     *  Cmd/Ctrl+Enter no-ops; the Run button is already disabled in the
+     *  parent. Prevents queue-piling on the same tab. */
+    disabled?: boolean;
     onquerychange?: (query: string) => void;
     onexecute?: (query: string) => void;
     onexecutemulti?: (queries: string[]) => void;
   }
 
-  let { query, tables = [], columnMap = {}, onquerychange, onexecute, onexecutemulti }: Props = $props();
+  let { query, tables = [], columnMap = {}, disabled = false, onquerychange, onexecute, onexecutemulti }: Props = $props();
 
   let editorContainer: HTMLDivElement | undefined = $state();
   let editorView: EditorView | undefined;
@@ -96,7 +100,14 @@
         lineNumbers(),
         history(),
         keymap.of([
-          { key: 'Mod-Enter', run: (view) => { executeFromCursor(view); return true; }, preventDefault: true },
+          { key: 'Mod-Enter', run: (view) => {
+              if (disabled) {
+                showToast('Query already running — cancel to start a new one', 'info');
+                return true;
+              }
+              executeFromCursor(view);
+              return true;
+            }, preventDefault: true },
           ...defaultKeymap,
           ...historyKeymap,
           indentWithTab,
@@ -196,6 +207,10 @@
   /** Called by the Execute button — requires selection */
   export function handleExecute() {
     if (!editorView) return;
+    if (disabled) {
+      showToast('Query already running — cancel to start a new one', 'info');
+      return;
+    }
     const sel = editorView.state.selection.main;
 
     if (!sel.empty) {
