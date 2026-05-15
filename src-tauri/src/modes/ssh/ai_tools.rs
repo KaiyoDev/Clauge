@@ -32,6 +32,12 @@ fn execute_shell<'a>(ctx: &'a ToolContext<'a>) -> ToolFuture<'a> {
             .and_then(|v| v.as_str())
             .unwrap_or("")
             .to_string();
+        let render_as = ctx
+            .input
+            .get("render_as")
+            .and_then(|v| v.as_str())
+            .unwrap_or("auto")
+            .to_string();
         if command.is_empty() {
             return "Tool error: 'command' field is required".to_string();
         }
@@ -45,6 +51,7 @@ fn execute_shell<'a>(ctx: &'a ToolContext<'a>) -> ToolFuture<'a> {
                 "tool": "execute_shell",
                 "command": command,
                 "reason": reason,
+                "renderAs": render_as,
             }),
         );
         match tokio::time::timeout(Duration::from_secs(120), rx).await {

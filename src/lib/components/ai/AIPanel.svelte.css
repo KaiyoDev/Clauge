@@ -387,7 +387,7 @@
   .ai-text {
     font-size: 13px;
     color: var(--t2);
-    line-height: 1.5;
+    line-height: 1.55;
     margin: 0;
     overflow-wrap: break-word;
   }
@@ -397,40 +397,99 @@
   .ai-text :global(p:last-child) {
     margin-bottom: 0;
   }
-  .ai-text :global(h1), .ai-text :global(h2), .ai-text :global(h3) {
-    font-size: 13px;
-    font-weight: 600;
+  .ai-text :global(h1), .ai-text :global(h2), .ai-text :global(h3),
+  .ai-text :global(h4), .ai-text :global(h5), .ai-text :global(h6) {
     color: var(--t1);
-    margin: 10px 0 4px 0;
+    margin: 14px 0 6px 0;
+    line-height: 1.3;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .ai-text :global(h1) {
+    font-size: 14.5px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--b1);
+    margin-top: 4px;
+  }
+  .ai-text :global(h2) {
+    font-size: 13.5px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .ai-text :global(h2)::before {
+    content: '';
+    width: 3px;
+    height: 12px;
+    border-radius: 2px;
+    background: var(--acc);
+  }
+  .ai-text :global(h3) {
+    font-size: 12.5px;
+    color: var(--t2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .ai-text :global(h4), .ai-text :global(h5), .ai-text :global(h6) {
+    font-size: 12px;
   }
   .ai-text :global(ul), .ai-text :global(ol) {
-    margin: 4px 0 8px 0;
-    padding-left: 18px;
+    margin: 4px 0 10px 0;
+    padding-left: 20px;
   }
+  .ai-text :global(ul) {
+    list-style: none;
+    padding-left: 4px;
+  }
+  .ai-text :global(ul > li) {
+    position: relative;
+    padding-left: 16px;
+  }
+  .ai-text :global(ul > li)::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 0.62em;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--acc);
+    opacity: 0.7;
+  }
+  .ai-text :global(ol) { padding-left: 22px; }
+  .ai-text :global(ol > li)::marker { color: var(--acc); font-weight: 600; }
   .ai-text :global(li) {
-    margin: 2px 0;
+    margin: 3px 0;
+  }
+  .ai-text :global(li > strong:first-child) {
+    color: var(--t1);
+    font-weight: 600;
   }
   .ai-text :global(code) {
     font-family: var(--mono);
-    font-size: 12px;
-    background: var(--n2);
-    padding: 1px 5px;
-    border-radius: 3px;
+    font-size: 11.5px;
+    background: color-mix(in srgb, var(--acc) 8%, var(--n2));
+    padding: 1px 6px;
+    border-radius: 4px;
     color: var(--t1);
+    border: 1px solid color-mix(in srgb, var(--acc) 15%, transparent);
   }
   .ai-text :global(pre) {
     background: var(--n2);
     border: 1px solid var(--b1);
-    border-radius: 6px;
-    padding: 8px 10px;
+    border-radius: 7px;
+    padding: 10px 12px;
     overflow-x: auto;
-    margin: 6px 0;
+    margin: 8px 0;
+    position: relative;
   }
   .ai-text :global(pre code) {
     background: none;
     padding: 0;
+    border: none;
     font-size: 11.5px;
     line-height: 1.5;
+    color: var(--t1);
   }
   .ai-text :global(pre) { padding-right: 36px; }
   .ai-text :global(.ai-copy-btn) {
@@ -477,10 +536,103 @@
     text-decoration: underline;
   }
   .ai-text :global(blockquote) {
-    border-left: 2px solid var(--b1);
-    margin: 6px 0;
-    padding: 2px 10px;
-    color: var(--t3);
+    border-left: 3px solid var(--acc);
+    background: color-mix(in srgb, var(--acc) 5%, transparent);
+    margin: 8px 0;
+    padding: 6px 12px;
+    color: var(--t2);
+    border-radius: 0 4px 4px 0;
+  }
+  .ai-text :global(blockquote p) { margin: 0; }
+
+  .ai-text :global(hr) {
+    border: none;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--b1), transparent);
+    margin: 14px 0;
+  }
+
+  .ai-text :global(table) {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 10px 0;
+    font-size: 12px;
+    border: 1px solid var(--b1);
+    border-radius: 8px;
+    overflow: hidden;
+    display: block;
+    overflow-x: auto;
+    max-height: 420px;
+  }
+  .ai-text :global(table thead) {
+    background: color-mix(in srgb, var(--acc) 6%, var(--n2));
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+  .ai-text :global(table th) {
+    text-align: left;
+    padding: 7px 12px;
+    font-weight: 600;
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--t2);
+    border-bottom: 1px solid var(--b1);
+    white-space: nowrap;
+  }
+  .ai-text :global(table td) {
+    padding: 6px 12px;
+    color: var(--t1);
+    border-bottom: 1px solid color-mix(in srgb, var(--b1) 50%, transparent);
+    vertical-align: top;
+  }
+  .ai-text :global(table tbody tr:last-child td) { border-bottom: none; }
+  .ai-text :global(table tbody tr:nth-child(even)) {
+    background: color-mix(in srgb, var(--t1) 2%, transparent);
+  }
+  .ai-text :global(table tbody tr:hover) {
+    background: color-mix(in srgb, var(--acc) 7%, transparent);
+  }
+  .ai-text :global(table td code), .ai-text :global(table th code) {
+    font-size: 11px;
+    padding: 0 4px;
+  }
+
+  .ai-text :global(details) {
+    border: 1px solid var(--b1);
+    border-radius: 6px;
+    padding: 6px 10px;
+    margin: 8px 0;
+    background: var(--n2);
+  }
+  .ai-text :global(details > summary) {
+    cursor: pointer;
+    color: var(--t1);
+    font-weight: 600;
+    font-size: 12px;
+    user-select: none;
+    list-style: none;
+  }
+  .ai-text :global(details > summary)::before {
+    content: '▸';
+    color: var(--acc);
+    display: inline-block;
+    margin-right: 6px;
+    transition: transform 0.15s;
+  }
+  .ai-text :global(details[open] > summary)::before { transform: rotate(90deg); }
+
+  .ai-text :global(kbd) {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    padding: 1px 5px;
+    border: 1px solid var(--b2);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    background: var(--n2);
+    color: var(--t1);
   }
   .code-block {
     background: var(--n2);

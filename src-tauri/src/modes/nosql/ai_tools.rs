@@ -6,6 +6,44 @@ use tokio_stream::StreamExt;
 use crate::shared::ai::types::ChatContext;
 use super::client::NoSqlConnections;
 
+/// Commands rejected by `redis_execute` because they wipe data, block the
+/// server, or change global config. The user can still run these from the
+/// raw Redis tab — the AI tool is the only path gated here.
+const REDIS_BLOCKED: &[&str] = &[
+    "FLUSHDB", "FLUSHALL", "SHUTDOWN", "DEBUG", "MIGRATE",
+    "REPLICAOF", "SLAVEOF", "CLUSTER", "FAILOVER", "RESET",
+    "SAVE", "BGSAVE", "BGREWRITEAOF", "SWAPDB", "MOVE",
+    "SCRIPT", "EVAL", "EVALSHA", "FUNCTION",
+    "RENAME", "RENAMENX",
+    "ACL",
+];
+
+fn is_blocked_redis_command(cmd: &str) -> bool {
+    let upper = cmd.to_ascii_uppercase();
+    if REDIS_BLOCKED.iter().any(|c| *c == upper) {
+        return true;
+    }
+    // CONFIG SET / CONFIG RESETSTAT are mutations; CONFIG GET is read-only.
+    // Whole CONFIG family is blocked here unless explicitly read-only.
+    if upper == "CONFIG" { return true; }
+    if upper == "KEYS" { return true; } // server-blocking, force SCAN path
+    false
+}
+
+/// Truncate a JSON value to a max serialized byte size. Returns the original
+/// value if already small, or a stub `{ "_truncated": true, "_bytes": N, "_preview": "..." }`
+/// for documents that would blow the model context.
+fn cap_doc_size(val: serde_json::Value, max_bytes: usize) -> serde_json::Value {
+    let s = serde_json::to_string(&val).unwrap_or_default();
+    if s.len() <= max_bytes { return val; }
+    let preview: String = s.chars().take(400).collect();
+    serde_json::json!({
+        "_truncated": true,
+        "_bytes": s.len(),
+        "_preview": preview,
+    })
+}
+
 /// Parse a Redis command string respecting quoted arguments.
 /// e.g. `SET key "hello world"` → ["SET", "key", "hello world"]
 fn parse_redis_args(input: &str) -> Vec<&str> {
@@ -96,7 +134,16 @@ pub async fn execute_nosql_tool(
             match conns {
                 Ok(rows) => {
                     let result: Vec<serde_json::Value> = rows.iter().map(|c| {
-                        serde_json::json!({"id": c.id, "name": c.name, "driver": c.driver, "host": c.host, "port": c.port, "database": c.database_name})
+                        serde_json::json!({
+                            "id": c.id,
+                            "name": c.name,
+                            "driver": c.driver,
+                            "host": c.host,
+                            "port": c.port,
+                            "database": c.database_name,
+                            "username": c.username,
+                            "uses_ssh_tunnel": c.ssh_profile_id.is_some(),
+                        })
                     }).collect();
                     serde_json::to_string_pretty(&result).unwrap_or_else(|_| "[]".to_string())
                 }
@@ -190,7 +237,7 @@ pub async fn execute_nosql_tool(
                                 match result {
                                     Ok(doc) => {
                                         if let Ok(val) = bson_doc_to_json(&doc) {
-                                            docs.push(val);
+                                            docs.push(cap_doc_size(val, 4096));
                                         }
                                         if docs.len() >= limit as usize {
                                             break;
@@ -273,6 +320,7 @@ pub async fn execute_nosql_tool(
             let database = input["database"].as_str().unwrap_or("");
             let collection = input["collection"].as_str().unwrap_or("");
             let pipeline_str = input["pipeline"].as_str().unwrap_or("[]");
+            let limit = input["limit"].as_i64().unwrap_or(50).min(100) as usize;
 
             if connection_id.is_empty() || database.is_empty() || collection.is_empty() {
                 return "Error: connection_id, database, and collection are required".to_string();
@@ -308,9 +356,9 @@ pub async fn execute_nosql_tool(
                                 match result {
                                     Ok(doc) => {
                                         if let Ok(val) = bson_doc_to_json(&doc) {
-                                            docs.push(val);
+                                            docs.push(cap_doc_size(val, 4096));
                                         }
-                                        if docs.len() >= 20 {
+                                        if docs.len() >= limit {
                                             break;
                                         }
                                     }
@@ -343,6 +391,7 @@ pub async fn execute_nosql_tool(
         "redis_list_keys" => {
             let connection_id = input["connection_id"].as_str().unwrap_or("");
             let pattern = input["pattern"].as_str().unwrap_or("*");
+            let limit = input["limit"].as_u64().unwrap_or(100).min(1000) as usize;
 
             if connection_id.is_empty() {
                 return "Error: connection_id is required".to_string();
@@ -353,16 +402,42 @@ pub async fn execute_nosql_tool(
                 Some(super::client::NoSqlPool::Redis(cm)) => {
                     let mut conn = cm.clone();
                     drop(guard);
-                    let keys: Vec<String> = redis::cmd("KEYS")
-                        .arg(pattern)
-                        .query_async(&mut conn)
-                        .await
-                        .unwrap_or_default();
-                    let capped: Vec<&str> = keys.iter().take(100).map(|s| s.as_str()).collect();
+
+                    let mut keys: Vec<String> = Vec::new();
+                    let mut cursor: u64 = 0;
+                    let mut iterations: u32 = 0;
+                    const MAX_ITERATIONS: u32 = 200;
+
+                    loop {
+                        let res: Result<(u64, Vec<String>), _> = redis::cmd("SCAN")
+                            .arg(cursor)
+                            .arg("MATCH")
+                            .arg(pattern)
+                            .arg("COUNT")
+                            .arg(500)
+                            .query_async(&mut conn)
+                            .await;
+
+                        match res {
+                            Ok((next_cursor, batch)) => {
+                                keys.extend(batch);
+                                cursor = next_cursor;
+                                iterations += 1;
+                                if cursor == 0 { break; }
+                                if keys.len() >= limit { break; }
+                                if iterations >= MAX_ITERATIONS { break; }
+                            }
+                            Err(e) => return format!("Error scanning keys: {}", e),
+                        }
+                    }
+
+                    let total_seen = keys.len();
+                    let capped: Vec<&str> = keys.iter().take(limit).map(|s| s.as_str()).collect();
                     let result = serde_json::json!({
-                        "count": keys.len(),
+                        "count": total_seen,
                         "keys": capped,
-                        "truncated": keys.len() > 100,
+                        "truncated": total_seen > limit || cursor != 0,
+                        "scan_complete": cursor == 0,
                     });
                     serde_json::to_string_pretty(&result).unwrap_or_else(|_| "[]".to_string())
                 }
@@ -383,6 +458,13 @@ pub async fn execute_nosql_tool(
             let parts: Vec<&str> = parse_redis_args(command_str);
             if parts.is_empty() {
                 return "Error: empty command".to_string();
+            }
+
+            if is_blocked_redis_command(parts[0]) {
+                return format!(
+                    "Error: '{}' is blocked from AI invocation because it can wipe data, change global config, or block the Redis server. If the user explicitly wants to run it, they can use the Redis console directly.",
+                    parts[0].to_ascii_uppercase()
+                );
             }
 
             let guard = nosql_conns.pools.lock().await;
@@ -440,7 +522,7 @@ pub async fn execute_nosql_tool(
                             while let Some(Ok(doc)) = cursor.next().await {
                                 if docs.len() >= 5 { break; }
                                 if let Ok(val) = bson_doc_to_json(&doc) {
-                                    docs.push(val);
+                                    docs.push(cap_doc_size(val, 4096));
                                 }
                             }
                             if docs.is_empty() {

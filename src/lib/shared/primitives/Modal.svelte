@@ -54,7 +54,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="q-modal-overlay" use:teleportToBody onclick={handleOverlayClick}>
-    <div class="q-modal" style="width: {width}">
+    <div class="q-modal modal-card" style="width: {width}">
       <div class="q-modal-hdr">
         <span class="q-modal-title">{title}</span>
         <button class="q-modal-close" onclick={close}>&times;</button>
@@ -75,8 +75,15 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.4);
-    backdrop-filter: blur(8px);
+    /* Backdrop is the dim layer behind the modal card. Keep it light
+       (0.18) so the chrome / vibrancy / wallpaper underneath still
+       reads through — the heavy blur (12px) is what visually separates
+       the modal from the page, not raw darkness. Previously 0.40 +
+       8px which made glass modals feel solid-dark on top of the
+       already-dim chrome. */
+    background: rgba(0,0,0,0.18);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     z-index: 1000;
     display: flex;
     align-items: center;
@@ -89,25 +96,16 @@
     to { opacity: 1; }
   }
 
+  /* Visual contract (bg, border, radius, shadow, glass-blur) lives
+     on `.modal-card` in app.css — applied via the root's class. This
+     rule only owns layout. */
   .q-modal {
-    background: var(--modal-bg, #101016);
-    border: 1px solid var(--b1);
-    border-radius: var(--radius-xl);
-    box-shadow: 0 24px 48px rgba(0,0,0,0.5);
     display: flex;
     flex-direction: column;
     animation: modalUp 0.18s ease;
     max-height: 85vh;
     max-width: 90vw;
     overflow: hidden;
-  }
-  /* In glass mode, layer a real macOS-style blur over the now-rgba
-     modal-bg so the modal reads as a floating glass card instead of
-     a flat translucent rectangle. Scoped to body.glass-mode so solid
-     themes don't pay the GPU cost of backdrop-filter on every modal. */
-  :global(body.glass-mode) .q-modal {
-    backdrop-filter: blur(30px) saturate(180%);
-    -webkit-backdrop-filter: blur(30px) saturate(180%);
   }
 
   @keyframes modalUp {

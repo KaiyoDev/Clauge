@@ -1,14 +1,30 @@
 import { get } from 'svelte/store';
-import { activeTabId } from '$lib/shared/stores/tabs';
-import { activeConnectionId, getSqlTabData, connections as sqlConnections, databaseTables, getLiveId, connectedIds, dbLiveConnections } from '../stores';
+import { activeTabId, tabs } from '$lib/shared/stores/tabs';
+import { getSqlTabData, connections as sqlConnections, databaseTables, connectedIds } from '../stores';
 import type { ChatContext, ContextRequest, ContextResponse, ContextEnvVar } from '$lib/types/ai';
 
 export async function gatherSqlContext(): Promise<ChatContext> {
   const tabId = get(activeTabId);
   const tabData = getSqlTabData(tabId);
-  const connId = get(activeConnectionId);
   const conns = get(sqlConnections);
-  const activeConn = conns.find((c: any) => c.id === connId);
+  const allConnected = get(connectedIds);
+
+  const sqlTab = get(tabs).find((t) => t.id === tabId && t.mode === 'sql');
+  const hasSqlTab = !!sqlTab;
+  const tabConnId = tabData.binding?.connectionId || null;
+  const tabDb = tabData.binding?.database || null;
+  const targetConn = tabConnId ? conns.find((c: any) => c.id === tabConnId) : undefined;
+
+  let targetStatus: 'ready' | 'database_unselected' | 'no_binding' | 'no_sql_tab';
+  if (!hasSqlTab) {
+    targetStatus = 'no_sql_tab';
+  } else if (!targetConn) {
+    targetStatus = 'no_binding';
+  } else if (!tabDb) {
+    targetStatus = 'database_unselected';
+  } else {
+    targetStatus = 'ready';
+  }
 
   let currentRequest: ContextRequest | null = null;
   if (tabData.query) {
@@ -43,28 +59,18 @@ export async function gatherSqlContext(): Promise<ChatContext> {
   }
 
   const envVars: ContextEnvVar[] = [];
-  if (activeConn) {
-    // Check if actually connected — don't send connection_id if disconnected
-    const isConnected = get(connectedIds).has(activeConn.id);
-    if (!isConnected) {
-      envVars.push({ key: 'connection_status', value: 'disconnected', isSecret: false });
-      envVars.push({ key: 'connection_name', value: activeConn.name, isSecret: false });
-      return { mode: 'sql', currentRequest, currentResponse, envVars };
-    }
+  envVars.push({ key: 'target_status', value: targetStatus, isSecret: false });
 
-    // Send pool key that both UI and AI use (savedId:dbName format)
-    const db = tabData.binding?.database || activeConn.databaseName || '';
-    const dbKey = `${activeConn.id}:${db}`;
-    const poolId = get(dbLiveConnections)[dbKey] || getLiveId(activeConn.id) || activeConn.id;
-    envVars.push({ key: 'connection_id', value: poolId, isSecret: false });
-    envVars.push({ key: 'saved_connection_id', value: activeConn.id, isSecret: false });
-    envVars.push({ key: 'connection_name', value: activeConn.name, isSecret: false });
-    envVars.push({ key: 'driver', value: activeConn.driver, isSecret: false });
-    envVars.push({ key: 'database', value: db, isSecret: false });
+  if (targetStatus === 'ready' && targetConn && tabDb) {
+    envVars.push({ key: 'connection_id', value: targetConn.id, isSecret: false });
+    envVars.push({ key: 'saved_connection_id', value: targetConn.id, isSecret: false });
+    envVars.push({ key: 'connection_name', value: targetConn.name, isSecret: false });
+    envVars.push({ key: 'driver', value: targetConn.driver, isSecret: false });
+    envVars.push({ key: 'database', value: tabDb, isSecret: false });
+    envVars.push({ key: 'pool_status', value: allConnected.has(targetConn.id) ? 'live' : 'idle', isSecret: false });
 
-    // Include table schema for active database so AI can write correct queries
     const tables = get(databaseTables);
-    const tableList = tables.get(`${connId}:${db}`);
+    const tableList = tables.get(`${targetConn.id}:${tabDb}`);
     if (tableList && tableList.length > 0) {
       const schema = tableList.slice(0, 30).map((t: any) => {
         const cols = (t.columns || []).map((c: any) => c.name).join(', ');
@@ -72,13 +78,19 @@ export async function gatherSqlContext(): Promise<ChatContext> {
       }).join('\n');
       envVars.push({ key: 'schema', value: schema, isSecret: false });
     }
+  } else if (targetStatus === 'database_unselected' && targetConn) {
+    envVars.push({ key: 'partial_connection_id', value: targetConn.id, isSecret: false });
+    envVars.push({ key: 'partial_connection_name', value: targetConn.name, isSecret: false });
+    envVars.push({ key: 'partial_driver', value: targetConn.driver, isSecret: false });
   }
 
-  // List other connected SQL instances so AI can target them
-  const allConnected = get(connectedIds);
-  for (const c of conns.filter((c: any) => c.id !== connId && allConnected.has(c.id)).slice(0, 3)) {
-    const otherLiveId = getLiveId(c.id) || c.id;
-    envVars.push({ key: `other_sql_connection`, value: `${c.name} (saved_id: ${c.id}, connection_id: ${otherLiveId}, driver: ${c.driver})`, isSecret: false });
+  const available = conns
+    .filter((c: any) => allConnected.has(c.id))
+    .map((c: any) => `${c.name} (saved_id=${c.id}, driver=${c.driver}, default_db=${c.databaseName})`);
+  if (available.length > 0) {
+    envVars.push({ key: 'available_connections', value: available.join('\n'), isSecret: false });
+  } else {
+    envVars.push({ key: 'available_connections', value: 'none — user has no live SQL connections', isSecret: false });
   }
 
   return { mode: 'sql', currentRequest, currentResponse, envVars };

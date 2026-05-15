@@ -23,6 +23,8 @@
   import { highlightJSON } from '$lib/shared/utils/json-highlight';
   import SshExecuteConfirmModal from '$lib/modes/ssh/components/SshExecuteConfirmModal.svelte';
   import { executeAndCaptureOnSsh } from '$lib/modes/ssh/ai/execute';
+  import { parseShell, type RenderAs } from '$lib/modes/ssh/ai/parsers';
+  import { digestForModel } from '$lib/modes/ssh/ai/digest';
   import { getSshAutoRun, setSshAutoRun, getAiPanelWidth, setAiPanelWidth } from '$lib/shared/constants/storage';
   import { aiEvent } from '$lib/shared/constants/events';
   import { COPY_FEEDBACK_MS } from '$lib/shared/constants/timings';
@@ -154,7 +156,7 @@
     sshAutoRunWarnShow = false;
   }
 
-  async function handleSshToolPending(payload: { toolUseId: string; tool: string; command: string; reason: string }) {
+  async function handleSshToolPending(payload: { toolUseId: string; tool: string; command: string; reason: string; renderAs?: string }) {
     if (payload.tool !== 'execute_shell') return;
     const profile = get(activeSshProfile);
     if (!profile) {
@@ -179,17 +181,25 @@
         return;
       }
     }
-    let captured = '';
+    let safeRaw = '';
+    let errored = false;
     try {
       const raw = await executeAndCaptureOnSsh(profile.id, payload.command);
-      captured = redactSecrets(raw);
+      safeRaw = redactSecrets(raw);
     } catch (e) {
-      captured = `[ERROR] ${e instanceof Error ? e.message : String(e)}`;
+      errored = true;
+      safeRaw = `[ERROR] ${e instanceof Error ? e.message : String(e)}`;
     }
+    const hint = (payload.renderAs ?? 'auto') as RenderAs;
+    const parsed = parseShell(safeRaw, hint);
+    const digest = errored
+      ? safeRaw
+      : (digestForModel(parsed, safeRaw) || '[INFO] Command produced no output.');
+
     try {
       await invoke('ai_resolve_pending_tool', {
         toolUseId: payload.toolUseId,
-        output: captured || '[INFO] Command produced no output.',
+        output: digest,
       });
     } catch (_) { /* swallow */ }
   }
@@ -463,7 +473,7 @@
     // Cleaned up in onDestroy below + when a new chat starts (cleanup chain).
     let _toolPendingOff: UnlistenFn | null = null;
     if (currentChatMode === 'ssh' || get(mode) === 'ssh') {
-      _toolPendingOff = await listen<{ toolUseId: string; tool: string; command: string; reason: string }>(
+      _toolPendingOff = await listen<{ toolUseId: string; tool: string; command: string; reason: string; renderAs?: string }>(
         aiEvent.toolPending(sessionId),
         (e) => { handleSshToolPending(e.payload); },
       );
@@ -477,7 +487,7 @@
       nvidia: 'nvidia/nemotron-3-super-120b-a12b',
       openrouter: 'meta-llama/llama-3.3-70b-instruct:free',
       openai_direct: 'gpt-4.1-mini',
-      gemini: 'gemini-2.5-flash',
+      gemini: 'gemini-3.1-flash-lite-preview',
     };
     const modelId = MODEL_MAP[provider] || 'claude-haiku-4-5-20251001';
 
@@ -539,60 +549,59 @@
               setActiveEnv(data.environmentId);
             });
           }
-          // SQL: apply_query — write query to the active SQL editor via store
           if (action === 'apply_query' && data.query) {
-            import('$lib/modes/sql/stores').then(({ applyAiQuery }) => {
-              if (typeof applyAiQuery === 'function') {
-                applyAiQuery(data.query);
-              }
-            }).catch(() => { /* store may not export applyAiQuery yet */ });
-          }
-          // SQL: ai_execute_sql — switch to SQL mode, ensure tab, trigger execution
-          if (action === 'ai_execute_sql' && data.query) {
             Promise.all([
               import('$lib/modes/sql/stores'),
               import('$lib/shared/stores/tabs'),
               import('$lib/stores/app'),
-            ]).then(([{ triggerAiSqlExecution }, { addTab, tabs: tabStore, activeTabId: activeTabStore }, { mode: modeStore }]) => {
-              // Switch to SQL mode
+            ]).then(([{ applyAiQuery }, { addTab, tabs: tabStore, activeTabId: activeTabStore }, { mode: modeStore }]) => {
               modeStore.set('sql');
-              // Ensure a SQL tab exists
               const currentTabs = get(tabStore);
               const sqlTab = currentTabs.find(t => t.mode === 'sql');
               if (!sqlTab) {
-                addTab('AI Query', 'sql', null, 'var(--sql)');
+                const tab = addTab('AI Query', 'sql', null, 'var(--sql)');
+                activeTabStore.set(tab.id);
               } else {
                 activeTabStore.set(sqlTab.id);
               }
-              // Trigger execution after a tick so SqlPanel mounts
+              requestAnimationFrame(() => applyAiQuery(data.query));
+            }).catch(() => { /* sql store import failed */ });
+          }
+          if (action === 'ai_execute_sql' && data.query) {
+            Promise.all([
+              import('$lib/modes/sql/stores'),
+              import('$lib/stores/app'),
+            ]).then(([{ triggerAiSqlExecution }, { mode: modeStore }]) => {
+              modeStore.set('sql');
               requestAnimationFrame(() => {
                 triggerAiSqlExecution(data.query, data.connectionId, data.database);
               });
             });
           }
-          // NoSQL: apply_nosql_query — write query to the active NoSQL editor via store
           if (action === 'apply_nosql_query' && data.query) {
-            import('$lib/modes/nosql/stores').then(({ applyAiNoSqlQuery }) => {
-              if (typeof applyAiNoSqlQuery === 'function') {
-                applyAiNoSqlQuery(data.query);
-              }
-            }).catch(() => { /* store may not export applyAiNoSqlQuery yet */ });
-          }
-          // NoSQL: ai_execute_nosql — switch to NoSQL mode, ensure tab, trigger execution
-          if (action === 'ai_execute_nosql' && data.filter) {
             Promise.all([
               import('$lib/modes/nosql/stores'),
               import('$lib/shared/stores/tabs'),
               import('$lib/stores/app'),
-            ]).then(([{ triggerAiNoSqlExecution }, { addTab, tabs: tabStore, activeTabId: activeTabStore }, { mode: modeStore }]) => {
+            ]).then(([{ applyAiNoSqlQuery }, { addTab, tabs: tabStore, activeTabId: activeTabStore }, { mode: modeStore }]) => {
               modeStore.set('nosql');
               const currentTabs = get(tabStore);
               const nosqlTab = currentTabs.find(t => t.mode === 'nosql');
               if (!nosqlTab) {
-                addTab('AI Query', 'nosql', null, 'var(--nosql)');
+                const tab = addTab('AI Query', 'nosql', null, 'var(--nosql)');
+                activeTabStore.set(tab.id);
               } else {
                 activeTabStore.set(nosqlTab.id);
               }
+              requestAnimationFrame(() => applyAiNoSqlQuery(data.query));
+            }).catch(() => { /* nosql store import failed */ });
+          }
+          if (action === 'ai_execute_nosql' && data.filter) {
+            Promise.all([
+              import('$lib/modes/nosql/stores'),
+              import('$lib/stores/app'),
+            ]).then(([{ triggerAiNoSqlExecution }, { mode: modeStore }]) => {
+              modeStore.set('nosql');
               requestAnimationFrame(() => {
                 triggerAiNoSqlExecution(data.filter, data.connectionId, data.database, data.collection);
               });
@@ -606,14 +615,27 @@
           scrollToBottom();
         },
         onError: (error) => {
-          const errLower = error.toLowerCase();
+          // Raw provider errors go to console for debugging; the chat bubble
+          // only ever shows a short, sanitised message.
+          console.error('[AI error]', error);
+          const errLower = (error || '').toLowerCase();
+          let mapped: AIMessage['error'];
           if (errLower.includes('rate limit') || errLower.includes('429') || errLower.includes('too many')) {
-            messages[lastIdx].error = { type: 'rate_limit', message: 'Rate limited. Wait a moment and try again.' };
+            mapped = { type: 'rate_limit', message: 'Rate limited. Wait a moment and try again.' };
           } else if (errLower.includes('invalid api key') || errLower.includes('401') || errLower.includes('unauthorized')) {
-            messages[lastIdx].error = { type: 'auth', message: 'Invalid API key. Check your key in Settings.' };
+            mapped = { type: 'auth', message: 'Invalid API key. Check your key in Settings.' };
+          } else if (errLower.includes('connection failed') || errLower.includes('network') || errLower.includes('timed out') || errLower.includes('timeout') || errLower.includes('econnref') || errLower.includes('dns')) {
+            mapped = { type: 'generic', message: 'Network issue. Check your connection and try again.' };
+          } else if (errLower.includes('500') || errLower.includes('502') || errLower.includes('503') || errLower.includes('504') || errLower.includes('service unavailable') || errLower.includes('internal server')) {
+            mapped = { type: 'generic', message: 'AI service is temporarily unavailable. Try again in a moment.' };
+          } else if (errLower.includes('400') || errLower.includes('422') || errLower.includes('bad request') || errLower.includes('invalid request')) {
+            mapped = { type: 'generic', message: "Couldn't process that request. Try rephrasing." };
+          } else if (errLower.includes('quota') || errLower.includes('insufficient')) {
+            mapped = { type: 'generic', message: 'API quota exceeded. Check your account.' };
           } else {
-            messages[lastIdx].error = { type: 'generic', message: error };
+            mapped = { type: 'generic', message: 'Something went wrong. Try again.' };
           }
+          messages[lastIdx].error = mapped;
           messages[lastIdx].isStreaming = false;
           isStreaming = false;
           scrollToBottom();

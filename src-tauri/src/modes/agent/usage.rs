@@ -1886,21 +1886,16 @@ fn empty_analytics() -> UsageAnalytics {
 /// which we accept as "best-effort estimate".
 fn gemini_price_for_model(model: &str) -> (f64, f64, f64) {
     let m = model.to_ascii_lowercase();
-    // Gemini 3 family (Dec 2026)
-    if m.contains("gemini-3-pro") { (1.25, 10.0, 0.31) }
-    else if m.contains("gemini-3-flash") { (0.30, 2.50, 0.075) }
-    else if m.contains("gemini-3") { (0.30, 2.50, 0.075) }
-    // Gemini 2.5 family
-    else if m.contains("gemini-2.5-pro") { (1.25, 5.00, 0.31) }
-    else if m.contains("gemini-2.5-flash-lite") { (0.10, 0.40, 0.025) }
-    else if m.contains("gemini-2.5-flash") { (0.30, 2.50, 0.075) }
-    // Gemini 2.0 family
-    else if m.contains("gemini-2.0-flash-lite") { (0.075, 0.30, 0.0) }
-    else if m.contains("gemini-2.0-flash") { (0.10, 0.40, 0.025) }
-    // Gemini 1.5 family (legacy, still parseable in older sessions)
-    else if m.contains("gemini-1.5-pro") { (1.25, 5.00, 0.3125) }
-    else if m.contains("gemini-1.5-flash") { (0.075, 0.30, 0.01875) }
-    else { (0.30, 2.50, 0.075) }
+    // Gemini 3 family (Dec 2025 / Mar 2026). Cached read = 10% of input (Google docs).
+    if m.contains("gemini-3.1-pro") { (2.00, 12.00, 0.20) }
+    else if m.contains("gemini-3.1-flash-lite") { (0.25, 1.50, 0.025) }
+    else if m.contains("gemini-3-flash") { (0.50, 3.00, 0.05) }
+    else if m.contains("gemini-3") { (0.50, 3.00, 0.05) }
+    // Gemini 2.5 family. 2.5 Pro output corrected to $10 (was $5 — stale).
+    else if m.contains("gemini-2.5-pro") { (1.25, 10.00, 0.20) }
+    else if m.contains("gemini-2.5-flash-lite") { (0.10, 0.40, 0.01) }
+    else if m.contains("gemini-2.5-flash") { (0.30, 2.50, 0.03) }
+    else { (0.30, 2.50, 0.03) }
 }
 
 /// Iterate a Gemini session file regardless of JSON vs JSONL shape.

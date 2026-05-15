@@ -45,7 +45,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="wn-overlay" onclick={handleOverlayClick}>
-    <div class="wn-modal">
+    <div class="wn-modal modal-card">
       {#if $updateAvailable}
         <div class="wn-hdr">
           <span class="wn-title">Update Available — v{$updateAvailable.version}</span>
@@ -94,10 +94,6 @@
   }
 
   .wn-modal {
-    background: var(--modal-bg, #101016);
-    border: 1px solid var(--b1);
-    border-radius: var(--radius-xl, 12px);
-    box-shadow: 0 24px 48px rgba(0,0,0,0.5);
     width: 480px;
     max-height: 70vh;
     display: flex;

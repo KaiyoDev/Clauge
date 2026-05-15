@@ -652,7 +652,7 @@
             "gpt-4.1-mini": "GPT-4.1 Mini",
             "nvidia/nemotron-3-super-120b-a12b": "Nemotron 3 Super 120B",
             "meta-llama/llama-3.3-70b-instruct:free": "Llama 3.3 70B",
-            "gemini-2.5-flash": "Gemini 2.5 Flash",
+            "gemini-3.1-flash-lite-preview": "Gemini 3.1 Flash-Lite",
             "qwen/qwen3-32b": "Qwen3 32B",
         };
         return names[model] || model;

@@ -8,10 +8,42 @@ import { isMac } from '$lib/utils/platform';
 
 export function setupGlobalShortcuts() {
   document.addEventListener('keydown', handleKeydown);
+  // Windows / Linux WebView2 / WebKitGTK honour ctrl+wheel and
+  // ctrl+plus/minus as page-zoom gestures (also how precision-touchpad
+  // pinch zooms surface). macOS doesn't surface pinch as ctrlKey here,
+  // and users haven't asked to disable it there — keep this gated.
+  if (!isMac()) {
+    window.addEventListener('wheel', blockCtrlWheel, { passive: false, capture: true });
+    document.addEventListener('keydown', blockCtrlZoomKeys, { capture: true });
+  }
 }
 
 export function teardownGlobalShortcuts() {
   document.removeEventListener('keydown', handleKeydown);
+  if (!isMac()) {
+    window.removeEventListener('wheel', blockCtrlWheel, { capture: true } as EventListenerOptions);
+    document.removeEventListener('keydown', blockCtrlZoomKeys, { capture: true } as EventListenerOptions);
+  }
+}
+
+/// Capture-phase wheel block: swallow the event before it bubbles to
+/// the WebView's built-in zoom logic. `passive: false` is required so
+/// `preventDefault()` actually takes effect.
+function blockCtrlWheel(e: WheelEvent) {
+  if (e.ctrlKey) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}
+
+/// Block Ctrl+0 / Ctrl+= / Ctrl++ / Ctrl+- which trigger zoom in
+/// WebView2 + WebKitGTK regardless of Tauri's zoomHotkeysEnabled flag.
+function blockCtrlZoomKeys(e: KeyboardEvent) {
+  if (!e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+  if (e.key === '0' || e.key === '=' || e.key === '+' || e.key === '-' || e.key === '_') {
+    e.preventDefault();
+    e.stopPropagation();
+  }
 }
 
 function handleKeydown(e: KeyboardEvent) {

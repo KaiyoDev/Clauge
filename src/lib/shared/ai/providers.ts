@@ -190,10 +190,10 @@ export const PROVIDERS: ProviderConfig[] = [
   },
   {
     providerId: 'gemini',
-    modelId: 'gemini-2.5-flash',
-    displayName: 'Gemini 2.5 Flash',
+    modelId: 'gemini-3.1-flash-lite-preview',
+    displayName: 'Gemini 3.1 Flash-Lite',
     providerLabel: 'Google Gemini',
-    modelLabel: 'Gemini 2.5 Flash',
+    modelLabel: 'Gemini 3.1 Flash-Lite',
     apiUrl: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     apiKind: 'openAICompat',
     maxInputTokens: 1_000_000,

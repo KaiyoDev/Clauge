@@ -212,10 +212,22 @@ pub async fn stream_openai(
         let mut lines = tokio::io::BufReader::new(stream_reader).lines();
 
         let mut current_text = String::new();
-        let mut current_tool_name = String::new();
-        let mut current_tool_id = String::new();
-        let mut current_tool_json = String::new();
-        let mut tool_calls_collected: Vec<(String, String, String)> = Vec::new(); // (id, name, args)
+        // Index-keyed accumulators. Gemini's OpenAI-compat layer streams the
+        // function name in one chunk, arguments across several, and the
+        // thought_signature in a separate (often final, often empty-text)
+        // chunk under `extra_content`. Tracking by `index` lets us merge
+        // these out-of-order pieces correctly across providers.
+        #[derive(Default, Clone)]
+        struct ToolAccum {
+            id: String,
+            name: String,
+            args: String,
+            thought_sig: Option<String>,
+            announced: bool,
+        }
+        let mut tool_calls_by_idx: std::collections::BTreeMap<i64, ToolAccum> = std::collections::BTreeMap::new();
+        let mut last_tool_idx: i64 = -1;
+        let mut logged_sample_delta = false;
         let mut finish_reason = String::new();
 
         while let Some(line) = lines.next_line().await.map_err(|e| e.to_string())? {
@@ -248,28 +260,60 @@ pub async fn stream_openai(
                 }
             }
 
-            // Tool calls
+            // Tool calls — merge by index across SSE chunks.
             if let Some(tool_calls) = delta["tool_calls"].as_array() {
+                if !logged_sample_delta {
+                    log::info!("[AI OpenAI] sample tool_call delta: {}", serde_json::to_string(tool_calls).unwrap_or_default());
+                    logged_sample_delta = true;
+                }
                 for tc in tool_calls {
+                    let idx = tc["index"].as_i64().unwrap_or_else(|| if last_tool_idx < 0 { 0 } else { last_tool_idx });
+                    last_tool_idx = idx;
+                    let entry = tool_calls_by_idx.entry(idx).or_default();
+
+                    if let Some(id) = tc["id"].as_str() {
+                        if !id.is_empty() && entry.id.is_empty() { entry.id = id.to_string(); }
+                    }
                     if let Some(name) = tc["function"]["name"].as_str() {
-                        // Finalize previous tool call if any
-                        if !current_tool_name.is_empty() {
-                            tool_calls_collected.push((
-                                current_tool_id.clone(),
-                                current_tool_name.clone(),
-                                current_tool_json.clone(),
-                            ));
+                        if !name.is_empty() && entry.name.is_empty() {
+                            entry.name = name.to_string();
                         }
-                        current_tool_name = name.to_string();
-                        current_tool_id = tc["id"].as_str().unwrap_or("").to_string();
-                        current_tool_json.clear();
+                    }
+                    if !entry.announced && !entry.name.is_empty() {
                         let _ = app.emit(
                             &format!("ai:tool_start:{}", session_id),
-                            serde_json::json!({"toolName": current_tool_name}),
+                            serde_json::json!({"toolName": entry.name}),
                         );
+                        entry.announced = true;
                     }
                     if let Some(args) = tc["function"]["arguments"].as_str() {
-                        current_tool_json.push_str(args);
+                        entry.args.push_str(args);
+                    }
+                    if entry.thought_sig.is_none() {
+                        let sig = tc["extra_content"]["google"]["thought_signature"].as_str()
+                            .or_else(|| tc["extra_content"]["thought_signature"].as_str())
+                            .or_else(|| tc["function"]["extra_content"]["thought_signature"].as_str())
+                            .or_else(|| tc["function"]["extra_content"]["google"]["thought_signature"].as_str())
+                            .or_else(|| tc["thought_signature"].as_str())
+                            .or_else(|| tc["function"]["thought_signature"].as_str());
+                        if let Some(s) = sig {
+                            entry.thought_sig = Some(s.to_string());
+                        }
+                    }
+                }
+            }
+
+            // Gemini sometimes streams the thought_signature on a separate
+            // delta with empty text content. Attach to most-recent tool call.
+            if last_tool_idx >= 0 {
+                let delta_sig = delta["extra_content"]["google"]["thought_signature"].as_str()
+                    .or_else(|| delta["extra_content"]["thought_signature"].as_str())
+                    .or_else(|| delta["thought_signature"].as_str());
+                if let Some(s) = delta_sig {
+                    if let Some(entry) = tool_calls_by_idx.get_mut(&last_tool_idx) {
+                        if entry.thought_sig.is_none() {
+                            entry.thought_sig = Some(s.to_string());
+                        }
                     }
                 }
             }
@@ -301,29 +345,40 @@ pub async fn stream_openai(
             }
         }
 
-        // Finalize last tool call if any
-        if !current_tool_name.is_empty() {
-            tool_calls_collected.push((
-                current_tool_id.clone(),
-                current_tool_name.clone(),
-                current_tool_json.clone(),
-            ));
-        }
+        let tool_calls_collected: Vec<(String, String, String, Option<String>)> = tool_calls_by_idx
+            .into_values()
+            .filter(|a| !a.name.is_empty())
+            .map(|a| (a.id, a.name, a.args, a.thought_sig))
+            .collect();
+        let sigs_captured = tool_calls_collected.iter().filter(|(_, _, _, s)| s.is_some()).count();
 
-        log::info!("[AI OpenAI] finish_reason=\"{}\" tool_calls_count={} text_len={}", finish_reason, tool_calls_collected.len(), current_text.len());
-        if finish_reason == "tool_calls" && !tool_calls_collected.is_empty() {
-            // Build assistant message with tool_calls
+        log::info!(
+            "[AI OpenAI] finish_reason=\"{}\" tool_calls_count={} thought_sigs={} text_len={}",
+            finish_reason, tool_calls_collected.len(), sigs_captured, current_text.len()
+        );
+        // Gemini's OpenAI-compat endpoint reports finish_reason="stop" even when
+        // the response includes tool_calls. OpenAI uses "tool_calls". Presence
+        // of tool_calls is the canonical signal — finish_reason is unreliable.
+        if !tool_calls_collected.is_empty() {
+            // Echo each tool_call back exactly as received. Gemini 3.x rejects
+            // requests where prior function calls lack `extra_content.google.thought_signature`.
             let assistant_tool_calls: Vec<serde_json::Value> = tool_calls_collected
                 .iter()
-                .map(|(id, name, args)| {
-                    serde_json::json!({
+                .map(|(id, name, args, sig)| {
+                    let mut tc = serde_json::json!({
                         "id": id,
                         "type": "function",
                         "function": {
                             "name": name,
                             "arguments": args,
                         }
-                    })
+                    });
+                    if let Some(s) = sig {
+                        tc["extra_content"] = serde_json::json!({
+                            "google": { "thought_signature": s }
+                        });
+                    }
+                    tc
                 })
                 .collect();
 
@@ -336,7 +391,7 @@ pub async fn stream_openai(
             conversation_msgs.push(assistant_msg);
 
             // Execute each tool and add results
-            for (id, name, args_str) in &tool_calls_collected {
+            for (id, name, args_str, _sig) in &tool_calls_collected {
                 let tool_input: serde_json::Value =
                     serde_json::from_str(args_str).unwrap_or(serde_json::json!({}));
 
@@ -368,11 +423,6 @@ pub async fn stream_openai(
                 full_msgs.push(tool_msg.clone());
                 conversation_msgs.push(tool_msg);
             }
-
-            tool_calls_collected.clear();
-            current_tool_name.clear();
-            current_tool_id.clear();
-            current_tool_json.clear();
 
             tool_rounds += 1;
             if tool_rounds >= MAX_TOOL_ROUNDS {

@@ -90,11 +90,12 @@ const themes: Record<string, Theme> = {
     textSecondary: '#d0d0e4',
     textMuted: '#bcbcd5',
     textFaint: '#8a8ab2',
-    // Modals on glass theme keep enough alpha (0.78) for crisp text
-    // legibility while still letting the vibrancy underneath read
-    // through. The Modal primitive layers a backdrop-filter on top of
-    // this for the native macOS glass-card look — see Modal.svelte.
-    modalBg: 'rgba(26,26,44,0.78)',
+    // Modals on glass theme: low alpha (0.50) so the vibrancy / wallpaper
+    // reads through clearly. `.modal-card` adds backdrop-filter blur on
+    // top — the combination gives a native macOS glass-card look. Text
+    // legibility comes from --t* foreground variables which are at full
+    // alpha, not from a heavy modal background.
+    modalBg: 'rgba(26,26,44,0.50)',
     ok: '#1dc880',
     warn: '#f5a623',
     err: '#f04444',

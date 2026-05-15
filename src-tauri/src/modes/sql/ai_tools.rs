@@ -5,6 +5,305 @@ use tauri::{AppHandle, Emitter};
 use crate::shared::ai::types::ChatContext;
 use crate::modes::sql::client::SqlConnectionManager;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum SqlErrKind {
+    Transient,
+    SchemaColumn,
+    SchemaTable,
+    Permission,
+    Syntax,
+    ConnectionDropped,
+    Other,
+}
+
+fn classify_sql_error(raw: &str) -> SqlErrKind {
+    let lower = raw.to_lowercase();
+    let transient_signals = [
+        "retry in a moment",
+        "try again",
+        "internal error",
+        "timeout",
+        "timed out",
+        "deadlock detected",
+        "temporary failure",
+        "503",
+        "502",
+        "504",
+        "too many connections",
+        "service unavailable",
+    ];
+    if transient_signals.iter().any(|s| lower.contains(s)) {
+        return SqlErrKind::Transient;
+    }
+    let dne = lower.contains("does not exist") || lower.contains("doesn't exist") || lower.contains("no such");
+    if dne && lower.contains("column") { return SqlErrKind::SchemaColumn; }
+    if dne && (lower.contains("relation") || lower.contains("table")) { return SqlErrKind::SchemaTable; }
+    if lower.contains("permission denied") || lower.contains("not authorized") || lower.contains("access denied") {
+        return SqlErrKind::Permission;
+    }
+    if lower.contains("syntax error") { return SqlErrKind::Syntax; }
+    if lower.contains("connection")
+        && (lower.contains("refused") || lower.contains("closed") || lower.contains("reset") || lower.contains("broken pipe"))
+    {
+        return SqlErrKind::ConnectionDropped;
+    }
+    SqlErrKind::Other
+}
+
+/// Best-effort fuzzy match: returns at most 5 candidates ordered by a
+/// crude similarity score. Used to suggest "did you mean" alternatives
+/// without pulling in a Levenshtein crate.
+fn similar_names(target: &str, candidates: &[String], limit: usize) -> Vec<String> {
+    let t = target.to_lowercase();
+    let mut scored: Vec<(i32, &String)> = candidates.iter().map(|c| {
+        let cl = c.to_lowercase();
+        let mut score = 0;
+        if cl == t { score += 1000; }
+        if cl.contains(&t) || t.contains(&cl) { score += 200; }
+        let common: usize = t.chars().filter(|ch| cl.contains(*ch)).count();
+        score += (common as i32) * 5;
+        if cl.starts_with(t.chars().next().unwrap_or('_')) { score += 30; }
+        (score, c)
+    }).collect();
+    scored.sort_by(|a, b| b.0.cmp(&a.0));
+    scored.into_iter().filter(|(s, _)| *s > 0).take(limit).map(|(_, c)| c.clone()).collect()
+}
+
+/// Extract identifier targets following FROM/JOIN/INTO/UPDATE in a SQL string.
+/// Strips quoting and schema prefix. Imperfect but covers the common shapes.
+fn extract_query_tables(query: &str) -> Vec<String> {
+    let bytes = query.as_bytes();
+    let upper: Vec<u8> = bytes.iter().map(|b| b.to_ascii_uppercase()).collect();
+    let keywords: &[&[u8]] = &[b"FROM ", b"JOIN ", b"INTO ", b"UPDATE "];
+    let mut out: Vec<String> = Vec::new();
+    let mut i = 0usize;
+    while i < upper.len() {
+        let mut matched: Option<usize> = None;
+        for kw in keywords {
+            if upper[i..].starts_with(kw) { matched = Some(kw.len()); break; }
+        }
+        if let Some(kw_len) = matched {
+            let mut j = i + kw_len;
+            while j < bytes.len() && (bytes[j] == b' ' || bytes[j] == b'\t' || bytes[j] == b'\n') { j += 1; }
+            while j < bytes.len() && matches!(bytes[j], b'"' | b'`' | b'\'' | b'[') { j += 1; }
+            let start = j;
+            while j < bytes.len() && (bytes[j].is_ascii_alphanumeric() || bytes[j] == b'_' || bytes[j] == b'.') {
+                j += 1;
+            }
+            if j > start {
+                let raw_name = std::str::from_utf8(&bytes[start..j]).unwrap_or("");
+                let name = raw_name.rsplit_once('.').map(|(_, n)| n.to_string()).unwrap_or_else(|| raw_name.to_string());
+                if !name.is_empty() && !out.contains(&name) { out.push(name); }
+            }
+            i = j;
+        } else {
+            i += 1;
+        }
+    }
+    out
+}
+
+async fn fetch_table_list(
+    pool_entry: &crate::modes::sql::client::DatabasePool,
+    database: &str,
+) -> Vec<String> {
+    use crate::modes::sql::client::DatabasePool;
+    match pool_entry {
+        DatabasePool::Postgres(p) => {
+            sqlx::query_scalar::<_, String>(
+                "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name LIMIT 200"
+            ).fetch_all(p).await.unwrap_or_default()
+        }
+        DatabasePool::MySql(p) => {
+            if database.is_empty() {
+                sqlx::query_scalar::<_, String>(
+                    "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY table_name LIMIT 200"
+                ).fetch_all(p).await.unwrap_or_default()
+            } else {
+                sqlx::query_scalar::<_, String>(
+                    "SELECT table_name FROM information_schema.tables WHERE table_schema = ? ORDER BY table_name LIMIT 200"
+                ).bind(database).fetch_all(p).await.unwrap_or_default()
+            }
+        }
+        DatabasePool::Sqlite(p) => {
+            sqlx::query_scalar::<_, String>(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name LIMIT 200"
+            ).fetch_all(p).await.unwrap_or_default()
+        }
+        DatabasePool::Clickhouse(c) => {
+            match c.query("SELECT name FROM system.tables WHERE database = currentDatabase() ORDER BY name LIMIT 200").await {
+                Ok(r) => r.rows.into_iter().filter_map(|row| row.first().and_then(|v| v.as_str().map(|s| s.to_string()))).collect(),
+                Err(_) => Vec::new(),
+            }
+        }
+        DatabasePool::D1(c) => {
+            match c.query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name LIMIT 200").await {
+                Ok(r) => r.rows.into_iter().filter_map(|row| row.first().and_then(|v| v.as_str().map(|s| s.to_string()))).collect(),
+                Err(_) => Vec::new(),
+            }
+        }
+    }
+}
+
+async fn fetch_columns_for_table(
+    pool_entry: &crate::modes::sql::client::DatabasePool,
+    database: &str,
+    table: &str,
+) -> Vec<String> {
+    use crate::modes::sql::client::DatabasePool;
+    match pool_entry {
+        DatabasePool::Postgres(p) => {
+            sqlx::query_scalar::<_, String>(
+                "SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 ORDER BY ordinal_position"
+            ).bind(table).fetch_all(p).await.unwrap_or_default()
+        }
+        DatabasePool::MySql(p) => {
+            if database.is_empty() {
+                sqlx::query_scalar::<_, String>(
+                    "SELECT column_name FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? ORDER BY ordinal_position"
+                ).bind(table).fetch_all(p).await.unwrap_or_default()
+            } else {
+                sqlx::query_scalar::<_, String>(
+                    "SELECT column_name FROM information_schema.columns WHERE table_schema = ? AND table_name = ? ORDER BY ordinal_position"
+                ).bind(database).bind(table).fetch_all(p).await.unwrap_or_default()
+            }
+        }
+        DatabasePool::Sqlite(p) => {
+            use sqlx::Row;
+            sqlx::query(&format!("PRAGMA table_info({})", table))
+                .fetch_all(p).await
+                .map(|rows| rows.iter().filter_map(|r| r.try_get::<String, _>("name").ok()).collect())
+                .unwrap_or_default()
+        }
+        DatabasePool::Clickhouse(c) => {
+            let q = format!("SELECT name FROM system.columns WHERE database = currentDatabase() AND table = '{}' ORDER BY position", table.replace('\'', "''"));
+            match c.query(&q).await {
+                Ok(r) => r.rows.into_iter().filter_map(|row| row.first().and_then(|v| v.as_str().map(|s| s.to_string()))).collect(),
+                Err(_) => Vec::new(),
+            }
+        }
+        DatabasePool::D1(c) => {
+            let q = format!("PRAGMA table_info({})", table);
+            match c.query(&q).await {
+                Ok(r) => {
+                    let name_idx = r.columns.iter().position(|n| n.eq_ignore_ascii_case("name"));
+                    if let Some(idx) = name_idx {
+                        r.rows.into_iter().filter_map(|row| row.get(idx).and_then(|v| v.as_str().map(|s| s.to_string()))).collect()
+                    } else { Vec::new() }
+                }
+                Err(_) => Vec::new(),
+            }
+        }
+    }
+}
+
+/// Pull the offending identifier ("name", "users") out of a database error,
+/// best effort across common driver formats.
+fn extract_offending_name(raw: &str) -> Option<String> {
+    let pats: &[&str] = &[
+        "column \"", "column '", "column `",
+        "relation \"", "relation '",
+        "table \"", "table '",
+        "no such column: ", "no such table: ",
+        "Unknown column '", "Unknown table '",
+        "Missing columns: '",
+    ];
+    for p in pats {
+        if let Some(start) = raw.find(p) {
+            let after = &raw[start + p.len()..];
+            let end = after.find(|c: char| c == '"' || c == '\'' || c == '`' || c == ' ' || c == ',' || c == ')').unwrap_or(after.len());
+            let name = after[..end].trim().to_string();
+            if !name.is_empty() { return Some(name); }
+        }
+    }
+    None
+}
+
+/// Run schema discovery on a column/table error and produce a hint block
+/// the model can use to either fix the query or ask a clarifying question.
+async fn build_schema_hint(
+    raw_err: &str,
+    kind: SqlErrKind,
+    pool_entry: &crate::modes::sql::client::DatabasePool,
+    database: &str,
+    query: &str,
+) -> String {
+    let mut out = String::new();
+    let offender = extract_offending_name(raw_err);
+    let query_tables = extract_query_tables(query);
+    let all_tables = fetch_table_list(pool_entry, database).await;
+
+    if kind == SqlErrKind::SchemaTable {
+        if !all_tables.is_empty() {
+            out.push_str("\n\nAvailable tables in this database: ");
+            out.push_str(&all_tables.join(", "));
+        }
+        if let Some(name) = &offender {
+            let suggestions = similar_names(name, &all_tables, 3);
+            if !suggestions.is_empty() {
+                out.push_str(&format!("\nClosest matches to '{}': {}", name, suggestions.join(", ")));
+            }
+        }
+    } else if kind == SqlErrKind::SchemaColumn {
+        let candidate_tables: Vec<String> = if !query_tables.is_empty() {
+            query_tables.iter().filter(|t| all_tables.iter().any(|a| a.eq_ignore_ascii_case(t))).cloned().collect()
+        } else { Vec::new() };
+        for t in &candidate_tables {
+            let cols = fetch_columns_for_table(pool_entry, database, t).await;
+            if !cols.is_empty() {
+                out.push_str(&format!("\n\nColumns of '{}': {}", t, cols.join(", ")));
+                if let Some(name) = &offender {
+                    let suggestions = similar_names(name, &cols, 3);
+                    if !suggestions.is_empty() {
+                        out.push_str(&format!("\nClosest matches to '{}' in '{}': {}", name, t, suggestions.join(", ")));
+                    }
+                }
+            }
+        }
+        if candidate_tables.is_empty() && !all_tables.is_empty() {
+            out.push_str("\n\nAvailable tables in this database: ");
+            out.push_str(&all_tables.join(", "));
+        }
+    }
+    out
+}
+
+/// Rewrites a sqlx/ClickHouse/D1 error into a message that tells the model
+/// exactly what to do next, by category. Transient errors are not reached
+/// here unless retries have already been exhausted in execute_query.
+fn diagnose_query_error(raw: &str) -> String {
+    match classify_sql_error(raw) {
+        SqlErrKind::Transient => format!(
+            "Database still unreachable after 4 automatic retries (~9s of waiting with exponential backoff). Driver said:\n```\n{}\n```\nThis pattern usually means a Cloudflare D1 cold-start or a brief regional outage — the database itself isn't broken. Tell the user to retry in 15–30 seconds. Show the raw error verbatim. Do not call execute_query again immediately.",
+            raw
+        ),
+        SqlErrKind::SchemaColumn => format!(
+            "Query failed. Database said:\n```\n{}\n```\nNEXT ACTION (required): call describe_table on the referenced table, find the real column name, and rewrite the query. Do not retry the same query. Quote the raw error above to the user verbatim.",
+            raw
+        ),
+        SqlErrKind::SchemaTable => format!(
+            "Query failed. Database said:\n```\n{}\n```\nNEXT ACTION (required): call list_tables, find the closest real table name, and rewrite the query. Do not retry the same query. Quote the raw error above to the user verbatim.",
+            raw
+        ),
+        SqlErrKind::Permission => format!(
+            "Query failed. Database said:\n```\n{}\n```\nTell the user their database role lacks the required permission. Do not retry. Quote the raw error verbatim.",
+            raw
+        ),
+        SqlErrKind::Syntax => format!(
+            "Query failed. Database said:\n```\n{}\n```\nRewrite the query fixing the syntax issue highlighted above. Quote the raw error to the user verbatim before retrying.",
+            raw
+        ),
+        SqlErrKind::ConnectionDropped => format!(
+            "Connection failed mid-query. Driver said:\n```\n{}\n```\nTell the user the connection dropped and to reconnect via the SQL Connections panel. Do not retry from your side — the pool needs to be reopened.",
+            raw
+        ),
+        SqlErrKind::Other => format!(
+            "Query failed. Database said:\n```\n{}\n```\nQuote the raw error above to the user verbatim. Do not paraphrase as 'internal error'.",
+            raw
+        ),
+    }
+}
+
 /// Ensure a database pool exists for the given connection_id + database combo.
 /// Extracts saved_connection_id from context env_vars to build stable cache keys.
 /// Cache key format: "savedId:dbName" — same as frontend's connectToDatabase.
@@ -15,39 +314,60 @@ async fn ensure_pool(
     pool: &SqlitePool,
     sql_manager: &Arc<SqlConnectionManager>,
 ) -> Result<String, String> {
-    // Extract saved_connection_id from context — needed to build stable cache keys
     let saved_from_ctx = context.env_vars.iter()
         .find(|v| v.key == "saved_connection_id")
-        .map(|v| v.value.as_str());
-    let saved_id = saved_from_ctx.unwrap_or(connection_id);
+        .map(|v| v.value.to_string());
 
-    // Build a stable cache key: "savedId:dbName"
-    let cache_key = match database {
-        Some(db) if !db.is_empty() => format!("{}:{}", saved_id, db),
-        _ => saved_id.to_string(),
+    // The AI may send the saved row id ("abc"), a pool key ("abc:mydb"), or
+    // something stale. Derive a real saved_id from whichever shape we got,
+    // preferring context when present.
+    let (input_saved_id, input_pool_key) = match connection_id.split_once(':') {
+        Some((s, _)) => (s.to_string(), Some(connection_id.to_string())),
+        None => (connection_id.to_string(), None),
     };
+    let saved_id = saved_from_ctx.unwrap_or(input_saved_id);
 
-    // Check if pool already exists under the stable key
+    let db_str = database.map(|s| s.to_string()).filter(|s| !s.is_empty());
+    let cache_key_with_db = db_str.as_ref().map(|db| format!("{}:{}", saved_id, db));
+
+    log::info!(
+        "[AI SQL] ensure_pool input: connection_id={} database={:?} → saved_id={} cache_key={:?} pool_key_hint={:?}",
+        connection_id, database, saved_id, cache_key_with_db, input_pool_key
+    );
+
+    // Try every reasonable key against the live pool map BEFORE deciding to
+    // auto-connect. Order: exact `saved_id:db`, then `connection_id` verbatim
+    // (in case the AI passed an already-built pool key), then any pool whose
+    // key starts with `saved_id:` (matches any open db for this connection).
     {
         let connections = sql_manager.connections.lock().await;
-        if connections.contains_key(&cache_key) {
-            return Ok(cache_key);
+        let keys: Vec<&String> = connections.keys().collect();
+        log::info!("[AI SQL] ensure_pool pool map keys ({}): {:?}", keys.len(), keys);
+
+        if let Some(ck) = &cache_key_with_db {
+            if connections.contains_key(ck) {
+                return Ok(ck.clone());
+            }
         }
-        // Also check bare connection_id (instance pool created by frontend sql_connect)
-        // BUT only if no specific database was requested — otherwise we'd return
-        // the wrong-DB pool
-        if database.map_or(true, |db| db.is_empty()) && connections.contains_key(connection_id) {
+        if connections.contains_key(connection_id) {
             return Ok(connection_id.to_string());
+        }
+        let prefix = format!("{}:", saved_id);
+        if let Some(any) = keys.iter().find(|k| k.starts_with(&prefix)) {
+            let chosen = (*any).clone();
+            log::info!("[AI SQL] ensure_pool prefix-match: {} from {}", chosen, prefix);
+            return Ok(chosen);
         }
     }
 
-    // Pool not found — try to auto-connect using saved connection config
-    let saved = crate::shared::repos::sql_connections::get_by_id_optional(pool, saved_id)
+    // No live pool found — try to auto-connect from saved record.
+    let saved = crate::shared::repos::sql_connections::get_by_id_optional(pool, &saved_id)
         .await
-        .map_err(|e| format!("DB error: {}", e))?;
+        .map_err(|e| format!("DB error looking up saved connection '{}': {}", saved_id, e))?;
 
     if let Some(saved) = saved {
-        let target_db = database.unwrap_or(&saved.database_name);
+        let target_db = db_str.clone().unwrap_or_else(|| saved.database_name.clone());
+        let final_key = format!("{}:{}", saved.id, target_db);
         let host = saved.host.clone();
         let port = saved.port;
         let config = crate::modes::sql::client::SqlConnectionConfig {
@@ -55,36 +375,39 @@ async fn ensure_pool(
             driver: saved.driver,
             host: saved.host,
             port: saved.port as u16,
-            database: target_db.to_string(),
+            database: target_db.clone(),
             username: saved.username,
             password: saved.password,
             ssl: saved.ssl == 1,
-            // Forward the tunnel selection so AI auto-connect honours it.
             ssh_profile_id: saved.ssh_profile_id,
         };
 
-        // Pass the app pool so saved connections with `ssh_profile_id` can
-        // open their tunnel. Connections without a tunnel take the same
-        // legacy path as before — same URLs, same drivers.
         let (new_pool, tunnel) = crate::modes::sql::client::create_pool_with_tunnel(&config, Some(pool)).await
-            .map_err(|e| format!("Auto-connect failed for {}:{}/{}: {}", host, port, target_db, e))?;
+            .map_err(|e| format!(
+                "Auto-connect failed for {}:{}/{}. Driver said:\n```\n{}\n```\nNEXT ACTION: Tell the user the database is not reachable (server may be down, network blocked, or credentials invalid). Do not retry. Show the raw error verbatim.",
+                host, port, target_db, e
+            ))?;
 
-        // Store under stable key so subsequent calls reuse the same pool
         let mut conns = sql_manager.connections.lock().await;
-        if conns.contains_key(&cache_key) {
-            // Race: another caller beat us to it. Drop our extra pool and
-            // tunnel; the existing entry wins.
+        if conns.contains_key(&final_key) {
             drop(tunnel);
-            return Ok(cache_key);
+            return Ok(final_key);
         }
-        conns.insert(cache_key.clone(), new_pool);
+        conns.insert(final_key.clone(), new_pool);
         if let Some(t) = tunnel {
-            sql_manager.tunnels.lock().await.insert(cache_key.clone(), t);
+            sql_manager.tunnels.lock().await.insert(final_key.clone(), t);
         }
-        log::info!("[AI SQL] Auto-connected to {}:{}/{} as pool {}", host, port, target_db, cache_key);
-        Ok(cache_key)
+        log::info!("[AI SQL] Auto-connected to {}:{}/{} as pool {}", host, port, target_db, final_key);
+        Ok(final_key)
     } else {
-        Err(format!("Connection '{}' not found in active pools or saved connections.", connection_id))
+        let keys_snapshot: Vec<String> = {
+            let conns = sql_manager.connections.lock().await;
+            conns.keys().cloned().collect()
+        };
+        Err(format!(
+            "No saved connection found for id '{}' (resolved saved_id='{}', database={:?}). Pool map currently has: {:?}.\nNEXT ACTION: Tell the user that the connection_id sent by the AI does not correspond to any saved record. Likely causes: (a) the saved connection was deleted, (b) chat context has a stale connection_id from a prior session, (c) the active connection has not been used yet (try one manual query first to warm the pool). Do not retry.",
+            connection_id, saved_id, database, keys_snapshot
+        ))
     }
 }
 
@@ -613,8 +936,13 @@ pub async fn execute_sql_tool(
             use crate::modes::sql::client::DatabasePool;
             use sqlx::{Column, Row};
 
+            let is_clickhouse = matches!(pool_entry, DatabasePool::Clickhouse(_));
+
             let start = std::time::Instant::now();
-            let result: Result<(Vec<String>, Vec<Vec<serde_json::Value>>), String> = match pool_entry {
+            let mut attempt: u32 = 0;
+            let result: Result<(Vec<String>, Vec<Vec<serde_json::Value>>), String> = loop {
+                attempt += 1;
+                let outcome: Result<(Vec<String>, Vec<Vec<serde_json::Value>>), String> = match pool_entry {
                 DatabasePool::Postgres(p) => {
                     sqlx::query(query)
                         .fetch_all(p)
@@ -748,6 +1076,16 @@ pub async fn execute_sql_tool(
                 DatabasePool::D1(c) => {
                     c.query(query).await.map(|r| (r.columns, r.rows))
                 }
+                };
+                match &outcome {
+                    Err(e) if attempt < 5 && classify_sql_error(e) == SqlErrKind::Transient => {
+                        let backoff_ms = 600u64 * (1u64 << (attempt - 1).min(4));
+                        log::info!("[AI SQL] transient error on attempt {} (sleeping {}ms): {}", attempt, backoff_ms, e);
+                        tokio::time::sleep(std::time::Duration::from_millis(backoff_ms)).await;
+                        continue;
+                    }
+                    _ => break outcome,
+                }
             };
             let duration_ms = start.elapsed().as_millis() as u64;
 
@@ -755,15 +1093,24 @@ pub async fn execute_sql_tool(
                 Ok((columns, rows)) => {
                     let row_count = rows.len();
 
-                    // Always route to main UI — chat shows status only
+                    let (saved_conn_id, derived_db) = pool_id
+                        .split_once(':')
+                        .map(|(s, d)| (s.to_string(), d.to_string()))
+                        .unwrap_or((pool_id.clone(), String::new()));
+                    let database_out = input["database"]
+                        .as_str()
+                        .filter(|s| !s.is_empty())
+                        .map(|s| s.to_string())
+                        .unwrap_or(derived_db);
+
                     let _ = app.emit(
                         &format!("ai:action:{}", session_id),
                         serde_json::json!({
                             "action": "ai_execute_sql",
                             "data": {
                                 "query": query,
-                                "connectionId": pool_id,
-                                "database": input["database"].as_str().unwrap_or(""),
+                                "connectionId": saved_conn_id,
+                                "database": database_out,
                                 "rowCount": row_count,
                                 "durationMs": duration_ms,
                                 "columns": columns,
@@ -771,16 +1118,31 @@ pub async fn execute_sql_tool(
                         }),
                     );
 
+                    let ch_note = if is_clickhouse {
+                        " ClickHouse note: Int64/UInt64/Decimal columns arrive as JSON strings (precision-preserving)."
+                    } else {
+                        ""
+                    };
                     if row_count == 0 {
-                        format!("Query returned 0 rows in {}ms.", duration_ms)
+                        format!("Query returned 0 rows in {}ms.{}", duration_ms, ch_note)
                     } else {
                         format!(
-                            "Query returned {} row(s) in {}ms. Columns: {}. Results shown in the SQL results panel.",
-                            row_count, duration_ms, columns.join(", ")
+                            "Query returned {} row(s) in {}ms. Columns: {}. Results shown in the SQL results panel.{}",
+                            row_count, duration_ms, columns.join(", "), ch_note
                         )
                     }
                 }
-                Err(e) => format!("Query error: {}", e),
+                Err(e) => {
+                    let kind = classify_sql_error(&e);
+                    let base = diagnose_query_error(&e);
+                    if matches!(kind, SqlErrKind::SchemaColumn | SqlErrKind::SchemaTable) {
+                        let db = input["database"].as_str().unwrap_or("");
+                        let hint = build_schema_hint(&e, kind, pool_entry, db, query).await;
+                        format!("{}{}", base, hint)
+                    } else {
+                        base
+                    }
+                }
             }
         }
         "apply_query" => {

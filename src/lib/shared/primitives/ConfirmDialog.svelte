@@ -88,7 +88,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="q-modal-overlay" use:teleportToBody onclick={handleOverlayClick}>
-    <div class="q-confirm">
+    <div class="q-confirm modal-card">
       <div class="q-modal-hdr">
         <span class="q-modal-title">{title}</span>
       </div>
@@ -135,10 +135,6 @@
 
   .q-confirm {
     width: 360px;
-    background: var(--modal-bg, #101016);
-    border: 1px solid var(--b1);
-    border-radius: 10px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     animation: modalUp 0.18s ease;
     overflow: hidden;
   }

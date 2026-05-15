@@ -95,6 +95,14 @@ html, body {
   height: 100%;
   overflow: hidden;
   background: transparent;  /* CRITICAL for vibrancy */
+  /* Disable browser pinch-zoom on touchscreens (Windows precision
+     touchpad pinch surfaces as touchpoints on the WebView). pan-x +
+     pan-y still allows scrolling. Combined with the ctrl+wheel +
+     ctrl+plus/minus blockers in shortcuts.ts, every zoom path the
+     OS WebViews honour by default is now suppressed. macOS is
+     unaffected — its trackpad pinch goes through a different gesture
+     pipeline that isn't governed by `touch-action`. */
+  touch-action: pan-x pan-y;
 }
 body {
   font-family: var(--ui);
@@ -136,6 +144,23 @@ body.glass-mode .glass-surface-light {
 /* Solid themes need opaque background on content area */
 body:not(.glass-mode) {
   background: var(--c) !important;
+}
+
+/* ── Modal card — single visual contract for every floating modal ──
+   Any modal panel (the actual card on top of the dim overlay) opts in
+   with `class="modal-card"`. Theme controls live here: change the
+   background or shadow once and every dialog updates. Glass theme
+   adds backdrop-filter on top of the same class — no per-modal
+   `glass-surface` opt-in needed anymore. */
+.modal-card {
+  background: var(--modal-bg, #101016);
+  border: 1px solid var(--b1);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 24px 48px rgba(0,0,0,0.5);
+}
+body.glass-mode .modal-card {
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
 }
 
 /* ── Scrollbar ── */

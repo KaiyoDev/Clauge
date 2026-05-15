@@ -176,7 +176,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div class="cm-overlay" use:teleportToBody onclick={() => { show = false; onclose?.(); }}>
     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-    <div class="cm-modal glass-surface" onclick={(e) => e.stopPropagation()}>
+    <div class="cm-modal modal-card" onclick={(e) => e.stopPropagation()}>
       <div class="cm-head">
         <h2>{isEdit ? 'Edit coworker' : 'New coworker'}</h2>
         <button class="cm-x" onclick={() => { show = false; onclose?.(); }}>×</button>
@@ -295,10 +295,6 @@
     width: 540px;
     max-width: 92%;
     max-height: 92vh;
-    background: var(--modal-bg, #0d1117);
-    border: 1px solid var(--b1);
-    border-radius: 10px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
     display: flex; flex-direction: column;
     animation: slideUp 0.18s ease both;
   }

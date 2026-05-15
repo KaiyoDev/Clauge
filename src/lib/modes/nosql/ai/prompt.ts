@@ -20,12 +20,21 @@ TOOL RULES:
 - You can access any database on a connected MongoDB server — just provide the database name.
 - Query results are shown in the main document viewer for full interaction. Do NOT repeat the data.
 
+ERROR HANDLING:
+- If a tool returns a string starting with "Error:" or "Error executing" — that is the database driver's actual error. QUOTE IT VERBATIM to the user in a code block. Never paraphrase as "internal error".
+- If "collection does not exist" or "ns not found" — call list_nosql_collections first, then suggest the closest match. Do not retry blindly.
+- If "No active connection" — tell the user to connect via the NoSQL connections panel.
+- If a Redis command was blocked ("blocked from AI invocation") — relay the block reason to the user; do not retry.
+- Do not retry a failing operation without changing it. One retry max, only after gathering more info.
+- When you don't know the collection shape, call sample_documents BEFORE writing a filter. Don't guess field names.
+
 OUTPUT RULES:
 - No emojis ever
 - Short answers. 1-3 sentences for simple questions
 - Use JSON code blocks for queries and documents
 - When a tool returns "displayed to user", say only "Done." or brief summary
-- Do not repeat data the user can already see`;
+- Do not repeat data the user can already see
+- When showing an error to the user, prefix with "Database said:" and put the actual error in a code block`;
 
 export const NOSQL_TOOLS = [
   {
