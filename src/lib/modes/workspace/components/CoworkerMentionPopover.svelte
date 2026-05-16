@@ -35,11 +35,13 @@
   let queryEnd = $state(0);
   let activeIndex = $state(0);
 
-  /** Filter coworkers by case-insensitive prefix match on name OR role. */
+  /** Filter coworkers by case-insensitive prefix match on name OR role.
+   *  Disabled coworkers are excluded from the @-mention picker. */
   const matches = $derived.by(() => {
+    const active = $coworkers.filter((c) => c.disabledAt == null);
     const q = query.trim().toLowerCase();
-    if (!q) return $coworkers;
-    return $coworkers.filter(
+    if (!q) return active;
+    return active.filter(
       (c) => c.name.toLowerCase().includes(q) || (c.role ?? '').toLowerCase().includes(q),
     );
   });

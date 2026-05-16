@@ -31,12 +31,13 @@
     value ? $coworkers.find((c) => c.id === value) ?? null : null,
   );
 
-  /** Filter by name OR role (case-insensitive). When the search is
-   *  empty, the full list shows. */
+  /** Filter by name OR role (case-insensitive). Disabled coworkers are
+   *  excluded. When the search is empty, the full active list shows. */
   const filtered = $derived.by(() => {
+    const active = $coworkers.filter((c) => c.disabledAt == null);
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return $coworkers;
-    return $coworkers.filter(
+    if (!q) return active;
+    return active.filter(
       (c) => c.name.toLowerCase().includes(q) || (c.role ?? '').toLowerCase().includes(q),
     );
   });

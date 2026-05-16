@@ -133,6 +133,8 @@ export interface WorkspaceCoworker {
   avatarStyle: string;
   createdAt: string;
   createdBy: string;
+  /** Non-null when this coworker was disabled (free plan limit). */
+  disabledAt: string | null;
 }
 
 /** Attribution actor format. Use the helper in `attribution.ts` to derive

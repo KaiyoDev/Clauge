@@ -6,7 +6,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 
 use crate::cloud::auth::{self, AuthState};
 use crate::cloud::client::{self, CloudError};
-use crate::cloud::config::{settings_key_synced_at, SETTINGS_KEY_HAS_SYNCED};
+use crate::cloud::config::{settings_key_synced_at, SETTINGS_KEY_HAS_SYNCED, SETTINGS_KEY_PLAN};
 use crate::cloud::domains::ALL_KINDS;
 use crate::cloud::models::{CloudAiBalance, CloudAiUsage, CloudPricing, CloudStatus, CloudUser};
 use crate::cloud::scheduler::Scheduler;
@@ -48,6 +48,7 @@ pub async fn cloud_get_status(
                     last_synced.insert(k.to_string(), s.value);
                 }
             }
+            let _ = settings::upsert(pool.inner(), SETTINGS_KEY_PLAN, &me.plan).await;
             Ok(CloudStatus {
                 connected: true,
                 active_provider: snap.active_provider,

@@ -66,9 +66,14 @@
 
         {#each $coworkers as cw (cw.id)}
           <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-          <button class="cv-tile" onclick={() => openEdit(cw)}>
+          <button class="cv-tile" class:cv-tile-disabled={cw.disabledAt != null} onclick={() => openEdit(cw)}>
             <CoworkerAvatar seed={cw.avatarSeed} style={cw.avatarStyle} size={64} ring />
-            <div class="cv-tile-name">@{cw.name}</div>
+            <div class="cv-tile-name">
+              @{cw.name}
+              {#if cw.disabledAt != null}
+                <span class="cv-disabled-pill" title="Re-enable with Pro">Disabled</span>
+              {/if}
+            </div>
             {#if cw.role}
               <div class="cv-tile-role">{cw.role}</div>
             {/if}
@@ -181,4 +186,19 @@
   }
   .cv-tile-add-plus { font-size: 28px; line-height: 1; font-weight: 300; }
   .cv-tile-add-label { font-family: var(--ui); font-size: 12px; }
+
+  .cv-tile-disabled { opacity: 0.45; }
+  .cv-tile-disabled:hover { border-color: var(--b1); background: var(--surface-card); }
+  .cv-tile-name { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .cv-disabled-pill {
+    padding: 1px 6px;
+    font-size: 9.5px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--surface-hover);
+    border: 1px solid var(--b1);
+    border-radius: 3px;
+    color: var(--t4);
+  }
 </style>

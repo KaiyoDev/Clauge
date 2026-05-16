@@ -2049,6 +2049,22 @@ pub async fn workspace_coworker_create(
     if name.is_empty() {
         return Err("Coworker name is required".into());
     }
+    let plan = settings_repo::get_by_key(pool.inner(), "cloud:plan")
+        .await
+        .ok()
+        .flatten()
+        .map(|s| s.value);
+    let is_pro = plan.as_deref() == Some("pro");
+    if !is_pro {
+        let active_count = coworker_repo::count_active(pool.inner())
+            .await
+            .unwrap_or(0);
+        if active_count >= 3 {
+            return Err(
+                "Free plan supports up to 3 coworkers. Upgrade to Pro for unlimited.".into(),
+            );
+        }
+    }
     let id = uuid::Uuid::new_v4().to_string();
     let now = now_rfc3339();
     let avatar_seed = input
