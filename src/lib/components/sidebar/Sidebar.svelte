@@ -414,8 +414,7 @@
   .sync-confirm-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: var(--scrim);
-    backdrop-filter: blur(8px);
+    background: var(--scrim-strong);
     z-index: var(--z-drawer);
     display: flex;
     align-items: center;

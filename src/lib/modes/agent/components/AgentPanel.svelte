@@ -37,6 +37,7 @@
     agentListSessions,
     agentGetSessionContexts,
     agentInjectContexts,
+    agentInjectPurpose,
     agentKillTerminal,
     agentRemoveWorktree,
     agentDeleteSession,
@@ -830,12 +831,27 @@
         }
       } catch (_) {}
 
-      // Auto-create worktree for new sessions in git repos
+      // Auto-create worktree for new sessions in git repos. Branch
+      // name includes a short prefix of this session's UUID so two
+      // sessions can never collide on the same worktree path
+      // regardless of title — that was the root cause of the
+      // "two Custom sessions, one loses context after restart" alpha
+      // report: identical title slugs produced the same branch name,
+      // `agent_create_worktree` reused the existing dir, both sessions
+      // ended up sharing one Claude projects directory, the capture
+      // loop then raced to claim the same `<id>.jsonl`. With UUID in
+      // the branch, each session gets its own dedicated worktree → its
+      // own encoded Claude dir → exactly one session file in there →
+      // capture is unambiguous and resume after restart always finds
+      // the right file. Title is kept as a readable suffix.
       if (!session.worktreePath && !session.claudeSessionId) {
         try {
           const isGit = await agentIsGitRepo(session.projectPath);
           if (isGit) {
-            const rawBranch = `clauge/${session.purpose.toLowerCase().replace(/\s+/g, '-')}-${session.title.toLowerCase().replace(/\s+/g, '-')}`;
+            const uuidShort = session.id.replace(/-/g, '').slice(0, 8);
+            const titleSlug = session.title.toLowerCase().replace(/\s+/g, '-');
+            const purposeSlug = session.purpose.toLowerCase().replace(/\s+/g, '-');
+            const rawBranch = `clauge/${purposeSlug}-${titleSlug}-${uuidShort}`;
             const branchName = rawBranch.replace(/[^a-zA-Z0-9/_\-.]/g, '').replace(/\.{2,}/g, '.').replace(/\.lock/g, '');
             const worktreePath = await agentCreateWorktree(session.projectPath, branchName);
             spawnPath = worktreePath;
@@ -849,13 +865,23 @@
         }
       }
 
-      // Get existing session IDs BEFORE spawning
+      // Get existing session IDs BEFORE spawning. We exclude ALL ids
+      // already claimed by any other Clauge session in the store (not
+      // just the on-disk snapshot) so that — even when two sessions
+      // somehow end up in the same encoded Claude directory
+      // (non-git projects, legacy worktrees from before the UUID-in-
+      // branch fix, etc.) — the capture poll below can't ever claim a
+      // session id that's already owned by a sibling. Defense in depth.
       let existingSessionIds: string[] = [];
       if (!session.claudeSessionId) {
         try {
           const existing = await agentDiscoverSessions(spawnPath);
           existingSessionIds = existing.map((s: any) => s.sessionId);
         } catch (_) {}
+        const claimedBySiblings = get(agentSessions)
+          .filter((o) => o.id !== session.id && !!o.claudeSessionId)
+          .map((o) => o.claudeSessionId as string);
+        existingSessionIds = Array.from(new Set([...existingSessionIds, ...claimedBySiblings]));
       }
 
       let outputReceived = false;
@@ -1079,7 +1105,19 @@
             if (attempts > 10 || session.claudeSessionId) { clearInterval(captureInterval); return; }
             try {
               const allSessions = await agentDiscoverSessions(spawnPath);
-              const newSession = allSessions.find((s: any) => !existingSessionIds.includes(s.sessionId));
+              // Re-check the "claimed by siblings" set on every poll
+              // tick — a concurrently-spawning session might have
+              // claimed an id since we took the snapshot at spawn
+              // time. Without this re-check, two simultaneous spawns
+              // in the same encoded Claude dir would both pick the
+              // most-recent file and end up sharing claudeSessionId.
+              const claimedNow = new Set<string>([
+                ...existingSessionIds,
+                ...get(agentSessions)
+                  .filter((o) => o.id !== session.id && !!o.claudeSessionId)
+                  .map((o) => o.claudeSessionId as string),
+              ]);
+              const newSession = allSessions.find((s: any) => !claimedNow.has(s.sessionId));
               if (newSession) {
                 await agentUpdateSessionId(session.id, newSession.sessionId);
                 session.claudeSessionId = newSession.sessionId;
@@ -1105,6 +1143,22 @@
       // Use frontend purpose prompt for fixed purposes, fall back to stored prompt for Custom
       const rawPrompt = getPurposePrompt(session.purpose) || session.contextPrompt || '';
       const purposePrompt = rawPrompt.replace(/\n+/g, ' ').replace(/\s+/g, ' ').trim();
+
+      // Gemini-only: write the purpose prompt into GEMINI.md before
+      // spawn. Other providers have real system-prompt flags and
+      // ignore this call. Without this, Gemini's previous workaround
+      // (`--prompt-interactive`) ran the persona as the user's first
+      // message at every spawn / resume — the alpha "Gemini just starts
+      // working without waiting for me" bug. With this, Gemini reads
+      // the persona from its context file at startup and the TUI sits
+      // idle waiting for the user's first turn.
+      if (session.provider === 'gemini') {
+        try {
+          await agentInjectPurpose(spawnPath, 'gemini', purposePrompt);
+        } catch (e) {
+          console.warn('[TERM] Gemini purpose-prompt injection failed:', e);
+        }
+      }
 
       // Resume-id rehydrate for non-Claude providers. Claude captures
       // its session id from the PTY banner ("claude --resume <id>") via

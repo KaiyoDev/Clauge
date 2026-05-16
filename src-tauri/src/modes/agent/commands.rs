@@ -162,6 +162,11 @@ pub async fn agent_detach_context(pool: State<'_, SqlitePool>, session_id: Strin
 // different providers in the same project.
 const CTX_MARKER_START: &str = "<!-- CLAUGE-CONTEXT-START -->";
 const CTX_MARKER_END: &str = "<!-- CLAUGE-CONTEXT-END -->";
+// Purpose prompt is its own separate marker pair so it coexists with
+// user-attached contexts (CLAUGE-CONTEXT-*) without either feature
+// stomping the other's block when one updates and the other doesn't.
+const PURPOSE_MARKER_START: &str = "<!-- CLAUGE-PURPOSE-START -->";
+const PURPOSE_MARKER_END: &str = "<!-- CLAUGE-PURPOSE-END -->";
 const ALL_CONTEXT_FILES: &[&str] = &["CLAUDE.md", "AGENTS.md", "GEMINI.md"];
 
 fn context_file_for(provider: &str) -> &'static str {
@@ -256,6 +261,96 @@ pub fn agent_remove_injected_contexts(project_path: String) -> Result<(), String
         }
     }
     Ok(())
+}
+
+/// Write the session's purpose prompt into the provider's project-level
+/// context file inside `<!-- CLAUGE-PURPOSE-START --> … <!-- CLAUGE-PURPOSE-END -->`.
+///
+/// Background: every other supported CLI exposes a real system-prompt
+/// flag (Claude `--append-system-prompt`, Codex `-c instructions=…`).
+/// Gemini does NOT — the closest analogue, `--prompt-interactive
+/// <text>`, smuggles the prompt into the user-message channel and
+/// makes Gemini execute it immediately at spawn / on resume instead
+/// of waiting for the user's first turn. That's the "Gemini starts
+/// running the moment I open the session" bug the alpha tester reported.
+/// Writing the prompt into `GEMINI.md` before spawn moves the prompt
+/// into the context channel where it belongs — Gemini reads the file at
+/// startup and treats it as ambient instructions. The TUI opens and
+/// waits for user input, matching Claude/Codex behaviour.
+///
+/// Preserves any pre-existing content in the file (user's own
+/// GEMINI.md / CLAUDE.md / AGENTS.md) by only touching the marked
+/// block. Coexists with the attach-contexts feature because the two
+/// use different marker pairs.
+fn write_injected_purpose(path: &PathBuf, purpose_text: &str) -> Result<(), String> {
+    let trimmed = purpose_text.trim();
+    // Read existing file, stripping any prior CLAUGE-PURPOSE block.
+    let existing = if path.exists() {
+        let raw = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
+        if let (Some(start), Some(end)) =
+            (raw.find(PURPOSE_MARKER_START), raw.find(PURPOSE_MARKER_END))
+        {
+            let before = raw[..start].trim_end();
+            let after = &raw[end + PURPOSE_MARKER_END.len()..];
+            format!("{}{}", before, after)
+        } else {
+            raw
+        }
+    } else {
+        String::new()
+    };
+
+    // Empty prompt → just clean. Removes the marker block; deletes the
+    // file if nothing else remains.
+    if trimmed.is_empty() {
+        let cleaned = existing.trim();
+        if cleaned.is_empty() {
+            if path.exists() {
+                let _ = std::fs::remove_file(path);
+            }
+        } else {
+            std::fs::write(path, cleaned.to_string() + "\n")
+                .map_err(|e| e.to_string())?;
+        }
+        return Ok(());
+    }
+
+    // Build the new block. Single trailing newline at end so the file
+    // ends cleanly whether or not the original had content.
+    let block = format!(
+        "{}\n\n{}\n\n{}",
+        PURPOSE_MARKER_START, trimmed, PURPOSE_MARKER_END
+    );
+    let final_content = if existing.trim().is_empty() {
+        format!("{}\n", block)
+    } else {
+        format!("{}\n\n{}\n", existing.trim_end(), block)
+    };
+    std::fs::write(path, final_content).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Inject (or clear) the session's purpose prompt into the provider's
+/// project-level context file. Called BEFORE spawn from the frontend.
+///
+/// Currently only meaningful for Gemini — every other provider has a
+/// real system-prompt flag and uses it directly in `build_spawn_command`.
+/// For the other providers this is a no-op so the frontend can fire
+/// it unconditionally without branching.
+#[tauri::command]
+pub fn agent_inject_purpose(
+    project_path: String,
+    provider: String,
+    purpose_prompt: String,
+) -> Result<(), String> {
+    if provider != "gemini" {
+        // Other providers have real system-prompt flags; their persona
+        // travels via the spawn command, not a context file.
+        return Ok(());
+    }
+    let filename = context_file_for(&provider);
+    let path = PathBuf::from(&project_path).join(filename);
+    write_injected_purpose(&path, &purpose_prompt)
 }
 
 #[tauri::command]

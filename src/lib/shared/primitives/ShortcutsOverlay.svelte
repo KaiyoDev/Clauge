@@ -59,8 +59,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: var(--scrim);
-    backdrop-filter: blur(6px);
+    background: var(--scrim-strong);
     z-index: var(--z-modal);
     display: flex;
     align-items: center;

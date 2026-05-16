@@ -401,6 +401,7 @@ pub fn run() {
             modes::agent::commands::agent_detach_context,
             modes::agent::commands::agent_inject_contexts,
             modes::agent::commands::agent_remove_injected_contexts,
+            modes::agent::commands::agent_inject_purpose,
             modes::agent::terminal::agent_spawn_terminal,
             modes::agent::terminal::agent_spawn_shell,
             modes::agent::terminal::agent_write_to_terminal,

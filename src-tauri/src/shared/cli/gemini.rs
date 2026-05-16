@@ -95,17 +95,18 @@ impl CliRunner for GeminiRunner {
             // as Claude's `--dangerously-skip-permissions` flag.
             cmd.push_str(" --yolo");
         }
-        if let Some(ref prompt) = opts.system_prompt {
-            if !prompt.is_empty() {
-                // No first-class system-prompt flag. `--prompt-interactive`
-                // runs the text and continues in interactive mode, which
-                // is the closest analogue for "seed the session with
-                // these instructions." Single-quote escape for the shell:
-                // ' -> '\''
-                let escaped = prompt.replace('\'', "'\\''");
-                cmd.push_str(&format!(" --prompt-interactive '{}'", escaped));
-            }
-        }
+        // No first-class system-prompt flag exists, and the previous
+        // workaround (`--prompt-interactive '<text>'`) had a serious
+        // side effect: Gemini treats `--prompt-interactive` as the
+        // user's first message, so the persona prompt was running
+        // immediately on every spawn / resume instead of waiting for
+        // the user's first turn. Now the purpose prompt is injected
+        // into `GEMINI.md` pre-spawn (see
+        // `agent_inject_purpose` in modes/agent/commands.rs). Gemini
+        // reads that file at startup as ambient context and the TUI
+        // opens idle, matching Claude/Codex behaviour. We consume the
+        // field so the spawn opts are uniform across runners.
+        let _ = opts.system_prompt;
         cmd
     }
 

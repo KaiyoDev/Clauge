@@ -75,6 +75,21 @@
   let createDbConnId = $state('');
   let createDbLoading = $state(false);
 
+  // Teleport the prompt to <body> so it always renders against the
+  // viewport. Without this, NavPanel's transform-animated container
+  // creates a containing block and the `position: fixed` overlay gets
+  // clipped to the nav column — modal renders only over the left side,
+  // background on the right is uncovered, clicks pass through, focus
+  // jumps away. Same fix Modal.svelte's `teleportToBody` does.
+  function teleportToBody(node: HTMLElement) {
+    document.body.appendChild(node);
+    return {
+      destroy() {
+        if (node.parentElement === document.body) node.remove();
+      },
+    };
+  }
+
   function openCreateDbDialog(connId: string) {
     createDbConnId = connId;
     createDbName = '';
@@ -831,7 +846,7 @@ ORDER BY ordinal_position;`);
 {#if createDbShow}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="sql-prompt-overlay" onclick={() => createDbShow = false}>
+  <div class="sql-prompt-overlay" use:teleportToBody onclick={() => createDbShow = false}>
     <div class="sql-prompt" onclick={(e) => e.stopPropagation()}>
       <div class="sql-prompt-title">Create Database</div>
       <div class="sql-prompt-msg">Enter a name for the new database.</div>

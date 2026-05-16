@@ -17,7 +17,7 @@
     gemini: '/gemini.svg',
     opencode: '/opencode-dark.svg',
   };
-  import { loadAgentSessions, agentSessions, activeAgentSession, agentFooterProvider } from '../stores';
+  import { loadAgentSessions, agentSessions, activeAgentSession, agentFooterProvider, providerInstallStates, loadProviderInstallStates } from '../stores';
   import { tabs as tabsStore, addTab, activateTab } from '$lib/shared/stores/tabs';
   import { showToast } from '$lib/shared/primitives/toast';
   import { SESSION_PURPOSES, getPurposeColor, getPurposePrompt } from '../ai/prompt';
@@ -43,9 +43,14 @@
       ? ($agentFooterProvider as AgentProvider)
       : 'claude',
   );
-  // Per-provider install state — drives the disabled grey-out in the picker.
-  // Loaded on modal open + when the picker mounts.
-  let installedByProvider = $state<Record<string, boolean>>({ claude: true });
+  // Per-provider install state — drives the disabled grey-out in the
+  // picker. Sourced from a global store (`providerInstallStates`)
+  // that's pre-warmed on app boot, so the modal renders the correct
+  // tile states INSTANTLY on first open instead of showing a stale
+  // default for the ~150-1000ms it takes the 4 `which <cli>` probes
+  // to finish. The modal still triggers a background refresh on open
+  // (via `loadProviderInstallStates` in the effect below) so newly-
+  // installed CLIs become available without an app restart.
   let skipPermissions = $state(false);
   let customPrompt = $state('');
   let gitEnabled = $state(false);
@@ -114,20 +119,9 @@
     }
   }
 
-  // Probe each provider's binary on $PATH so the picker can grey out
-  // CLIs the user hasn't installed yet. Fire-and-forget — failure leaves
-  // the existing state; only Claude is assumed-true by default.
-  async function loadProviderInstallStates() {
-    const next: Record<string, boolean> = { ...installedByProvider };
-    await Promise.all(
-      AGENT_PROVIDERS.map(async (p) => {
-        try { next[p.id] = await agentCheckCliInstalled(p.id); }
-        catch { next[p.id] = p.id === 'claude'; }
-      }),
-    );
-    installedByProvider = next;
-  }
-  // Refresh probe whenever the modal opens.
+  // Refresh probe in the background whenever the modal opens. The
+  // initial render uses the pre-warmed cache, so this is a live-update
+  // pass (e.g. user installed `gemini` in another tab since app boot).
   $effect(() => {
     if (show) void loadProviderInstallStates();
   });
@@ -253,7 +247,7 @@
       <span class="ns-label-text">Agent</span>
       <div class="ns-provider-row">
         {#each AGENT_PROVIDERS as p}
-          {@const installed = installedByProvider[p.id] !== false}
+          {@const installed = $providerInstallStates[p.id] !== false}
           <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
           <button
             class="ns-provider"

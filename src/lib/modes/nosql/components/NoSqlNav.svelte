@@ -77,6 +77,21 @@
   let renameValue = $state('');
   let renameAction: ((name: string) => Promise<void>) | null = $state(null);
 
+  // Teleport the prompt to <body> so it always renders against the
+  // viewport. Without this, NavPanel's transform-animated container
+  // creates a containing block and the `position: fixed` overlay gets
+  // clipped to the nav column — modal renders only over the left side,
+  // background on the right is uncovered, clicks pass through, focus
+  // jumps away. Same fix Modal.svelte's `teleportToBody` does.
+  function teleportToBody(node: HTMLElement) {
+    document.body.appendChild(node);
+    return {
+      destroy() {
+        if (node.parentElement === document.body) node.remove();
+      },
+    };
+  }
+
   let prevSearch = '';
   $effect(() => {
     if (searchQuery !== prevSearch) {
@@ -591,7 +606,7 @@
 {#if renameShow}
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="nn-confirm-overlay" onclick={() => renameShow = false}>
+  <div class="nn-confirm-overlay" use:teleportToBody onclick={() => renameShow = false}>
     <div class="nn-confirm" onclick={(e) => e.stopPropagation()}>
       <div class="nn-confirm-title">{renameTitle}</div>
       <input

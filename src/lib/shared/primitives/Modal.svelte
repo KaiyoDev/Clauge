@@ -75,9 +75,12 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: var(--scrim);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+    /* Solid scrim, no blur — matches the SqlNav/NoSqlNav inline prompts
+       and ConfirmDialog. Heavy backdrop-filter blur made every dialog
+       fog the entire app, which felt aggressive and hurt scannability
+       of anything the user was referencing behind the modal. The
+       darker scrim alone gives enough separation. */
+    background: var(--scrim-strong);
     z-index: var(--z-modal);
     display: flex;
     align-items: center;

@@ -10,6 +10,7 @@
     import {
         loadAgentSessions,
         loadAgentContexts,
+        loadProviderInstallStates,
     } from "$lib/modes/agent/stores";
     import { getPurposeColor } from "$lib/modes/agent/ai/prompt";
     import NewSessionModal from "$lib/modes/agent/components/NewSessionModal.svelte";
@@ -725,6 +726,13 @@
             loadWorkspaces(),
             loadMcpStatus(),
             refreshInboxUnread(),
+            // Pre-warm agent CLI install probes so the "+ New Session"
+            // modal can render its provider tiles instantly. Per-provider
+            // probes shell out (`which <cli>`); doing them on boot
+            // (parallel with everything else) costs nothing perceivable
+            // here but saves the user a multi-hundred-ms delay on the
+            // first click, especially on Windows / with network drives.
+            loadProviderInstallStates(),
         ]);
 
         applyAppearanceOnStartup();

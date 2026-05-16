@@ -34,20 +34,107 @@ async fn resolve_actor(
     (fallback.to_string(), false)
 }
 
+/// Resolve a caller-supplied project path into the canonical form the
+/// workspace store uses as its dedup key.
+///
+/// Two transforms, in order:
+///   1. `std::fs::canonicalize` — resolves symlinks, drops trailing slash,
+///      normalises case on case-insensitive filesystems. Skipped if the
+///      path doesn't exist (falls back to trimmed input).
+///   2. Worktree → project root. Every Custom-purpose agent session
+///      auto-creates a worktree under `<root>/.clauge-worktrees/<branch>`
+///      and ends up cwd'd inside it; the workspace, however, is bound to
+///      `<root>`. Without this step the agent's cwd-derived projectPath
+///      misses the lookup and a duplicate workspace gets created. We
+///      walk path components, and if any segment equals
+///      `.clauge-worktrees` we keep only the segments before it.
+///
+/// Returns a string suitable for both `find_workspace_by_project_path`
+/// and `insert_workspace`. Both find and insert use the same canonical
+/// form so the dedup property holds going forward.
+fn resolve_canonical_project_path(input: &str) -> String {
+    let trimmed = input.trim();
+    if trimmed.is_empty() {
+        return String::new();
+    }
+    // 1. Realpath via fs::canonicalize. Strips trailing slash, resolves
+    //    symlinks, normalises case where the FS does. Falls back to the
+    //    raw trimmed input if the path doesn't exist on disk.
+    let realpath: String = std::fs::canonicalize(trimmed)
+        .ok()
+        .and_then(|p| p.into_os_string().into_string().ok())
+        .map(|s| {
+            // Windows canonicalize prefixes paths with `\\?\` (extended-
+            // length form). Strip it so the stored path matches what
+            // users + tools see elsewhere.
+            if let Some(stripped) = s.strip_prefix(r"\\?\") {
+                stripped.to_string()
+            } else {
+                s
+            }
+        })
+        .unwrap_or_else(|| trimmed.to_string());
+
+    // 2. Walk path components looking for `.clauge-worktrees`. If found,
+    //    return the parent of that segment (the project root). Component
+    //    walk handles both `/` and `\` separators uniformly.
+    let pb = std::path::PathBuf::from(&realpath);
+    let mut before_marker: std::path::PathBuf = std::path::PathBuf::new();
+    let mut hit_marker = false;
+    for comp in pb.components() {
+        let segment = comp.as_os_str().to_string_lossy();
+        if segment == ".clauge-worktrees" {
+            hit_marker = true;
+            break;
+        }
+        before_marker.push(comp);
+    }
+    if hit_marker {
+        if let Some(s) = before_marker.into_os_string().into_string().ok() {
+            return s;
+        }
+    }
+    realpath
+}
+
 async fn upsert_workspace_for_project(
     pool: &SqlitePool,
     project_path: &str,
     actor: &str,
 ) -> Result<crate::modes::workspace::models::Workspace, (i32, String)> {
     let map_db = |e: sqlx::Error| -> (i32, String) { (-32603, format!("DB error: {}", e)) };
-    if let Some(ws) = repo::find_workspace_by_project_path(pool, project_path)
-        .await
-        .map_err(map_db)?
-    {
-        return Ok(ws);
+    // Canonicalise the incoming path BEFORE looking it up. This is what
+    // makes "I'm cwd'd in /root/.clauge-worktrees/clauge/custom-foo-xyz,
+    // please add a note for this project" land on the same workspace
+    // that was created against /root from the UI. Without it the agent
+    // creates a second workspace because the strings don't match.
+    let canonical = resolve_canonical_project_path(project_path);
+    if !canonical.is_empty() {
+        if let Some(ws) = repo::find_workspace_by_project_path(pool, &canonical)
+            .await
+            .map_err(map_db)?
+        {
+            return Ok(ws);
+        }
     }
-    // Insert new workspace named after the last path segment.
-    let name = std::path::Path::new(project_path)
+    // Back-compat: existing DB rows may have been stored with a
+    // non-canonical project_path (e.g. with a trailing slash, or as the
+    // worktree path itself before this fix). Try the raw trimmed input
+    // before deciding to insert a new workspace.
+    let raw = project_path.trim();
+    if !raw.is_empty() && raw != canonical {
+        if let Some(ws) = repo::find_workspace_by_project_path(pool, raw)
+            .await
+            .map_err(map_db)?
+        {
+            return Ok(ws);
+        }
+    }
+    // No hit either way — insert a new workspace, storing the canonical
+    // form so future lookups are deterministic regardless of which path
+    // representation the caller supplies.
+    let stored_path = if !canonical.is_empty() { canonical } else { raw.to_string() };
+    let name = std::path::Path::new(&stored_path)
         .file_name()
         .and_then(|n| n.to_str())
         .unwrap_or("workspace")
@@ -59,7 +146,7 @@ async fn upsert_workspace_for_project(
         pool,
         &id,
         &name,
-        Some(project_path),
+        Some(&stored_path),
         Some(&project_name),
         None,
         actor,

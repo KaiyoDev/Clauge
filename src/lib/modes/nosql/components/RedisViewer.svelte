@@ -639,8 +639,8 @@
   /* ── Modal ── */
   .rv-modal-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.45); backdrop-filter: blur(8px);
-    z-index: 1000; display: flex; align-items: center; justify-content: center;
+    background: var(--scrim-strong);
+    z-index: var(--z-modal); display: flex; align-items: center; justify-content: center;
     animation: rvFadeIn 0.12s ease;
   }
   @keyframes rvFadeIn { from { opacity: 0; } to { opacity: 1; } }

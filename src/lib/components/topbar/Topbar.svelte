@@ -35,10 +35,36 @@
   let showCloseConfirm = $state(false);
   let closeConfirmTabId = $state(-1);
 
+  /** DOM ref to the scrolling tabs container. Used by the effect below
+   *  to auto-scroll a newly-created or newly-activated tab into view
+   *  when the strip overflows. Without this, opening a new tab via "+"
+   *  while the strip is full appends the tab off-screen and the user
+   *  has to scroll right to find it. */
+  let tabsContainer: HTMLDivElement | undefined = $state();
 
   // Topbar shows ALL tabs across modes. Click flips mode + activates +
   // runs mode-specific side effects via the shared helper.
   const filteredTabs = $derived($tabs);
+
+  // Auto-scroll the active tab into view whenever:
+  //   • a new tab is created (addTab activates it → $activeTabId changes)
+  //   • the user clicks a tab that's currently off-screen
+  //   • a tab is closed and another becomes active off-screen
+  // Uses scrollIntoView with `inline: 'nearest'` so the container only
+  // scrolls when the tab isn't already visible — no jitter for tabs
+  // already in view. requestAnimationFrame defers until after Svelte
+  // has painted the new tab DOM, otherwise querySelector would miss it.
+  $effect(() => {
+    // Track both signals so a focus change OR a tab list change retriggers.
+    void $activeTabId;
+    void filteredTabs.length;
+    if (!tabsContainer) return;
+    requestAnimationFrame(() => {
+      const active = tabsContainer?.querySelector('.tab.on') as HTMLElement | null;
+      if (!active) return;
+      active.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+    });
+  });
 
   function handleTabClick(tabId: number) {
     activateTabAcrossMode(tabId);
@@ -481,7 +507,7 @@
 </script>
 
 <header class="topbar">
-  <div class="tabs">
+  <div class="tabs" bind:this={tabsContainer}>
     {#each filteredTabs as tab (tab.id)}
       <button
         class="tab"

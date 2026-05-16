@@ -38,11 +38,11 @@ fn workspace_schemas() -> Vec<Value> {
         json!(
         {
             "name": "workspaces_upsert_for_project",
-            "description": "Find a workspace bound to the given project path. If none exists, create one named after the folder with a default 5-column board, and return it. Use this whenever you have a project path (e.g. cwd) and want a workspace to put notes or cards in — it's the canonical way to resolve 'this project' to a workspace id.",
+            "description": "Find a workspace bound to the given project path. If none exists, create one named after the folder with a default 5-column board, and return it. Use this whenever you have a project path (e.g. cwd) and want a workspace to put notes or cards in — it's the canonical way to resolve 'this project' to a workspace id. The server canonicalises the path before lookup — symlinks are resolved, trailing slashes are normalised, and worktree paths (`<root>/.clauge-worktrees/<branch>/...`) are resolved to the parent project root automatically. So passing your current working directory is fine even when you're inside a worktree: the server will find (or create) the workspace bound to the actual project root, not a duplicate keyed to the worktree.",
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "projectPath": { "type": "string", "description": "Absolute path to the project's root folder." }
+                    "projectPath": { "type": "string", "description": "Path to the project. Absolute paths are preferred, but the cwd of your shell session also works — the server canonicalises before matching, so worktree paths resolve to the parent project's workspace." }
                 },
                 "required": ["projectPath"]
             }
@@ -131,7 +131,7 @@ fn note_schemas() -> Vec<Value> {
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "projectPath": { "type": "string", "description": "Absolute path to the project's root folder." },
+                    "projectPath": { "type": "string", "description": "Path to the project. Absolute is preferred but cwd works — the server canonicalises before lookup (resolves symlinks, normalises slashes, and walks worktree paths back to the parent project root), so the same workspace is reused regardless of which path representation you pass." },
                     "title": { "type": "string" },
                     "content": { "type": "string" },
                     "tags": { "type": "array", "items": { "type": "string" } },
@@ -148,7 +148,7 @@ fn note_schemas() -> Vec<Value> {
             "inputSchema": {
                 "type": "object",
                 "properties": {
-                    "projectPath": { "type": "string", "description": "Absolute path to the project's root folder." },
+                    "projectPath": { "type": "string", "description": "Path to the project. Absolute is preferred but cwd works — the server canonicalises before lookup (resolves symlinks, normalises slashes, and walks worktree paths back to the parent project root), so the same workspace is reused regardless of which path representation you pass." },
                     "title": { "type": "string" },
                     "content": { "type": "string" },
                     "tags": { "type": "array", "items": { "type": "string" } },

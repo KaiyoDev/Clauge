@@ -128,10 +128,9 @@
   /* First-time warning modal for enabling auto-execute */
   .auto-run-backdrop {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    background: var(--scrim-strong);
     display: flex; align-items: center; justify-content: center;
-    z-index: 10000;
+    z-index: var(--z-drawer);
     animation: ar-fade 0.12s ease;
   }
   @keyframes ar-fade { from { opacity: 0; } to { opacity: 1; } }

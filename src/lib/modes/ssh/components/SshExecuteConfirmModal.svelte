@@ -73,8 +73,7 @@
 <style>
   .ssh-modal-backdrop {
     position: fixed; inset: 0;
-    background: var(--scrim);
-    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    background: var(--scrim-strong);
     display: flex; align-items: center; justify-content: center;
     z-index: var(--z-drawer);
     animation: ssh-fade 0.12s ease;
