@@ -41,5 +41,9 @@ pub async fn run(pool: &SqlitePool) -> Result<(), String> {
         .await
         .map_err(|e| format!("migration apply: {}", e))?;
 
+    bootstrap::import_legacy_ai_settings(pool)
+        .await
+        .map_err(|e| format!("legacy ai import: {}", e))?;
+
     Ok(())
 }
