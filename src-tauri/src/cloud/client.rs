@@ -139,7 +139,7 @@ pub async fn me(pool: &SqlitePool, state: &AuthState) -> Result<MeResponse, Clou
         let (token, provider) = state
             .active_token_and_provider()
             .ok_or(CloudError::NotAuthenticated)?;
-        get_json(pool, "/api/auth/me", &token, &provider).await
+        get_json_auth(pool, "/api/auth/me", &token, &provider).await
     })
     .await
 }
@@ -252,7 +252,7 @@ pub async fn sync_state(
         let (token, provider) = state
             .active_token_and_provider()
             .ok_or(CloudError::NotAuthenticated)?;
-        get_json(pool, "/api/sync/state", &token, &provider).await
+        get_json_auth(pool, "/api/sync/state", &token, &provider).await
     })
     .await
 }
@@ -267,7 +267,7 @@ pub async fn sync_pull(
             .active_token_and_provider()
             .ok_or(CloudError::NotAuthenticated)?;
         let path = format!("/api/sync/pull/{}", kind);
-        get_json(pool, &path, &token, &provider).await
+        get_json_auth(pool, &path, &token, &provider).await
     })
     .await
 }
@@ -409,7 +409,7 @@ pub(crate) async fn post_json_auth<T: DeserializeOwned>(
     check_ok(resp).await
 }
 
-async fn get_json<T: DeserializeOwned>(
+pub(crate) async fn get_json_auth<T: DeserializeOwned>(
     pool: &SqlitePool,
     path: &str,
     token: &str,
