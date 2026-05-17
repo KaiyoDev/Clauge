@@ -292,12 +292,12 @@
 
   <!-- Bottom section -->
   <div class="sb-bot">
-    <GetProButton />
     <div class="profile-wrap">
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div onclick={(e: MouseEvent) => { e.stopPropagation(); toggleProfileMenu(); }}>
+      <div class="avatar-slot" onclick={(e: MouseEvent) => { e.stopPropagation(); toggleProfileMenu(); }}>
         <Avatar />
+        <GetProButton />
       </div>
       {#if profileMenuOpen}
         <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -553,6 +553,11 @@
   }
   .profile-wrap {
     position: relative;
+  }
+  .avatar-slot {
+    position: relative;
+    display: inline-flex;
+    cursor: pointer;
   }
   .profile-menu {
     position: absolute;
