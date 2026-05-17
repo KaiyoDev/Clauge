@@ -31,6 +31,70 @@
   let saving = $state(false);
   let error = $state<string | null>(null);
 
+  // Curated default model lists per provider. The "Custom…" sentinel
+  // reveals a free-text input so power users can type unlisted models.
+  // Update these lists as providers ship new models.
+  const MODELS_BY_PROVIDER: Record<string, string[]> = {
+    anthropic: [
+      'claude-3-5-sonnet-20241022',
+      'claude-3-5-haiku-20241022',
+      'claude-3-opus-20240229',
+    ],
+    openai: [
+      'gpt-4o',
+      'gpt-4o-mini',
+      'o1-preview',
+      'o1-mini',
+    ],
+    groq: [
+      'llama-3.3-70b-versatile',
+      'llama-3.1-8b-instant',
+      'mixtral-8x7b-32768',
+    ],
+    gemini: [
+      'gemini-2.0-flash-exp',
+      'gemini-1.5-pro',
+      'gemini-1.5-flash',
+    ],
+    openrouter: [
+      'anthropic/claude-3.5-sonnet',
+      'openai/gpt-4o',
+      'meta-llama/llama-3.3-70b-instruct',
+    ],
+    opencode: [],
+  };
+
+  const CUSTOM_SENTINEL = '__custom__';
+
+  // The dropdown's bound value. Either a known model from the list, or the
+  // sentinel that switches us into custom (text-input) mode.
+  let modelChoice = $state<string>(
+    existing?.defaultModel &&
+      !(MODELS_BY_PROVIDER[existing.provider]?.includes(existing.defaultModel))
+      ? CUSTOM_SENTINEL
+      : (existing?.defaultModel ?? ''),
+  );
+
+  const knownModels = $derived(MODELS_BY_PROVIDER[provider] ?? []);
+  const isCustomModel = $derived(modelChoice === CUSTOM_SENTINEL);
+
+  // Resolve the actual model value to save: the dropdown choice unless we're
+  // in custom mode, in which case use the free-text input.
+  function resolveModel(): string {
+    if (isCustomModel) return defaultModel.trim();
+    return modelChoice.trim();
+  }
+
+  // When provider changes, reset the model choice if it isn't in the new
+  // provider's list (avoid persisting an Anthropic model under OpenAI).
+  $effect(() => {
+    const list = MODELS_BY_PROVIDER[provider] ?? [];
+    if (modelChoice && modelChoice !== CUSTOM_SENTINEL && !list.includes(modelChoice)) {
+      modelChoice = '';
+      defaultModel = '';
+    }
+  });
+
   const canSave = $derived(label.trim().length > 0 && provider.trim().length > 0 && !saving);
 
   async function handleSave() {
@@ -38,11 +102,12 @@
     saving = true;
     error = null;
     try {
+      const finalModel = resolveModel();
       await onSave({
         label: label.trim(),
         provider,
         baseUrl: baseUrl.trim() || null,
-        defaultModel: defaultModel.trim() || null,
+        defaultModel: finalModel || null,
       });
       onClose();
     } catch (e: unknown) {
@@ -100,7 +165,9 @@
         <select class="aice-select" bind:value={provider}>
           <option value="anthropic">Anthropic</option>
           <option value="openai">OpenAI</option>
+          <option value="groq">Groq</option>
           <option value="gemini">Gemini</option>
+          <option value="openrouter">OpenRouter</option>
           <option value="opencode">OpenCode</option>
         </select>
       </label>
@@ -125,14 +192,23 @@
           Default model
           <span class="aice-opt">(optional)</span>
         </span>
-        <input
-          class="aice-input"
-          type="text"
-          bind:value={defaultModel}
-          placeholder="gpt-4o-mini"
-          autocomplete="off"
-          spellcheck={false}
-        />
+        <select class="aice-select" bind:value={modelChoice}>
+          <option value="">Use provider default</option>
+          {#each knownModels as m (m)}
+            <option value={m}>{m}</option>
+          {/each}
+          <option value={CUSTOM_SENTINEL}>Custom…</option>
+        </select>
+        {#if isCustomModel}
+          <input
+            class="aice-input aice-input-custom"
+            type="text"
+            bind:value={defaultModel}
+            placeholder="Type a model name"
+            autocomplete="off"
+            spellcheck={false}
+          />
+        {/if}
       </label>
 
       {#if error}
@@ -263,6 +339,12 @@
   .aice-select option {
     background: var(--n, #111);
     color: var(--t1);
+  }
+
+  /* Custom-model input sits right under the model select when "Custom…"
+     is chosen. Slight top margin separates it from the dropdown. */
+  .aice-input-custom {
+    margin-top: 6px;
   }
 
   .aice-error {

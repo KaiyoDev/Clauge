@@ -6,6 +6,8 @@
         cloudUser,
         cloudProviders,
         cloudPlan,
+        cloudCredits,
+        upgradeModalOpen,
         syncing,
         setSyncing,
         setConnected,
@@ -17,6 +19,7 @@
         cloudConflicts,
         type Provider,
     } from "$lib/stores/cloud";
+    import { invoke } from "@tauri-apps/api/core";
     import ConflictResolverModal from "$lib/components/cloud/ConflictResolverModal.svelte";
 
     let conflictResolverOpen = $state(false);
@@ -345,7 +348,59 @@
     }
 
     function openUpgrade() {
-        showToast("Pro plan — coming soon", "info");
+        upgradeModalOpen.set(true);
+    }
+
+    let openingPortal = $state(false);
+    async function openManageSubscription() {
+        if (openingPortal) return;
+        openingPortal = true;
+        try {
+            const url = await invoke<string>("cloud_open_portal");
+            const { openUrl } = await import("@tauri-apps/plugin-opener");
+            await openUrl(url);
+        } catch (e) {
+            showToast(friendlyError(e), "error");
+        } finally {
+            openingPortal = false;
+        }
+    }
+
+    // Auto-load AI balance for Pro users so the Profile-card strip shows
+    // credits without requiring the user to send a chat first (the SSE
+    // balance event is the only other writer to cloudCredits).
+    let balanceLoadedFor = $state<string | null>(null);
+    async function refreshBalance() {
+        try {
+            const b = await invoke<{
+                remaining: number;
+                allowance: number;
+                resetsAt: string | null;
+            }>("cloud_ai_balance");
+            cloudCredits.set({
+                remaining: b.remaining,
+                allowance: b.allowance,
+                resetsAt: b.resetsAt,
+            });
+        } catch {
+            /* silent — strip falls back to plan affirmation only */
+        }
+    }
+    $effect(() => {
+        const key = `${$cloudConnected}:${$cloudPlan}`;
+        if (!$cloudConnected || $cloudPlan !== "pro") return;
+        if (balanceLoadedFor === key) return;
+        balanceLoadedFor = key;
+        refreshBalance();
+    });
+
+    function formatResetCountdown(resetsAt: string | null): string {
+        if (!resetsAt) return "";
+        const reset = new Date(resetsAt).getTime();
+        const days = Math.max(0, Math.ceil((reset - Date.now()) / 86400000));
+        if (days === 0) return "Resets today";
+        if (days === 1) return "Resets tomorrow";
+        return `Resets in ${days} days`;
     }
 
     function openMenu(e: MouseEvent) {
@@ -668,6 +723,103 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Plan strip: lives at the bottom of the Profile card.
+                     Both states lead with a plan affirmation, then a single
+                     contextual CTA on the right (upgrade for free, manage
+                     for pro). -->
+                <div class="acc-plan-strip">
+                    {#if $cloudPlan === "pro"}
+                        <div class="acc-plan-strip-left">
+                            <div class="acc-plan-strip-head">
+                                <strong class="acc-plan-strip-title"
+                                    >Clauge Pro</strong
+                                >
+                                <span class="acc-plan-strip-status">Active</span
+                                >
+                            </div>
+                            {#if $cloudCredits}
+                                <p class="acc-plan-strip-sub">
+                                    <span class="acc-credits-inline"
+                                        ><strong
+                                            >{$cloudCredits.remaining.toLocaleString()}</strong
+                                        >
+                                        of {$cloudCredits.allowance.toLocaleString()}
+                                        credits remaining</span
+                                    >
+                                    {#if $cloudCredits.resetsAt}
+                                        <span class="acc-credits-sep-dot"
+                                            >·</span
+                                        >
+                                        <span>
+                                            {formatResetCountdown(
+                                                $cloudCredits.resetsAt,
+                                            )}
+                                        </span>
+                                    {/if}
+                                </p>
+                                <div class="acc-credits-bar-wrap">
+                                    <div
+                                        class="acc-credits-bar"
+                                        style="width: {Math.min(
+                                            100,
+                                            Math.round(
+                                                ($cloudCredits.remaining /
+                                                    Math.max(
+                                                        1,
+                                                        $cloudCredits.allowance,
+                                                    )) *
+                                                    100,
+                                            ),
+                                        )}%"
+                                    ></div>
+                                </div>
+                            {:else}
+                                <p class="acc-plan-strip-sub">
+                                    Managed AI assistance and premium features
+                                    are unlocked on this account.
+                                </p>
+                            {/if}
+                        </div>
+                        <button
+                            class="acc-btn acc-btn-manage"
+                            onclick={openManageSubscription}
+                            disabled={openingPortal}
+                        >
+                            {openingPortal
+                                ? "Opening…"
+                                : "Manage subscription"}
+                        </button>
+                    {:else}
+                        <div class="acc-plan-strip-left">
+                            <strong class="acc-plan-strip-title"
+                                >You're on the Free plan</strong
+                            >
+                            <p class="acc-plan-strip-sub">
+                                Upgrade for managed AI assistance and premium
+                                features.
+                            </p>
+                        </div>
+                        <button
+                            class="acc-btn acc-btn-primary"
+                            onclick={openUpgrade}
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                width="13"
+                                height="13"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.2"
+                                stroke-linejoin="round"
+                                ><path
+                                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                                /></svg
+                            >
+                            <span>Upgrade to Pro</span>
+                        </button>
+                    {/if}
+                </div>
             </section>
 
             <!-- Linked accounts -->
@@ -759,50 +911,6 @@
                         {/if}
                     </div>
                 {/each}
-            </section>
-
-            <!-- Subscription -->
-            <section class="acc-card">
-                <h3 class="acc-card-title acc-card-title-solo">Subscription</h3>
-                <div class="acc-sub-row">
-                    <div>
-                        <div class="acc-sub-line">
-                            <strong
-                                >{$cloudPlan === "pro"
-                                    ? "Pro plan"
-                                    : "Free plan"}</strong
-                            >
-                            <span class="acc-current-pill">Current</span>
-                        </div>
-                        <p class="acc-sub-body">
-                            {$cloudPlan === "pro"
-                                ? "Pro features are enabled on this account."
-                                : "Upgrade to unlock Pro features."}
-                        </p>
-                    </div>
-                    <button
-                        class="acc-btn acc-btn-primary"
-                        onclick={openUpgrade}
-                    >
-                        <svg
-                            viewBox="0 0 24 24"
-                            width="13"
-                            height="13"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2.2"
-                            stroke-linejoin="round"
-                            ><path
-                                d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                            /></svg
-                        >
-                        <span
-                            >{$cloudPlan === "pro"
-                                ? "Manage"
-                                : "See Pro pricing"}</span
-                        >
-                    </button>
-                </div>
             </section>
 
             <!-- Danger zone -->
@@ -1483,44 +1591,83 @@
         color: var(--t1);
     }
 
-    /* Subscription */
-    .acc-sub-row {
+    /* Plan strip — bottom band of the Profile card */
+    .acc-plan-strip {
         display: flex;
         align-items: center;
         justify-content: space-between;
         gap: 16px;
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid var(--b1);
     }
-    .acc-sub-row > div {
+    .acc-plan-strip-left {
         flex: 1;
         min-width: 0;
     }
-    .acc-sub-line {
+    .acc-plan-strip-head {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 6px;
+        gap: 8px;
+        margin-bottom: 4px;
     }
-    .acc-sub-line strong {
-        font-size: 14px;
+    .acc-plan-strip-title {
+        font-size: 13px;
         color: var(--t1);
         font-weight: 600;
+        display: block;
     }
-    .acc-current-pill {
+    .acc-plan-strip-status {
         font-size: 9.5px;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        padding: 3px 8px;
-        border-radius: 999px;
-        background: var(--surface-hover);
-        color: var(--t3);
         font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 2px 7px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--acc) 14%, transparent);
+        color: var(--acc);
+        border: 1px solid color-mix(in srgb, var(--acc) 35%, transparent);
     }
-    .acc-sub-body {
-        font-size: 12.5px;
-        color: var(--t2);
-        line-height: 1.55;
+    .acc-plan-strip-sub {
+        font-size: 11.5px;
+        color: var(--t3);
         margin: 0;
-        max-width: 480px;
+        line-height: 1.5;
+    }
+    .acc-credits-inline strong {
+        color: var(--t1);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+    }
+    .acc-credits-sep-dot {
+        opacity: 0.5;
+        margin: 0 4px;
+    }
+    .acc-credits-bar-wrap {
+        height: 4px;
+        background: var(--b1);
+        border-radius: 100px;
+        overflow: hidden;
+        margin-top: 6px;
+        max-width: 320px;
+    }
+    .acc-credits-bar {
+        height: 100%;
+        background: var(--acc);
+        border-radius: 100px;
+        transition: width 0.3s ease;
+    }
+
+    /* Manage-subscription button — pinned width so the text swap
+       ("Manage subscription" → "Opening…") doesn't collapse the button
+       and jolt the surrounding strip. Softer disabled treatment too. */
+    .acc-btn-manage {
+        min-width: 175px;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .acc-btn-manage:disabled {
+        opacity: 0.75;
     }
 
     /* Danger zone */

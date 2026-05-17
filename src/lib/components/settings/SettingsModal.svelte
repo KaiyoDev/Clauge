@@ -507,6 +507,12 @@
         editorState = { open: true, mode: "edit", config: c };
     }
 
+    // Notify AIPanel (or any other listener) that the BYOK config list
+    // changed so they refresh without waiting for the next app boot.
+    function broadcastConfigChange() {
+        window.dispatchEvent(new CustomEvent("ai-configs-changed"));
+    }
+
     async function handleEditorSave(data: {
         label: string;
         provider: string;
@@ -522,17 +528,50 @@
             });
         }
         await loadAiConfigs();
+        await loadAiProviderStats();
+        broadcastConfigChange();
     }
 
     async function handleDeleteConfig(c: AiConfig) {
         if (!confirm(`Delete provider configuration "${c.label}"?`)) return;
         await invoke("ai_config_delete", { id: c.id });
         await loadAiConfigs();
+        broadcastConfigChange();
     }
 
     async function handleSetDefault(c: AiConfig) {
         await invoke("ai_config_set_default", { id: c.id });
         await loadAiConfigs();
+        broadcastConfigChange();
+    }
+
+    // Per-provider usage stats — locally tracked via record_ai_usage from
+    // the BYOK send path in AIPanel. Each row is keyed by model name, so
+    // we look up by the config's default_model below.
+    type ProviderStat = {
+        model: string;
+        totalCalls: number;
+        inputTokens: number;
+        outputTokens: number;
+    };
+    let aiProviderStats = $state<ProviderStat[]>([]);
+    async function loadAiProviderStats() {
+        try {
+            aiProviderStats = await invoke<ProviderStat[]>(
+                "get_ai_provider_stats",
+            );
+        } catch (e) {
+            console.warn("get_ai_provider_stats failed", e);
+            aiProviderStats = [];
+        }
+    }
+    function statsForConfig(cfg: AiConfig): ProviderStat | null {
+        if (!cfg.defaultModel) return null;
+        return aiProviderStats.find((s) => s.model === cfg.defaultModel) ?? null;
+    }
+    function fmtTokens(n: number): string {
+        if (n >= 1000) return `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k`;
+        return String(n);
     }
 
     function handleUpgradeClick() {
@@ -867,6 +906,7 @@
             loadAiSettings();
             loadAiConfigs();
             loadCloudBalance();
+            loadAiProviderStats();
         }
         if (!show) {
             aiSettingsLoaded = false;
@@ -1939,13 +1979,13 @@
                         </div>
                     </div>
                 {:else if activeTab === "ai"}
-                    <!-- Clauge AI card (upsell or balance) -->
+                    <!-- Clauge AI card (upsell or balance). Manage button
+                         lives only in Account → Profile strip now. -->
                     <ClaugeAIBalance
                         plan={$cloudPlan ?? "free"}
                         credits={cloudCreditsLocal}
                         subscription={cloudSubLocal}
                         onUpgradeClick={handleUpgradeClick}
-                        onManageClick={handleManageClick}
                     />
 
                     <!-- BYOK multi-config list -->
@@ -1985,26 +2025,64 @@
                                             >
                                         </div>
                                         <div class="byok-config-actions">
-                                            {#if cfg.isDefault !== 1}
+                                            <div
+                                                class="byok-config-actions-inner"
+                                            >
+                                                {#if cfg.isDefault !== 1}
+                                                    <button
+                                                        class="byok-btn-link"
+                                                        onclick={() =>
+                                                            handleSetDefault(
+                                                                cfg,
+                                                            )}
+                                                        >Set default</button
+                                                    >
+                                                {/if}
                                                 <button
                                                     class="byok-btn-link"
                                                     onclick={() =>
-                                                        handleSetDefault(cfg)}
-                                                    >Set default</button
+                                                        openEditEditor(cfg)}
+                                                    >Edit</button
+                                                >
+                                                <button
+                                                    class="byok-btn-link danger"
+                                                    onclick={() =>
+                                                        handleDeleteConfig(cfg)}
+                                                    >Delete</button
+                                                >
+                                            </div>
+                                        </div>
+                                        {@const s = statsForConfig(cfg)}
+                                        <div class="byok-config-stats">
+                                            {#if s}
+                                                <span class="byok-stat"
+                                                    ><strong
+                                                        >{s.totalCalls.toLocaleString()}</strong
+                                                    >
+                                                    {s.totalCalls === 1
+                                                        ? "request"
+                                                        : "requests"}</span
+                                                >
+                                                <span class="byok-stat-sep"
+                                                    >·</span
+                                                >
+                                                <span class="byok-stat"
+                                                    >{fmtTokens(s.inputTokens)}
+                                                    in</span
+                                                >
+                                                <span class="byok-stat-sep"
+                                                    >·</span
+                                                >
+                                                <span class="byok-stat"
+                                                    >{fmtTokens(
+                                                        s.outputTokens,
+                                                    )} out</span
+                                                >
+                                            {:else}
+                                                <span class="byok-stat muted"
+                                                    >No usage tracked yet</span
                                                 >
                                             {/if}
-                                            <button
-                                                class="byok-btn-link"
-                                                onclick={() =>
-                                                    openEditEditor(cfg)}
-                                                >Edit</button
-                                            >
-                                            <button
-                                                class="byok-btn-link danger"
-                                                onclick={() =>
-                                                    handleDeleteConfig(cfg)}
-                                                >Delete</button
-                                            >
                                         </div>
                                     </li>
                                 {/each}
@@ -4604,8 +4682,13 @@
         margin: 0;
     }
     .byok-config-row {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "info actions"
+            "stats stats";
+        column-gap: 0.5rem;
+        row-gap: 0.45rem;
         align-items: center;
         padding: 0.75rem 1rem;
         border: 1px solid var(--b1);
@@ -4614,10 +4697,40 @@
         background: var(--surface-hover, transparent);
     }
     .byok-config-info {
+        grid-area: info;
         display: flex;
         align-items: center;
         gap: 0.5rem;
         min-width: 0;
+    }
+    .byok-config-actions {
+        grid-area: actions;
+    }
+    .byok-config-stats {
+        grid-area: stats;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 11.5px;
+        color: var(--t3);
+        font-family: var(--ui);
+        padding-top: 0.4rem;
+        border-top: 1px dashed color-mix(in srgb, var(--b1) 80%, transparent);
+    }
+    .byok-stat {
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+    .byok-stat strong {
+        color: var(--t2);
+        font-weight: 600;
+    }
+    .byok-stat.muted {
+        font-style: italic;
+        opacity: 0.7;
+    }
+    .byok-stat-sep {
+        opacity: 0.5;
     }
     .byok-config-label {
         font-weight: 500;
@@ -4642,7 +4755,7 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .byok-config-actions {
+    .byok-config-actions-inner {
         display: flex;
         gap: 0.5rem;
         flex-shrink: 0;

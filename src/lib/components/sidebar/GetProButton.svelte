@@ -1,57 +1,69 @@
 <script lang="ts">
-  import { cloudConnected, cloudPlan, upgradeModalOpen } from '$lib/stores/cloud';
+  import { cloudPlan, upgradeModalOpen } from '$lib/stores/cloud';
 
   const isPro = $derived($cloudPlan === 'pro');
-  const visible = $derived($cloudConnected);
 </script>
 
-{#if visible}
+{#if isPro}
+  <span class="pill pill-pro" title="Clauge Pro active">
+    <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6L12 2z"/>
+    </svg>
+    PRO
+  </span>
+{:else}
   <button
-    class="get-pro-badge"
-    class:pro={isPro}
-    onclick={(e) => {
-      e.stopPropagation();
-      if (!isPro) upgradeModalOpen.set(true);
-    }}
-    title={isPro ? 'Clauge Pro active' : 'Upgrade to Clauge Pro'}
-    aria-label={isPro ? 'Clauge Pro active' : 'Upgrade to Clauge Pro'}
-    disabled={isPro}
+    class="pill pill-free"
+    onclick={(e) => { e.stopPropagation(); upgradeModalOpen.set(true); }}
+    title="Upgrade to Clauge Pro"
   >
-    {isPro ? 'Pro' : 'Get Pro'}
+    <span class="lbl-free">FREE</span>
+    <span class="sep">·</span>
+    <span class="lbl-cta">Get Pro</span>
+    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
+    </svg>
   </button>
 {/if}
 
 <style>
-  .get-pro-badge {
-    /* Sits above the avatar, anchored to its right side with a tiny outward
-       overhang so the lower-right corner of the badge clips just past the
-       avatar's right edge while staying within the 72px sidebar. */
-    position: absolute;
-    bottom: 100%;
-    right: -6px;
-    margin-bottom: -4px;
-    padding: 2px 6px;
-    border-radius: 5px;
-    border: 1px solid var(--n2, #0e0e0e);
-    background: linear-gradient(135deg, var(--acc, #c2185b), color-mix(in srgb, var(--acc, #c2185b) 65%, transparent));
-    color: white;
-    cursor: pointer;
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 7px;
+    border-radius: 999px;
     font-size: 9px;
-    font-weight: 700;
     font-family: var(--ui);
-    letter-spacing: 0.04em;
-    line-height: 1.2;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: 0.05em;
     white-space: nowrap;
-    z-index: 2;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    background: color-mix(in srgb, var(--acc, #c2185b) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--acc, #c2185b) 45%, transparent);
+    color: var(--acc, #c2185b);
   }
-  .get-pro-badge:not(.pro):hover {
-    transform: scale(1.08);
-    box-shadow: 0 2px 5px color-mix(in srgb, var(--acc, #c2185b) 55%, transparent);
+  .pill-free {
+    cursor: pointer;
+    transition: background 0.12s, border-color 0.12s;
   }
-  .get-pro-badge.pro {
-    cursor: default;
-    background: color-mix(in srgb, var(--acc, #c2185b) 80%, transparent);
+  .pill-free:hover {
+    background: color-mix(in srgb, var(--acc, #c2185b) 25%, transparent);
+    border-color: var(--acc, #c2185b);
+  }
+  .pill-pro {
+    background: var(--acc, #c2185b);
+    border-color: var(--acc, #c2185b);
+    color: white;
+  }
+  .lbl-free {
+    opacity: 0.7;
+    font-weight: 600;
+  }
+  .lbl-cta {
+    font-weight: 700;
+  }
+  .sep {
+    opacity: 0.4;
   }
 </style>

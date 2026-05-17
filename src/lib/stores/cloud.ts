@@ -27,6 +27,7 @@ export const cloudUser = writable<CloudUser | null>(null);
 export const cloudProviders = writable<CloudProviderLink[]>([]);
 export const cloudPlan = writable<string>('free');
 export const activeProvider = writable<Provider | null>(null);
+export const welcomeProModalOpen = writable<boolean>(false);
 
 /** Convenience: the GitHub-or-Google display handle shown in UI. */
 export const cloudDisplayHandle = derived(

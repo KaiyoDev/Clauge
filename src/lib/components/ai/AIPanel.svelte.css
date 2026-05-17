@@ -350,19 +350,42 @@
     color: var(--t2);
   }
 
+  .welcome-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 14px 0 4px;
+    width: 100%;
+    max-width: 240px;
+    align-items: stretch;
+  }
   .ai-setup-btn {
-    padding: 8px 20px;
+    padding: 9px 18px;
     border-radius: 8px;
-    border: none;
-    background: var(--acc);
-    color: #fff;
+    border: 1px solid var(--b1);
+    background: transparent;
+    color: var(--t1);
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    margin-top: 8px;
-    transition: opacity 0.15s;
+    transition:
+      background 0.15s,
+      border-color 0.15s,
+      opacity 0.15s;
   }
-  .ai-setup-btn:hover { opacity: 0.85; }
+  .ai-setup-btn:hover {
+    background: var(--surface-hover);
+    border-color: var(--b2);
+  }
+  .ai-setup-btn-primary {
+    background: var(--acc);
+    border-color: transparent;
+    color: #fff;
+  }
+  .ai-setup-btn-primary:hover {
+    opacity: 0.92;
+    background: var(--acc);
+  }
 
   /* User bubble */
   .bubble.user-bubble {
@@ -1043,12 +1066,23 @@
     40% { opacity: 1; transform: scale(1); }
   }
 
-  /* Input area */
-  .ai-input-area {
+  /* Composer meta — sits between the chat area and the input. Holds the
+     provider selector chip + any future contextual badges. */
+  .ai-composer-meta {
     flex-shrink: 0;
     border-top: 1px solid var(--b1);
     background: var(--n2);
-    padding: 10px 14px;
+    padding: 6px 14px 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  /* Input area — now adjoins the meta row above it (no double border). */
+  .ai-input-area {
+    flex-shrink: 0;
+    background: var(--n2);
+    padding: 6px 14px 10px;
     display: flex;
     align-items: flex-end;
     gap: 8px;

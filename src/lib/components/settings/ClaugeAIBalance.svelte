@@ -4,13 +4,11 @@
     credits,
     subscription,
     onUpgradeClick,
-    onManageClick,
   }: {
     plan: string;
     credits: { remaining: number; allowance: number; resets_at: string | null } | null;
     subscription: { status: string; cancel_at_period_end: boolean } | null;
     onUpgradeClick: () => void;
-    onManageClick: () => void;
   } = $props();
 
   const isPro = $derived(plan === 'pro');
@@ -61,7 +59,6 @@
     {#if credits.resets_at}
       <p class="cai-reset">{formatResetCountdown(credits.resets_at)}</p>
     {/if}
-    <button class="cai-btn cai-btn-ghost" onclick={onManageClick}>Manage subscription</button>
   </div>
 {/if}
 

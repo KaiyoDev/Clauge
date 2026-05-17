@@ -2,7 +2,7 @@
   import { mod } from '$lib/utils/platform';
   const m = mod();
   import { aiPanelOpen, aiPanelOpenPerMode, mode, getModeChatMessages, setModeChatMessages, clearModeChatMessages, type AppMode } from '$lib/stores/app';
-  import { settings } from '$lib/stores/settings';
+  import { settings, setSetting } from '$lib/stores/settings';
   import { loadCollections } from '$lib/modes/rest/stores';
   import { activeTabId, draftRequests, openSettingsTab } from '$lib/shared/stores/tabs';
   import { sendChatMessage, generateSessionId } from '$lib/services/ai-chat';
@@ -291,9 +291,70 @@
     }
   });
 
-  let hasApiKey = $derived(
+  // Did the legacy BYOK setup leave at least one usable api key behind?
+  // Used as a fallback "user can still chat" signal when they haven't migrated
+  // to the new ai_configurations rows yet.
+  let hasLegacyKey = $derived(
     !!$settings[`ai_api_key_${$settings['ai_provider'] || 'claude'}`]?.trim()
   );
+
+  // The panel is usable if the user has Clauge AI (Pro) or any BYOK config
+  // in the new ai_configurations table — or the old legacy key as fallback.
+  let hasAnyProvider = $derived(
+    $cloudPlan === 'pro' || aiConfigs.length > 0 || hasLegacyKey
+  );
+
+  // Auto-select an active provider as soon as we know the plan + configs.
+  // Pro users default to Clauge AI; free users default to their `is_default`
+  // BYOK row (or first one). Idempotent — only runs when selectedAI is null.
+  $effect(() => {
+    if (selectedAI !== null) return;
+    if ($cloudPlan === 'pro') {
+      selectedAI = 'clauge';
+      return;
+    }
+    if (aiConfigs.length > 0) {
+      const def = aiConfigs.find((c) => c.isDefault === 1) ?? aiConfigs[0];
+      selectedAI = `config:${def.id}`;
+    }
+  });
+
+  // Bridge new ai_configurations provider names to the legacy `ai_provider`
+  // setting key. The legacy send path looks up the API key as
+  // `ai_api_key_${ai_provider}` and the model as MODEL_MAP[ai_provider], so
+  // any new provider that doesn't match its legacy slug needs to map.
+  function legacyProviderKey(newProvider: string): string {
+    switch (newProvider) {
+      case 'anthropic':
+        return 'claude';
+      case 'openai':
+        return 'openai_direct';
+      default:
+        // groq, gemini, openrouter, opencode are 1:1 with the legacy slugs.
+        return newProvider;
+    }
+  }
+
+  // When the user picks a BYOK config from the selector, mirror its provider
+  // (mapped to the legacy slug) into the ai_provider setting so the existing
+  // send path routes to the right upstream + reads the right api key.
+  $effect(() => {
+    if (!selectedAI || !selectedAI.startsWith('config:')) return;
+    const id = Number(selectedAI.slice('config:'.length));
+    const cfg = aiConfigs.find((c) => c.id === id);
+    if (!cfg) return;
+    const legacy = legacyProviderKey(cfg.provider);
+    if ($settings['ai_provider'] !== legacy) {
+      setSetting('ai_provider', legacy);
+    }
+  });
+
+  // Re-load configs when SettingsModal mutates them (add/edit/delete/default).
+  $effect(() => {
+    function reload() { loadAiConfigs(); }
+    window.addEventListener('ai-configs-changed', reload);
+    return () => window.removeEventListener('ai-configs-changed', reload);
+  });
 
   const modeColors: Record<AppMode, string> = {
     rest: 'var(--acc)',
@@ -566,7 +627,15 @@
       openai_direct: 'gpt-4.1-mini',
       gemini: 'gemini-3.1-flash-lite-preview',
     };
-    const modelId = MODEL_MAP[provider] || 'claude-haiku-4-5-20251001';
+    // The selected BYOK config's defaultModel wins over the legacy MODEL_MAP
+    // fallback, so the model the user explicitly picked in Settings → AI
+    // Assistance is the one we actually send to upstream.
+    let modelId = MODEL_MAP[provider] || 'claude-haiku-4-5-20251001';
+    if (selectedAI?.startsWith('config:')) {
+      const sid = Number(selectedAI.slice('config:'.length));
+      const scfg = aiConfigs.find((c) => c.id === sid);
+      if (scfg?.defaultModel) modelId = scfg.defaultModel;
+    }
 
     cleanup?.();
     const currentMode = get(mode);
@@ -686,10 +755,19 @@
           }
           scrollToBottom();
         },
-        onDone: (_inputTokens, _outputTokens) => {
+        onDone: (inputTokens, outputTokens) => {
           messages[lastIdx].isStreaming = false;
           isStreaming = false;
           scrollToBottom();
+          // Local usage log for BYOK sends — feeds the per-provider stats
+          // line under each row in Settings → AI Assistance. BYOK calls go
+          // direct to upstream, so this is the only place we see them.
+          invoke('record_ai_usage', {
+            mode: currentMode,
+            model: modelId,
+            inputTokens: inputTokens ?? 0,
+            outputTokens: outputTokens ?? 0,
+          }).catch((e) => console.warn('record_ai_usage failed', e));
         },
         onError: (error) => {
           // Raw provider errors go to console for debugging; the chat bubble
@@ -816,11 +894,6 @@
           {modeLabels[$mode]}
         </span>
       </div>
-      <AIConfigSelector
-        bind:value={selectedAI}
-        configs={aiConfigs}
-        onUpgradeClick={() => upgradeModalOpen.set(true)}
-      />
       <div class="ai-header-right">
         {#if $mode === 'ssh'}
           <button
@@ -847,15 +920,18 @@
       </div>
     </div>
 
-    {#if !hasApiKey}
+    {#if !hasAnyProvider}
       <div class="ai-chat">
         <div class="ai-welcome">
           <div class="welcome-icon">
             <svg viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg>
           </div>
-          <p class="welcome-text">Set up your API key to start using AI assistance</p>
-          <button class="ai-setup-btn" onclick={openAiSettings}>Configure in Settings</button>
-          <p class="welcome-hint">Toggle with <kbd>{m}+L</kbd></p>
+          <p class="welcome-text">Pick how you'd like to use AI in Clauge.</p>
+          <div class="welcome-actions">
+            <button class="ai-setup-btn ai-setup-btn-primary" onclick={() => upgradeModalOpen.set(true)}>Get Clauge AI with Pro</button>
+            <button class="ai-setup-btn" onclick={openAiSettings}>Add your own API key</button>
+          </div>
+          <p class="welcome-hint">Toggle this panel with <kbd>{m}+L</kbd></p>
         </div>
       </div>
     {:else}
@@ -1090,7 +1166,15 @@
       {/each}
     </div>
 
-    <!-- Input area -->
+    <!-- Composer: provider selector chip on top, input + send below -->
+    <div class="ai-composer-meta">
+      <AIConfigSelector
+        bind:value={selectedAI}
+        configs={aiConfigs}
+        onUpgradeClick={() => upgradeModalOpen.set(true)}
+        onAddProvider={openAiSettings}
+      />
+    </div>
     <div class="ai-input-area">
       <textarea
         class="ai-input"

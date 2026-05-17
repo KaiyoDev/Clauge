@@ -5,7 +5,6 @@
   import { isMac, isLinux } from '$lib/utils/platform';
   import { cloudConnected, cloudConflicts, syncing, setSyncing, setDisconnected, showSyncRestorePrompt, markSynced } from '$lib/stores/cloud';
   import ConflictResolverModal from '$lib/components/cloud/ConflictResolverModal.svelte';
-  import GetProButton from './GetProButton.svelte';
 
   let conflictResolverOpen = $state(false);
 
@@ -297,7 +296,6 @@
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="avatar-slot" onclick={(e: MouseEvent) => { e.stopPropagation(); toggleProfileMenu(); }}>
         <Avatar />
-        <GetProButton />
       </div>
       {#if profileMenuOpen}
         <!-- svelte-ignore a11y_no_static_element_interactions -->

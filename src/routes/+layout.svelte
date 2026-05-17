@@ -14,6 +14,7 @@
     import ContextMenu from "$lib/shared/primitives/ContextMenu.svelte";
     import EnvManagerModal from "$lib/components/env/EnvManagerModal.svelte";
     import UpgradeModal from "$lib/components/cloud/UpgradeModal.svelte";
+    import WelcomeProModal from "$lib/components/cloud/WelcomeProModal.svelte";
     import {
         loadAgentSessions,
         loadAgentContexts,
@@ -83,6 +84,7 @@
         cloudCredits,
         cloudPlan,
         upgradeModalOpen,
+        welcomeProModalOpen,
     } from "$lib/stores/cloud";
     import { invoke } from "@tauri-apps/api/core";
     import {
@@ -859,10 +861,8 @@
                                     e,
                                 ),
                             );
-                            showToast(
-                                "Welcome to Clauge Pro — you're all set.",
-                                "success",
-                            );
+                            upgradeModalOpen.set(false);
+                            welcomeProModalOpen.set(true);
                             continue;
                         }
                     } catch {
@@ -1147,6 +1147,7 @@
 />
 <UsageDashboard bind:show={showUsageDashboard} />
 <UpgradeModal />
+<WelcomeProModal />
 
 <style>
     .app-shell {
