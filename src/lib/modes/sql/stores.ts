@@ -27,6 +27,11 @@ export const expandedConnectionId = writable<string | null>(null);
 // Cached metadata per `(conn, db)` key — fetched lazily by SqlNav / SqlPanel.
 export const connectionDatabases = writable<Map<string, string[]>>(new Map());
 export const databaseTables = writable<Map<string, TableInfo[]>>(new Map());
+/** Resolved default schema per `(conn, db)`. Populated when a Postgres
+ *  pool transitions to `connected` via `current_schema()`. Used by the
+ *  editor as the unqualified-completion hint, replacing a hardcoded
+ *  `public` that didn't fit users whose tables live elsewhere. */
+export const defaultSchemas = writable<Map<string, string>>(new Map());
 
 // --- Pool state (keyed by `${connId}:${db}`) ---------------------------------
 
