@@ -21,7 +21,7 @@
   let confirmTitle = $state('');
   let confirmMessage = $state('');
   let confirmDanger = $state(false);
-  let confirmText = $state('Confirm');
+  let confirmText = $state('Xác nhận');
   let confirmAction: (() => Promise<void>) | null = $state(null);
 
   /** Set up + show the shared ConfirmDialog. Centralised so the Reset
@@ -78,7 +78,7 @@
   const groupedByProject = $derived.by(() => {
     const groups = new Map<string, AgentSession[]>();
     for (const s of filteredSessions) {
-      const key = s.projectName || 'Untitled';
+      const key = s.projectName || 'Không tên';
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(s);
     }
@@ -137,10 +137,10 @@
 
   function relativeTime(iso: string): string {
     const diff = Date.now() - new Date(iso).getTime();
-    if (diff < 60000) return 'just now';
-    if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
-    return `${Math.floor(diff / 86400000)}d ago`;
+    if (diff < 60000) return 'vừa xong';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)} phút trước`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ trước`;
+    return `${Math.floor(diff / 86400000)} ngày trước`;
   }
 
   function showSessionMenu(e: MouseEvent, session: AgentSession) {
@@ -149,20 +149,20 @@
 
     showContextMenu(e.clientX, e.clientY, [
       {
-        label: 'Edit',
+        label: 'Chỉnh sửa',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
         action: () => {
           window.dispatchEvent(new CustomEvent(AGENT_EVENT.EDIT_SESSION, { detail: { session } }));
         },
       },
       {
-        label: 'Reset Session',
+        label: 'Đặt lại phiên',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>',
         action: () => showConfirm({
-          title: 'Reset Session',
-          message: `Reset "${session.title}"? This will clear the Claude session ID and start fresh.`,
+          title: 'Đặt lại phiên',
+          message: `Đặt lại "${session.title}"? Hành động này sẽ xóa session ID của Claude và bắt đầu lại từ đầu.`,
           danger: false,
-          confirmText: 'Reset',
+          confirmText: 'Đặt lại',
           action: async () => {
             window.dispatchEvent(new CustomEvent(AGENT_EVENT.RESET_SESSION, { detail: { session } }));
           },
@@ -170,7 +170,7 @@
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Delete',
+        label: 'Xóa',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
         danger: true,
         action: async () => {
@@ -186,14 +186,14 @@
             try { dirty = await agentWorktreeIsDirty(session.worktreePath); } catch { /* probe error → treat as clean and let the normal flow run */ }
           }
           if (dirty) {
-            showToast(`"${session.title}" has uncommitted changes in ${session.worktreePath}. Commit or stash them, then try again.`, 'info');
+            showToast(`"${session.title}" có thay đổi chưa commit trong ${session.worktreePath}. Hãy commit hoặc stash, rồi thử lại.`, 'info');
             return;
           }
           showConfirm({
-            title: 'Delete Session',
-            message: `Delete "${session.title}"? This cannot be undone.`,
+            title: 'Xóa phiên',
+            message: `Xóa "${session.title}"? Không thể hoàn tác.`,
             danger: true,
-            confirmText: 'Delete',
+            confirmText: 'Xóa',
             action: async () => {
               window.dispatchEvent(new CustomEvent(AGENT_EVENT.DELETE_SESSION, { detail: { session } }));
             },
@@ -214,11 +214,11 @@
   {#if filteredSessions.length === 0}
     <div class="nav-empty">
       {#if searchQuery}
-        <span>No results for "{searchQuery}"</span>
+        <span>Không có kết quả cho "{searchQuery}"</span>
       {:else}
-        <span>No sessions yet</span>
+        <span>Chưa có phiên nào</span>
         <button class="nav-empty-btn" onclick={handleNewSession}>
-          + New Session
+          + Phiên mới
         </button>
       {/if}
     </div>
@@ -237,7 +237,7 @@
               <span class="ncoll-name">{projectName}</span>
             </div>
             <div class="ncoll-row-bot">
-              <span class="ncoll-sub">{sessions.length} session{sessions.length === 1 ? '' : 's'}</span>
+              <span class="ncoll-sub">{sessions.length} phiên</span>
             </div>
           </div>
           <svg class="ncoll-arr" class:open={!isCollapsed} viewBox="0 0 24 24">
@@ -272,13 +272,13 @@
               <div class="session-row-top">
                 <span class="session-title">{session.title}</span>
                 {#if pct !== null}
-                  <span class="ctx-badge {contextClass(pct)}" title="{pct}% context window used">{pct}%</span>
+                  <span class="ctx-badge {contextClass(pct)}" title="Đã dùng {pct}% cửa sổ context">{pct}%</span>
                 {/if}
               </div>
               <div class="session-row-bot">
                 <span class="purpose-badge" style="color:{purposeColor(session.purpose)};background:{purposeColor(session.purpose)}22">{session.purpose}</span>
                 {#if session.worktreePath}
-                  <span class="wt-badge" title="Isolated worktree: {session.worktreeBranch}">WT</span>
+                  <span class="wt-badge" title="Worktree độc lập: {session.worktreeBranch}">WT</span>
                 {/if}
                 <span class="session-time-spacer"></span>
                 <span class="session-time">{relativeTime(session.lastUsedAt)}</span>
@@ -289,7 +289,7 @@
               class="session-ellipsis"
               role="button"
               tabindex="-1"
-              title="More"
+              title="Thêm"
               onclick={(e) => { e.stopPropagation(); showSessionMenu(e, session); }}
             >
               <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>

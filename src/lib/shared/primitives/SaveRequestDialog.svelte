@@ -30,10 +30,10 @@
         const pathParts = parsed.pathname.split('/').filter(Boolean);
         name = pathParts.length > 0 ? pathParts[pathParts.length - 1] : draft.url;
       } catch {
-        name = draft.url || 'New Request';
+        name = draft.url || 'Yêu cầu mới';
       }
     } else if (show) {
-      name = 'New Request';
+      name = 'Yêu cầu mới';
     }
   });
 
@@ -108,7 +108,7 @@
   <div class="q-modal-overlay" onclick={handleOverlayClick}>
     <div class="q-save-dialog modal-card">
       <div class="q-modal-hdr">
-        <span class="q-modal-title">Save Request</span>
+        <span class="q-modal-title">Lưu yêu cầu</span>
         <button class="q-modal-close" onclick={close}>&times;</button>
       </div>
       <div class="q-save-body">
@@ -117,12 +117,12 @@
         </div>
 
         <label class="q-save-label">
-          <span class="q-save-label-text">Name</span>
+          <span class="q-save-label-text">Tên</span>
           <input
             class="q-save-input"
             type="text"
             bind:value={name}
-            placeholder="Request name"
+            placeholder="Tên yêu cầu"
             autofocus
           />
         </label>
@@ -137,12 +137,12 @@
         </label>
       </div>
       <div class="q-save-actions">
-        <button class="q-save-cancel" onclick={close}>Cancel</button>
+        <button class="q-save-cancel" onclick={close}>Hủy</button>
         <button
           class="q-save-ok"
           onclick={handleSave}
           disabled={!name.trim() || !selectedCollectionId || saving}
-        >{saving ? 'Saving...' : 'Save'}</button>
+        >{saving ? 'Đang lưu...' : 'Lưu'}</button>
       </div>
     </div>
   </div>

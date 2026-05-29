@@ -42,7 +42,7 @@ export function friendlyError(err: unknown): string {
     msg.includes("Name or service not known") ||
     msg.includes("No address associated")
   ) {
-    return "DNS resolution failed — check the hostname or your network/VPN";
+    return "Phân giải DNS thất bại — kiểm tra hostname hoặc mạng/VPN";
   }
 
   // Connection errors
@@ -50,19 +50,19 @@ export function friendlyError(err: unknown): string {
     msg.includes("Connection refused") ||
     msg.includes("connection refused")
   ) {
-    return "Could not connect — is the server running?";
+    return "Không thể kết nối — server có đang chạy không?";
   }
   if (msg.includes("password authentication failed")) {
-    return "Authentication failed — check your username and password";
+    return "Xác thực thất bại — kiểm tra tên đăng nhập và mật khẩu";
   }
   if (
     msg.includes("Connection not found") ||
     msg.includes("connection not found")
   ) {
-    return "Connection lost — please disconnect and reconnect";
+    return "Mất kết nối — vui lòng ngắt và kết nối lại";
   }
   if (msg.includes("timeout") || msg.includes("timed out")) {
-    return "Connection timed out — check your network and server";
+    return "Kết nối hết thời gian chờ — kiểm tra mạng và server";
   }
   // Preserve the ssl-error: prefix — RestPanel uses it to trigger the retry
   // modal and ResponseViewer uses it to show the SSL guide.
@@ -70,49 +70,49 @@ export function friendlyError(err: unknown): string {
     return msg;
   }
   if (msg.includes("SSL") || msg.includes("ssl") || msg.includes("TLS")) {
-    return "SSL connection error — check your SSL settings";
+    return "Lỗi kết nối SSL — kiểm tra cài đặt SSL của bạn";
   }
   if (msg.includes("ECONNREFUSED") || msg.includes("ENOTFOUND")) {
-    return "Server not reachable — check host and port";
+    return "Không tới được server — kiểm tra host và port";
   }
 
   // SQL errors — check specific patterns BEFORE generic "does not exist"
   if (msg.includes("syntax error")) {
     const match = msg.match(/syntax error at or near "([^"]+)"/);
     return match
-      ? `SQL syntax error near "${match[1]}"`
-      : "SQL syntax error — check your query";
+      ? `Lỗi cú pháp SQL gần "${match[1]}"`
+      : "Lỗi cú pháp SQL — kiểm tra truy vấn của bạn";
   }
   if (msg.includes("relation") && msg.includes("does not exist")) {
     const match = msg.match(/relation "([^"]+)" does not exist/);
-    return match ? `Table "${match[1]}" not found` : "Table not found";
+    return match ? `Không tìm thấy bảng "${match[1]}"` : "Không tìm thấy bảng";
   }
   if (msg.includes("column") && msg.includes("does not exist")) {
     const match = msg.match(/column "([^"]+)" does not exist/);
-    return match ? `Column "${match[1]}" not found` : "Column not found";
+    return match ? `Không tìm thấy cột "${match[1]}"` : "Không tìm thấy cột";
   }
   // Database not found — use specific regex to avoid matching "error returned from database"
   if (/database "([^"]+)" does not exist/.test(msg)) {
     const match = msg.match(/database "([^"]+)" does not exist/);
-    return match ? `Database "${match[1]}" not found` : "Database not found";
+    return match ? `Không tìm thấy CSDL "${match[1]}"` : "Không tìm thấy CSDL";
   }
   if (msg.includes("permission denied")) {
-    return "Permission denied — insufficient privileges";
+    return "Từ chối quyền — không đủ quyền hạn";
   }
   if (msg.includes("duplicate key")) {
-    return "Duplicate entry — a record with this key already exists";
+    return "Trùng lặp — đã tồn tại bản ghi với khóa này";
   }
   if (msg.includes("violates foreign key")) {
-    return "Cannot complete — referenced record does not exist or is still in use";
+    return "Không thể hoàn tất — bản ghi tham chiếu không tồn tại hoặc đang được dùng";
   }
   if (msg.includes("violates not-null")) {
-    return "Required field is missing — cannot be empty";
+    return "Trường bắt buộc bị thiếu — không được để trống";
   }
   if (msg.includes("multiple commands") || msg.includes("prepared statement")) {
-    return "Cannot execute multiple statements at once — select the query you want to run";
+    return "Không thể chạy nhiều câu lệnh cùng lúc — chọn truy vấn cần chạy";
   }
   if (msg.includes("unterminated") || msg.includes("incomplete")) {
-    return "Incomplete query — check for missing keywords or semicolons";
+    return "Truy vấn chưa hoàn chỉnh — kiểm tra từ khóa hoặc dấu chấm phẩy thiếu";
   }
 
   // MongoDB errors — detect by error patterns (Rust driver doesn't always include "mongo").
@@ -143,24 +143,24 @@ export function friendlyError(err: unknown): string {
     ) {
       const dbMatch = msg.match(/not authorized on (\w+)/);
       if (dbMatch) {
-        return `Not authorized on "${dbMatch[1]}" — insufficient permissions`;
+        return `Không có quyền trên "${dbMatch[1]}" — không đủ quyền hạn`;
       }
-      return "MongoDB authentication failed — check your username, password, and auth database";
+      return "Xác thực MongoDB thất bại — kiểm tra tên đăng nhập, mật khẩu và auth database";
     }
     if (
       msg.includes("ping failed") ||
       msg.includes("Server selection timeout")
     ) {
       if (msg.includes("unexpected end of file") || msg.includes("I/O error")) {
-        return "Could not reach MongoDB server — try enabling SSL/TLS";
+        return "Không thể kết nối server MongoDB — thử bật SSL/TLS";
       }
-      return "Could not reach MongoDB server — check host, port, and credentials";
+      return "Không thể kết nối server MongoDB — kiểm tra host, port và thông tin xác thực";
     }
     // Find/query errors — extract the useful part
     if (msg.includes("Find error") || msg.includes("Command failed")) {
       const codeMatch = msg.match(/Error code \d+ \((\w+)\)/);
       if (codeMatch) {
-        return `MongoDB error — ${codeMatch[1]}`;
+        return `Lỗi MongoDB — ${codeMatch[1]}`;
       }
     }
     // Fall through to the generic cleanup at the bottom — the backend
@@ -172,10 +172,10 @@ export function friendlyError(err: unknown): string {
 
   // Redis errors
   if (msg.includes("WRONGTYPE")) {
-    return "Wrong data type for this operation";
+    return "Sai kiểu dữ liệu cho thao tác này";
   }
   if (msg.includes("NOAUTH") || msg.includes("Authentication required")) {
-    return "Redis authentication required — check your password";
+    return "Redis yêu cầu xác thực — kiểm tra mật khẩu";
   }
   if (msg.includes("Redis")) {
     if (
@@ -183,7 +183,7 @@ export function friendlyError(err: unknown): string {
       msg.includes("401") ||
       msg.includes("Unauthorized")
     ) {
-      return "Redis authentication failed — check your password";
+      return "Xác thực Redis thất bại — kiểm tra mật khẩu";
     }
   }
 
@@ -192,13 +192,13 @@ export function friendlyError(err: unknown): string {
     (msg.includes("401") || msg.includes("Unauthorized")) &&
     (msg.includes("GitHub") || msg.includes("token") || msg.includes("gist"))
   ) {
-    return "Invalid or expired token — please reconnect";
+    return "Token không hợp lệ hoặc đã hết hạn — vui lòng kết nối lại";
   }
   if (msg.includes("404") || msg.includes("Not Found")) {
-    return "Resource not found";
+    return "Không tìm thấy tài nguyên";
   }
   if (msg.includes("rate limit")) {
-    return "Rate limit exceeded — try again later";
+    return "Đã vượt giới hạn gọi — thử lại sau";
   }
 
   // Raw API / Rust / panic dumps must NEVER reach the UI — they leak
@@ -221,7 +221,7 @@ export function friendlyError(err: unknown): string {
     /at line \d+ column \d+/.test(msg); // parse / serde traces
 
   if (looksLikeRawDump) {
-    return "Something went wrong on our end. Please try again later.";
+    return "Đã có lỗi xảy ra ở phía chúng tôi. Vui lòng thử lại sau.";
   }
 
   // Generic fallback — show the actual error message, cleaned up
@@ -236,7 +236,7 @@ export function friendlyError(err: unknown): string {
   if (msg.length > 280) {
     msg = msg.substring(0, 277) + "...";
   }
-  return msg || "Something went wrong";
+  return msg || "Đã có lỗi xảy ra";
 }
 
 /**

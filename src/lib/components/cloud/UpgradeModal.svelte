@@ -18,15 +18,15 @@
     function friendlyError(stage: "pricing" | "checkout", raw: string): string {
         const lower = raw.toLowerCase();
         if (lower.includes("unauthorized") || lower.includes("401"))
-            return "Your session expired. Please sign in again.";
+            return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
         if (lower.includes("network") || lower.includes("failed to fetch"))
-            return "Couldn't reach the Clauge cloud. Check your internet and try again.";
+            return "Không kết nối được tới Clauge cloud. Kiểm tra mạng và thử lại.";
         if (stage === "checkout") {
             if (lower.includes("invalid plan"))
-                return "That plan isn't available right now.";
-            return "Couldn't start checkout. Please try again in a moment.";
+                return "Gói này hiện không khả dụng.";
+            return "Không thể mở thanh toán. Vui lòng thử lại sau ít phút.";
         }
-        return "Couldn't load pricing. Please try again in a moment.";
+        return "Không thể tải bảng giá. Vui lòng thử lại sau ít phút.";
     }
     function setError(stage: "pricing" | "checkout", e: unknown) {
         console.error(`[UpgradeModal] ${stage} failed:`, e);
@@ -151,15 +151,15 @@
         );
     }
     function planLabel(id: string): string {
-        if (id === "monthly") return "Monthly";
-        if (id === "yearly") return "Yearly";
-        if (id === "lifetime") return "Lifetime";
+        if (id === "monthly") return "Hằng tháng";
+        if (id === "yearly") return "Hằng năm";
+        if (id === "lifetime") return "Trọn đời";
         return id;
     }
     function priceSuffix(id: string): string {
-        if (id === "monthly") return "/mo";
-        if (id === "yearly") return "/yr";
-        return "once";
+        if (id === "monthly") return "/tháng";
+        if (id === "yearly") return "/năm";
+        return "một lần";
     }
 
     // Plan-specific credit copy for the feature grid. Only credits differ
@@ -171,14 +171,12 @@
         const live = pricing?.plans.find((p) => p.id === id)?.credits;
         const fmt = (n: number) => n.toLocaleString();
         if (id === "yearly") {
-            return `${fmt(live ?? 12000)} credits / year`;
+            return `${fmt(live ?? 12000)} credits / năm`;
         }
         if (id === "lifetime") {
-            // Lifetime is a one-time grant — NOT a yearly refill. Copy must
-            // never imply otherwise.
-            return `${fmt(live ?? 20000)} credits, one-time`;
+            return `${fmt(live ?? 20000)} credits, một lần duy nhất`;
         }
-        return `${fmt(live ?? 1000)} credits / month`;
+        return `${fmt(live ?? 1000)} credits / tháng`;
     }
 </script>
 
@@ -195,7 +193,7 @@
             aria-modal="true"
         >
             <div class="modal">
-                <button class="close-btn" onclick={close} aria-label="Close">
+                <button class="close-btn" onclick={close} aria-label="Đóng">
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                         <path
                             d="M1 1l12 12M13 1L1 13"
@@ -221,11 +219,11 @@
                                 />
                             </svg>
                         </div>
-                        <h2 class="signin-title">Sign in to continue</h2>
+                        <h2 class="signin-title">Đăng nhập để tiếp tục</h2>
                         <p class="signin-sub">
-                            A Clauge account keeps your subscription, sync, and
-                            preferences tied to you across devices. It only
-                            takes a moment.
+                            Tài khoản Clauge giúp giữ gói đăng ký, đồng bộ và
+                            tùy chỉnh của bạn liên kết qua nhiều thiết bị. Chỉ
+                            mất một lát thôi.
                         </p>
                         <button
                             class="cta-btn"
@@ -234,7 +232,7 @@
                                 openSettingsTab("account");
                             }}
                         >
-                            Open Settings → Account
+                            Mở Cài đặt → Tài khoản
                             <svg
                                 width="13"
                                 height="13"
@@ -251,7 +249,7 @@
                         </button>
                     </div>
                 {:else if loading}
-                    <p class="status-line muted">Loading pricing…</p>
+                    <p class="status-line muted">Đang tải bảng giá…</p>
                 {:else if error}
                     <div class="error-box" role="alert">
                         <svg
@@ -293,10 +291,10 @@
                                     d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6L12 2z"
                                 />
                             </svg>
-                            Pro plan
+                            Gói Pro
                         </span>
-                        <h2 class="upm-title">Upgrade to Clauge Pro</h2>
-                        <p class="upm-tag">Everything you need, unlocked.</p>
+                        <h2 class="upm-title">Nâng cấp lên Clauge Pro</h2>
+                        <p class="upm-tag">Mở khóa mọi thứ bạn cần.</p>
                     </header>
 
                     <!-- 2x2 feature grid -->
@@ -347,7 +345,7 @@
                                 <circle cx="17" cy="7" r="2.5" />
                                 <path d="M14 16a4.5 4.5 0 018 2.8V20" />
                             </svg>
-                            <span>Unlimited coworkers</span>
+                            <span>Đồng nghiệp không giới hạn</span>
                         </div>
                         <div class="upm-feat">
                             <svg
@@ -382,7 +380,7 @@
                                     fill="currentColor"
                                 />
                             </svg>
-                            <span>Premium themes</span>
+                            <span>Theme cao cấp</span>
                         </div>
                         <div class="upm-feat">
                             <svg
@@ -402,7 +400,7 @@
                                 <path d="M12 8v13" />
                                 <path d="M12 8c-2-3-6-3-6 0 0 1.5 2 2 4 2h2zm0 0c2-3 6-3 6 0 0 1.5-2 2-4 2h-2z" />
                             </svg>
-                            <span>All future premium features included</span>
+                            <span>Bao gồm mọi tính năng cao cấp tương lai</span>
                         </div>
                     </div>
 
@@ -410,7 +408,7 @@
                     <div
                         class="upm-plans"
                         role="radiogroup"
-                        aria-label="Choose plan"
+                        aria-label="Chọn gói"
                     >
                         {#each plans as p (p.id)}
                             {@const isSelected = selectedPlan === p.id}
@@ -441,12 +439,12 @@
                                         >
                                         {#if p.id === "yearly" && yearlyPct}
                                             <span class="upm-pill-save"
-                                                >Save {yearlyPct}%</span
+                                                >Tiết kiệm {yearlyPct}%</span
                                             >
                                         {/if}
                                         {#if p.id === "lifetime"}
                                             <span class="upm-pill-best"
-                                                >Best deal</span
+                                                >Tốt nhất</span
                                             >
                                         {/if}
                                     </div>
@@ -473,7 +471,7 @@
                                 {#if hasDiscount && p.discount?.code}
                                     <div class="upm-row-discount">
                                         <span class="upm-row-discount-text">
-                                            Use at checkout to save {p.discount
+                                            Dùng khi thanh toán để tiết kiệm {p.discount
                                                 .percent}%
                                         </span>
                                         <span class="upm-row-discount-code"
@@ -488,7 +486,7 @@
                                                     p.discount!.code!,
                                                 );
                                             }}
-                                            title="Copy discount code"
+                                            title="Sao chép mã giảm giá"
                                         >
                                             {#if copiedCode === p.discount.code}
                                                 <svg
@@ -506,7 +504,7 @@
                                                         points="20 6 9 17 4 12"
                                                     />
                                                 </svg>
-                                                Copied
+                                                Đã chép
                                             {:else}
                                                 <svg
                                                     width="12"
@@ -530,7 +528,7 @@
                                                         d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"
                                                     />
                                                 </svg>
-                                                Copy
+                                                Sao chép
                                             {/if}
                                         </button>
                                     </div>
@@ -560,8 +558,8 @@
                             <path d="M8 11V8a4 4 0 018 0v3" />
                         </svg>
                         {busyPlan
-                            ? "Opening checkout…"
-                            : `Continue to checkout — ${planLabel(selectedPlan).toLowerCase()}`}
+                            ? "Đang mở thanh toán…"
+                            : `Tiếp tục thanh toán — ${planLabel(selectedPlan).toLowerCase()}`}
                     </button>
 
                     <!-- Footer microcopy -->
@@ -581,10 +579,9 @@
                             <rect x="5" y="11" width="14" height="10" rx="2" />
                             <path d="M8 11V8a4 4 0 018 0v3" />
                         </svg>
-                        Secure checkout
-                        <span class="upm-foot-dot">·</span> Cancel anytime
-                        <span class="upm-foot-dot">·</span> Credits non-refundable
-                        once used
+                        Thanh toán an toàn
+                        <span class="upm-foot-dot">·</span> Hủy bất cứ lúc nào
+                        <span class="upm-foot-dot">·</span> Credits đã dùng không hoàn lại
                     </p>
                 {/if}
 
@@ -593,17 +590,17 @@
                         <div class="pending-inner">
                             <div class="spinner" aria-hidden="true"></div>
                             <p class="pending-title">
-                                Opening secure checkout in your browser…
+                                Đang mở thanh toán an toàn trên trình duyệt…
                             </p>
                             <p class="pending-hint">
-                                This can take a few seconds on first launch.
+                                Việc này có thể mất vài giây ở lần đầu.
                             </p>
                             <button
                                 type="button"
                                 class="pending-cancel"
                                 onclick={() => (busyPlan = null)}
                             >
-                                Cancel
+                                Hủy
                             </button>
                         </div>
                     </div>

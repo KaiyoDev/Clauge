@@ -75,15 +75,15 @@
     try {
       if (editing) {
         await updateWorkspace({ id: editing.id, name: trimmed, projectPath });
-        showToast(`Updated "${trimmed}"`, 'success');
+        showToast(`Đã cập nhật "${trimmed}"`, 'success');
       } else {
         await createWorkspace({ name: trimmed, projectPath });
-        showToast(`Created "${trimmed}"`, 'success');
+        showToast(`Đã tạo "${trimmed}"`, 'success');
       }
       show = false;
       onclose?.();
     } catch (e) {
-      errorToast('Failed', e);
+      errorToast('Thất bại', e);
     } finally {
       loading = false;
     }
@@ -94,38 +94,38 @@
   }
 </script>
 
-<Modal bind:show title={isEdit ? 'Edit Workspace' : 'New Workspace'} width="440px" {onclose}>
+<Modal bind:show title={isEdit ? 'Chỉnh sửa Workspace' : 'Workspace mới'} width="440px" {onclose}>
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="nw-form" onkeydown={handleKeydown}>
     <label class="nw-field">
-      <span class="nw-label">Name</span>
+      <span class="nw-label">Tên</span>
       <input
         class="nw-input"
         type="text"
-        placeholder="e.g. Project X"
+        placeholder="vd. Dự án X"
         bind:value={name}
       />
     </label>
 
     <div class="nw-field">
-      <span class="nw-label">Project</span>
+      <span class="nw-label">Dự án</span>
 
       <div class="nw-path-row">
         <input
           class="nw-input nw-input-flex"
           type="text"
-          placeholder="Path to a project directory (optional)"
+          placeholder="Đường dẫn tới thư mục dự án (tùy chọn)"
           bind:value={projectPath}
         />
-        <button class="nw-browse" onclick={pickFolder}>Browse</button>
+        <button class="nw-browse" onclick={pickFolder}>Duyệt</button>
         {#if projectPath}
-          <button class="nw-clear" onclick={() => projectPath = null} title="Clear">×</button>
+          <button class="nw-clear" onclick={() => projectPath = null} title="Xóa">×</button>
         {/if}
       </div>
 
       {#if knownProjects.length > 0}
         <div class="nw-recent">
-          <span class="nw-recent-label">Recent projects</span>
+          <span class="nw-recent-label">Dự án gần đây</span>
           <div class="nw-chips">
             {#each knownProjects as p (p.path)}
               <button
@@ -144,9 +144,9 @@
     </div>
 
     <div class="nw-actions">
-      <button class="nw-btn-cancel" onclick={() => { show = false; onclose?.(); }}>Cancel</button>
+      <button class="nw-btn-cancel" onclick={() => { show = false; onclose?.(); }}>Hủy</button>
       <button class="nw-btn-create" onclick={submit} disabled={!name.trim() || loading}>
-        {loading ? (isEdit ? 'Saving…' : 'Creating…') : (isEdit ? 'Save' : 'Create')}
+        {loading ? (isEdit ? 'Đang lưu…' : 'Đang tạo…') : (isEdit ? 'Lưu' : 'Tạo')}
       </button>
     </div>
   </div>

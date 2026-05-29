@@ -135,7 +135,7 @@
         const urlVal = draft?.url?.trim();
 
         if (!urlVal) {
-          showToast('Enter a URL first', 'error');
+          showToast('Vui lòng nhập URL trước', 'error');
           loadingCache.set(tabId, false);
           if (get(activeTabId) === tabId) loading = false;
           return;
@@ -176,7 +176,7 @@
       }
       resp = {
         status: 0,
-        status_text: 'Error',
+        status_text: 'Lỗi',
         headers: [],
         body: errMsg,
         duration_ms: 0,
@@ -212,8 +212,8 @@
     <div class="rest-empty-icon">
       <svg viewBox="0 0 24 24" width="40" height="40"><path d="M12 5v14M5 12h14" stroke="var(--t4)" fill="none" stroke-width="1.5" stroke-linecap="round"/></svg>
     </div>
-    <p class="rest-empty-text">Create a new request or select one from collections</p>
-    <p class="rest-empty-hint">Press <kbd>+</kbd> on a collection or use the <kbd>+</kbd> button in the tab bar</p>
+    <p class="rest-empty-text">Tạo yêu cầu mới hoặc chọn một yêu cầu từ collection</p>
+    <p class="rest-empty-hint">Nhấn <kbd>+</kbd> trên collection hoặc dùng nút <kbd>+</kbd> trên thanh tab</p>
     <p class="rest-empty-hint rest-empty-ai"><kbd>{m}+L</kbd> AI Assistant</p>
   </div>
 {:else}

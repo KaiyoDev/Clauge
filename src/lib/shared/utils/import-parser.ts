@@ -139,5 +139,5 @@ export function parseJsonDocs(text: string): any[] {
     // Give up
   }
 
-  throw new Error('Could not parse file as JSON. Expected a JSON object, array, or JSONL format.');
+  throw new Error('Không phân tích được tệp dưới dạng JSON. Cần JSON object, mảng hoặc định dạng JSONL.');
 }

@@ -25,7 +25,7 @@
     if (!conn) return;
     try {
       await disconnectFromDb(conn.id);
-      showToast('Disconnected', 'success');
+      showToast('Đã ngắt kết nối', 'success');
     } catch (e: any) {
       showToast(friendlyError(e), 'error');
     }
@@ -258,16 +258,16 @@
     const tab = $tabs.find((t) => t.id === closeConfirmTabId);
     const mode = tab?.mode;
     if (mode === 'agent') {
-      return { title: 'Close this tab?', message: 'This agent session tab will be closed.', confirmText: 'Close', confirmColor: 'var(--acc)', discardText: undefined as string | undefined };
+      return { title: 'Đóng tab này?', message: 'Tab phiên agent này sẽ được đóng.', confirmText: 'Đóng', confirmColor: 'var(--acc)', discardText: undefined as string | undefined };
     }
     if (mode === 'ssh') {
-      return { title: 'Disconnect SSH session?', message: 'This will close the connection and the tab.', confirmText: 'Disconnect', confirmColor: 'var(--acc)', discardText: undefined as string | undefined };
+      return { title: 'Ngắt kết nối SSH?', message: 'Việc này sẽ đóng kết nối và tab.', confirmText: 'Ngắt kết nối', confirmColor: 'var(--acc)', discardText: undefined as string | undefined };
     }
     if (mode === 'explorer') {
-      return { title: 'Close file browser tab?', message: 'The remote connection for this tab will be closed.', confirmText: 'Disconnect', confirmColor: 'var(--acc)', discardText: undefined as string | undefined };
+      return { title: 'Đóng tab trình duyệt tệp?', message: 'Kết nối từ xa của tab này sẽ được đóng.', confirmText: 'Ngắt kết nối', confirmColor: 'var(--acc)', discardText: undefined as string | undefined };
     }
     // REST / SQL "save before close" — 3-button.
-    return { title: 'Unsaved changes', message: 'Do you want to save changes before closing?', confirmText: 'Save', confirmColor: 'var(--acc)', discardText: "Don't Save" as string | undefined };
+    return { title: 'Thay đổi chưa lưu', message: 'Bạn có muốn lưu thay đổi trước khi đóng?', confirmText: 'Lưu', confirmColor: 'var(--acc)', discardText: "Không lưu" as string | undefined };
   });
 
   // SQL script modal state
@@ -285,7 +285,7 @@
     if (!profile) return;
     showContextMenu(e.clientX, e.clientY, [
       {
-        label: 'Duplicate Session',
+        label: 'Nhân bản phiên',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>',
         action: () => {
           window.dispatchEvent(new CustomEvent(SSH_EVENT.DUPLICATE_SESSION, { detail: profile }));
@@ -328,19 +328,19 @@
     }
     if (m === 'nosql') {
       if (get(connectedNoSqlIds).size === 0) {
-        showToast('Connect to a database first', 'info');
+        showToast('Hãy kết nối tới một cơ sở dữ liệu trước', 'info');
         return;
       }
-      const tab = addTab('New Query', 'nosql', null, 'var(--nosql)');
+      const tab = addTab('Truy vấn mới', 'nosql', null, 'var(--nosql)');
       initNoSqlTab(tab.id);
       return;
     }
-    addTab('New Request', 'rest', null, 'var(--rest)');
+    addTab('Yêu cầu mới', 'rest', null, 'var(--rest)');
     clearActiveRequest();
   }
 
   async function handleCreateSqlScript() {
-    const name = sqlScriptName.trim() || 'Untitled Query';
+    const name = sqlScriptName.trim() || 'Truy vấn không tên';
     try {
       // Brand-new scripts start UNBOUND. The user picks the target
       // connection + database from the pill on the new tab; their
@@ -415,7 +415,7 @@
         const fb = allConns[0];
         nextBinding = { connectionId: fb.id, database: fb.databaseName };
         showToast(
-          `Original connection deleted — switched to ${fb.name} / ${fb.databaseName}.`,
+          `Kết nối gốc đã bị xóa — đã chuyển sang ${fb.name} / ${fb.databaseName}.`,
           'info',
         );
       }
@@ -582,7 +582,7 @@
   {#if $mode !== 'history'}
     <button
       class="tab-add"
-      title="New tab"
+      title="Tab mới"
       onclick={(e) => {
         // stopPropagation: same click event reaches the global
         // ContextMenu's window.click listener and immediately closes
@@ -604,7 +604,7 @@
       <EnvPill />
     {/if}
     {#if $mode !== 'agent' && $mode !== 'workspace' && $mode !== 'history'}
-      <button class="ai-toggle-btn" class:active={$aiPanelOpen} onclick={() => { aiPanelOpen.update(v => { const next = !v; aiPanelOpenPerMode.update(m => ({ ...m, [$mode]: next })); return next; }); }} title="AI Assistant">
+      <button class="ai-toggle-btn" class:active={$aiPanelOpen} onclick={() => { aiPanelOpen.update(v => { const next = !v; aiPanelOpenPerMode.update(m => ({ ...m, [$mode]: next })); return next; }); }} title="Trợ lý AI">
         <svg viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg>
       </button>
     {/if}
@@ -619,29 +619,29 @@
     <div class="sql-script-modal" onclick={(e: MouseEvent) => e.stopPropagation()}>
       <div class="ssm-title">SQL Script</div>
       <div class="ssm-section">
-        <label class="ssm-label">Script Name</label>
+        <label class="ssm-label">Tên Script</label>
         <input
           class="ssm-input"
           type="text"
-          placeholder="Untitled Query"
+          placeholder="Truy vấn không tên"
           bind:value={sqlScriptName}
           onkeydown={handleSqlScriptKeydown}
         />
         <button class="ssm-btn primary" onclick={handleCreateSqlScript}>
-          New Script
+          Script mới
         </button>
       </div>
       {#if $sqlScripts.length > 0}
         <div class="ssm-divider"></div>
         <div class="ssm-section">
-          <label class="ssm-label">Open Existing</label>
+          <label class="ssm-label">Mở script đã có</label>
           <div class="ssm-list">
             {#each $sqlScripts as script (script.id)}
               <button class="ssm-list-item" onclick={() => handleOpenScript(script)}>
                 <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>
                 <span class="ssm-item-info">
                   <span class="ssm-item-name">{script.name}</span>
-                  <span class="ssm-item-meta">{script.databaseName || 'No database'} &middot; {new Date(script.updatedAt).toLocaleDateString()}</span>
+                  <span class="ssm-item-meta">{script.databaseName || 'Không có CSDL'} &middot; {new Date(script.updatedAt).toLocaleDateString()}</span>
                 </span>
                 <span
                   class="ssm-item-delete"

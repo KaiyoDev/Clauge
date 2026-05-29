@@ -88,16 +88,16 @@
   async function handleClear() {
     try {
       await clearHistory();
-      showToast('History cleared', 'success');
+      showToast('Đã xóa lịch sử', 'success');
     } catch {
-      showToast('Failed to clear history', 'error');
+      showToast('Không thể xóa lịch sử', 'error');
     }
   }
 </script>
 
 <div class="history-panel">
   {#if $history.length === 0}
-    <div class="hist-empty">No history yet</div>
+    <div class="hist-empty">Chưa có lịch sử</div>
   {:else}
     <div class="hist-list">
       {#each $history as entry (entry.id)}
@@ -131,16 +131,16 @@
   {/if}
   {#if $history.length > 0}
     <div class="hist-footer">
-      <button class="hist-clear" onclick={() => showClearConfirm = true}>Clear History</button>
+      <button class="hist-clear" onclick={() => showClearConfirm = true}>Xóa lịch sử</button>
     </div>
   {/if}
 </div>
 
 <ConfirmDialog
   bind:show={showClearConfirm}
-  title="Clear History"
-  message="Are you sure you want to clear all request history? This cannot be undone."
-  confirmText="Clear"
+  title="Xóa lịch sử"
+  message="Bạn có chắc muốn xóa toàn bộ lịch sử yêu cầu? Hành động này không thể hoàn tác."
+  confirmText="Xóa"
   onconfirm={handleClear}
 />
 

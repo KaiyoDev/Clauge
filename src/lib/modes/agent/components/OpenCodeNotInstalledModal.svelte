@@ -30,27 +30,27 @@
   }
 </script>
 
-<Modal bind:show title="OpenCode Not Found" width="440px">
+<Modal bind:show title="Không tìm thấy OpenCode" width="440px">
   <div class="cn-body">
     <p class="cn-desc">
-      OpenCode wasn't found on your <code class="cn-code">PATH</code>.
-      Install it to start OpenCode sessions.
+      Không tìm thấy OpenCode trong <code class="cn-code">PATH</code>.
+      Hãy cài đặt để bắt đầu phiên OpenCode.
     </p>
 
     {#if platform === 'mac'}
-      {@render cmdBlock('Install script', 'curl -fsSL https://opencode.ai/install | bash')}
-      {@render cmdBlock('Homebrew (official tap)', 'brew install anomalyco/tap/opencode')}
+      {@render cmdBlock('Script cài đặt', 'curl -fsSL https://opencode.ai/install | bash')}
+      {@render cmdBlock('Homebrew (tap chính thức)', 'brew install anomalyco/tap/opencode')}
       {@render cmdBlock('npm', 'npm install -g opencode-ai')}
     {:else if platform === 'windows'}
       <p class="cn-note">
-        OpenCode recommends running inside WSL on Windows for full
-        feature support. Native installs work via Scoop or Chocolatey.
+        OpenCode khuyến nghị chạy trong WSL trên Windows để có đầy đủ
+        tính năng. Cài đặt native qua Scoop hoặc Chocolatey.
       </p>
       {@render cmdBlock('Scoop', 'scoop install opencode')}
       {@render cmdBlock('Chocolatey', 'choco install opencode')}
       {@render cmdBlock('npm', 'npm install -g opencode-ai')}
     {:else}
-      {@render cmdBlock('Install script', 'curl -fsSL https://opencode.ai/install | bash')}
+      {@render cmdBlock('Script cài đặt', 'curl -fsSL https://opencode.ai/install | bash')}
       {@render cmdBlock('Arch Linux', 'sudo pacman -S opencode')}
       {@render cmdBlock('npm', 'npm install -g opencode-ai')}
     {/if}
@@ -59,7 +59,7 @@
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
       </svg>
-      After installing, run <code class="cn-code">opencode auth</code> to add an LLM provider key, then restart Clauge so it picks up your updated <code class="cn-code">PATH</code>.
+      Sau khi cài đặt, hãy chạy <code class="cn-code">opencode auth</code> để thêm khóa LLM provider, rồi khởi động lại Clauge để cập nhật <code class="cn-code">PATH</code>.
     </div>
 
     <div class="cn-footer">
@@ -68,9 +68,9 @@
           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
           <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
         </svg>
-        OpenCode docs
+        Tài liệu OpenCode
       </button>
-      <button class="cn-btn-close" onclick={() => (show = false)}>Close</button>
+      <button class="cn-btn-close" onclick={() => (show = false)}>Đóng</button>
     </div>
   </div>
 </Modal>
@@ -80,7 +80,7 @@
     <span class="cn-label">{label}</span>
     <div class="cn-cmd-block">
       <code>{cmd}</code>
-      <button class="cn-copy" onclick={() => copy(cmd)} title="Copy" aria-label="Copy command">
+      <button class="cn-copy" onclick={() => copy(cmd)} title="Sao chép" aria-label="Sao chép lệnh">
         {#if copiedCmd === cmd}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         {:else}

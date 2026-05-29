@@ -46,7 +46,7 @@
     {@const c = tagColor(tag)}
     <span class="ti-chip" style="color:{c.fg};background:{c.bg};border-color:{c.border};">
       {tag}
-      <button class="ti-chip-x" onclick={() => remove(i)} aria-label="Remove tag">×</button>
+      <button class="ti-chip-x" onclick={() => remove(i)} aria-label="Xóa tag">×</button>
     </span>
   {/each}
   <input

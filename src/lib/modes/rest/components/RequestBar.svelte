@@ -643,7 +643,7 @@
 
       const _mc = METHOD_COLORS;
       const newColor = _mc[parsed.method] ?? _mc.GET;
-      const name = $activeRequest?.name ?? (parsed.url || 'New Request');
+      const name = $activeRequest?.name ?? (parsed.url || 'Yêu cầu mới');
       updateTab(tabId, { dot: newColor.color, label: parsed.method + ' ' + name });
 
       // Render the URL into the editor and place cursor at end
@@ -662,7 +662,7 @@
       lastSnapAt = 0;
       pushUndoSnapshot(parsed.url, parsed.url.length);
 
-      showToast('Imported from cURL', 'success');
+      showToast('Đã nhập từ cURL', 'success');
       return;
     }
 
@@ -686,7 +686,7 @@
     }
     const _mc2 = METHOD_COLORS;
     const newColor = _mc2[newMethod] ?? _mc2.GET;
-    const name = $activeRequest?.name ?? (localUrl || 'New Request');
+    const name = $activeRequest?.name ?? (localUrl || 'Yêu cầu mới');
     updateTab(tabId, { dot: newColor.color, label: newMethod + ' ' + name });
     onmethodchange?.(newMethod);
   }
@@ -719,7 +719,7 @@
       contenteditable="true"
       role="textbox"
       tabindex="0"
-      data-placeholder="Enter URL or &#123;&#123;variable&#125;&#125;"
+      data-placeholder="Nhập URL hoặc &#123;&#123;biến&#125;&#125;"
       oninput={handleInput}
       onbeforeinput={handleBeforeInput}
       onkeydown={handleKeydown}
@@ -750,9 +750,9 @@
 
   <button class="send-btn" onclick={handleSend} disabled={loading}>
     {#if loading}
-      Sending&hellip;
+      Đang gửi&hellip;
     {:else}
-      Send &#9654;
+      Gửi &#9654;
     {/if}
   </button>
 </div>

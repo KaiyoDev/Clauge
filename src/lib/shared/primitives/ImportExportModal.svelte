@@ -72,7 +72,7 @@
       }
 
       if (!content) {
-        showToast('Please provide content to import', 'error');
+        showToast('Vui lòng cung cấp nội dung để nhập', 'error');
         importing = false;
         return;
       }
@@ -81,7 +81,7 @@
 
       if (format === 'curl') {
         await cmd.importCurl(content);
-        showToast('Imported cURL as request', 'success');
+        showToast('Đã nhập cURL thành request', 'success');
       } else if (format === 'postman') {
         const result = await cmd.importPostman(content);
         showToast(result.message, 'success');
@@ -111,7 +111,7 @@
         const data = JSON.parse(json);
         const requests = data.requests || [];
         if (requests.length === 0) {
-          showToast('No requests to export', 'error');
+          showToast('Không có request để xuất', 'error');
           exporting = false;
           return;
         }
@@ -132,7 +132,7 @@
         }
         const content = curlCommands.join('\n\n');
         downloadFile(content, getCollectionName(exportCollectionId), 'sh', 'text/x-sh');
-        showToast('Export downloaded as cURL', 'success');
+        showToast('Đã tải xuống bản xuất cURL', 'success');
       } else {
         let json: string;
         if (exportCollectionId === '__all__') {
@@ -141,7 +141,7 @@
           json = await cmd.exportCollection(exportCollectionId);
         }
         downloadFile(json, exportCollectionId === '__all__' ? 'clauge-export' : getCollectionName(exportCollectionId), 'json', 'application/json');
-        showToast('Export downloaded', 'success');
+        showToast('Đã tải xuống bản xuất', 'success');
       }
     } catch (err: any) {
       showToast(friendlyError(err), 'error');
@@ -168,31 +168,31 @@
   }
 </script>
 
-<Modal bind:show title="Import / Export" width="540px">
+<Modal bind:show title="Nhập / Xuất" width="540px">
   <div class="ie-tabs">
     <button
       class="ie-tab"
       class:active={activeTab === 'import'}
       onclick={() => activeTab = 'import'}
-    >Import</button>
+    >Nhập</button>
     <button
       class="ie-tab"
       class:active={activeTab === 'export'}
       onclick={() => activeTab = 'export'}
-    >Export</button>
+    >Xuất</button>
   </div>
 
   {#if activeTab === 'import'}
     <div class="ie-section">
-      <label class="ie-label">Format</label>
+      <label class="ie-label">Định dạng</label>
       <select class="ie-select" bind:value={importFormat}>
-        <option value="auto">Auto-detect</option>
+        <option value="auto">Tự động phát hiện</option>
         <option value="clauge">Clauge JSON</option>
         <option value="postman">Postman Collection</option>
-        <option value="curl">cURL Command</option>
+        <option value="curl">Lệnh cURL</option>
       </select>
 
-      <label class="ie-label">Choose File</label>
+      <label class="ie-label">Chọn tệp</label>
       <input
         bind:this={fileInputEl}
         type="file"
@@ -201,10 +201,10 @@
         onchange={handleFileChange}
       />
 
-      <label class="ie-label">Or paste content</label>
+      <label class="ie-label">Hoặc dán nội dung</label>
       <textarea
         class="ie-textarea"
-        placeholder="Paste JSON or cURL command here..."
+        placeholder="Dán JSON hoặc lệnh cURL vào đây..."
         rows="8"
         bind:value={importText}
       ></textarea>
@@ -214,20 +214,20 @@
         onclick={handleImport}
         disabled={importing || (!importText.trim() && !importFile)}
       >
-        {importing ? 'Importing...' : 'Import'}
+        {importing ? 'Đang nhập...' : 'Nhập'}
       </button>
     </div>
   {:else}
     <div class="ie-section">
       <label class="ie-label">Collection</label>
       <select class="ie-select" bind:value={exportCollectionId}>
-        <option value="__all__">All Collections</option>
+        <option value="__all__">Tất cả Collections</option>
         {#each collectionList as coll}
           <option value={coll.id}>{coll.name}</option>
         {/each}
       </select>
 
-      <label class="ie-label">Format</label>
+      <label class="ie-label">Định dạng</label>
       <select class="ie-select" bind:value={exportFormat}>
         <option value="clauge">Clauge JSON</option>
         {#if exportCollectionId !== '__all__'}
@@ -236,7 +236,7 @@
       </select>
 
       {#if exportFormat === 'curl'}
-        <p class="ie-note">Exports each request as a cURL command in a shell script.</p>
+        <p class="ie-note">Xuất từng request thành lệnh cURL trong một shell script.</p>
       {/if}
 
       <button
@@ -244,7 +244,7 @@
         onclick={handleExport}
         disabled={exporting}
       >
-        {exporting ? 'Exporting...' : exportFormat === 'curl' ? 'Export as cURL' : 'Export as JSON'}
+        {exporting ? 'Đang xuất...' : exportFormat === 'curl' ? 'Xuất ra cURL' : 'Xuất ra JSON'}
       </button>
     </div>
   {/if}

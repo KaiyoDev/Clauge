@@ -82,8 +82,8 @@
 </script>
 
 {#if active}
-  <Modal show={true} title={active.name || 'SSH Authentication Required'} width="420px">
-    <div class="ap-form" onkeydown={handleKey} role="dialog" aria-label="SSH authentication prompts">
+  <Modal show={true} title={active.name || 'Yêu cầu xác thực SSH'} width="420px">
+    <div class="ap-form" onkeydown={handleKey} role="dialog" aria-label="Yêu cầu xác thực SSH">
       {#if active.instructions}
         <p class="ap-instructions">{active.instructions}</p>
       {/if}
@@ -102,9 +102,9 @@
       {/each}
 
       <div class="ap-actions">
-        <button class="ap-btn-cancel" onclick={cancel} type="button">Cancel</button>
+        <button class="ap-btn-cancel" onclick={cancel} type="button">Hủy</button>
         <button class="ap-btn-submit" onclick={submit} disabled={submitting} type="button">
-          {submitting ? 'Authenticating…' : 'Submit'}
+          {submitting ? 'Đang xác thực…' : 'Gửi'}
         </button>
       </div>
     </div>

@@ -290,9 +290,9 @@
       await deleteSecrets(pendingDelete.id);
       await deleteConnection(pendingDelete.id);
       await loadExplorerConnections();
-      showToast(`Deleted ${pendingDelete.name}`, 'success');
+      showToast(`Đã xóa ${pendingDelete.name}`, 'success');
     } catch (err: any) {
-      errorToast('Delete failed', err);
+      errorToast('Xóa thất bại', err);
     }
     pendingDelete = null;
   }
@@ -312,7 +312,7 @@
   <div class="ex-nav-filters">
     {#each ['all', 'sftp', 'ftp', 's3', 'azure_blob'] as f (f)}
       <button class="ex-nav-chip" class:on={filter === f} onclick={() => (filter = f as typeof filter)}>
-        {f === 'all' ? 'All' : kindBadge(f as ExplorerKind)}
+        {f === 'all' ? 'Tất cả' : kindBadge(f as ExplorerKind)}
       </button>
     {/each}
   </div>
@@ -320,11 +320,11 @@
   <div class="ex-nav-list">
     {#if filtered.length === 0}
       {#if searchQuery}
-        <div class="ex-nav-empty">No results for "{searchQuery}"</div>
+        <div class="ex-nav-empty">Không có kết quả cho "{searchQuery}"</div>
       {:else}
         <div class="ex-nav-empty">
-          <span>No connections yet</span>
-          <button class="ex-nav-empty-btn" onclick={() => (showKindPicker = true)}>+ New connection</button>
+          <span>Chưa có kết nối nào</span>
+          <button class="ex-nav-empty-btn" onclick={() => (showKindPicker = true)}>+ Kết nối mới</button>
         </div>
       {/if}
     {:else}
@@ -342,7 +342,7 @@
           >
             <div class="coll-icon coll-icon-accent">
               {@html kindIcon(conn.kind)}
-              {#if connected}<span class="conn-dot" aria-label="Connected" title="Connected"></span>{/if}
+              {#if connected}<span class="conn-dot" aria-label="Đã kết nối" title="Đã kết nối"></span>{/if}
             </div>
             <div class="ncoll-text">
               <div class="ncoll-row-top">
@@ -357,7 +357,7 @@
             </div>
             <button
               class="coll-menu"
-              title="More"
+              title="Thêm"
               onclick={(e) => { e.stopPropagation(); handleContextMenu(e, conn); }}
             >
               <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
@@ -371,17 +371,17 @@
 
 <ConfirmDialog
   bind:show={showDeleteConfirm}
-  title="Delete connection"
-  message={pendingDelete ? `Delete "${pendingDelete.name}"? Stored credentials will also be removed.` : ''}
-  confirmText="Delete"
+  title="Xóa kết nối"
+  message={pendingDelete ? `Xóa "${pendingDelete.name}"? Thông tin đăng nhập đã lưu cũng sẽ bị xóa.` : ''}
+  confirmText="Xóa"
   onconfirm={confirmDelete}
 />
 
 <ConfirmDialog
   bind:show={showDisconnectConfirm}
-  title="Disconnect"
-  message={pendingDisconnect ? `Disconnect from "${pendingDisconnect.name}"? Any open file browser tabs for this connection will be closed.` : ''}
-  confirmText="Disconnect"
+  title="Ngắt kết nối"
+  message={pendingDisconnect ? `Ngắt kết nối "${pendingDisconnect.name}"? Mọi tab trình duyệt tệp đang mở của kết nối này sẽ bị đóng.` : ''}
+  confirmText="Ngắt kết nối"
   confirmColor="var(--acc)"
   onconfirm={confirmDisconnect}
 />
@@ -415,16 +415,16 @@
   <div class="ex-kind-overlay" use:teleportToBody>
     <div class="ex-kind-card">
       <div class="ex-kind-hdr">
-        <span class="ex-kind-title">New connection</span>
-        <button class="ex-kind-close" onclick={() => (showKindPicker = false)} title="Close">&times;</button>
+        <span class="ex-kind-title">Kết nối mới</span>
+        <button class="ex-kind-close" onclick={() => (showKindPicker = false)} title="Đóng">&times;</button>
       </div>
       <div class="ex-kind-body">
-        <p class="ex-kind-sub">What kind of remote storage?</p>
+        <p class="ex-kind-sub">Loại lưu trữ từ xa nào?</p>
         <div class="ex-kind-grid">
-          <button onclick={() => pickKind('sftp')}><strong>SFTP</strong><span>Secure shell file transfer</span></button>
-          <button onclick={() => pickKind('s3')}><strong>S3-compatible</strong><span>AWS, R2, MinIO, Wasabi, B2, GCS, Custom</span></button>
+          <button onclick={() => pickKind('sftp')}><strong>SFTP</strong><span>Truyền tệp qua SSH bảo mật</span></button>
+          <button onclick={() => pickKind('s3')}><strong>S3-compatible</strong><span>AWS, R2, MinIO, Wasabi, B2, GCS, Tùy chỉnh</span></button>
           <button onclick={() => pickKind('azure_blob')}><strong>Azure Blob</strong><span>Microsoft Azure Storage</span></button>
-          <button onclick={() => pickKind('ftp')}><strong>FTP</strong><span>Plain FTP (legacy)</span></button>
+          <button onclick={() => pickKind('ftp')}><strong>FTP</strong><span>FTP thuần (cũ)</span></button>
         </div>
       </div>
     </div>

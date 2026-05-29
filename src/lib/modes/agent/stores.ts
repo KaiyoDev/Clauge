@@ -86,7 +86,7 @@ async function loadAgentUsageLimitsClaude() {
   try {
     const limits = await agentFetchUsageLimits(key);
     agentUsageLimits.set(limits);
-    agentUsageAuthStatus.set({ state: 'valid', message: 'Session key verified' });
+    agentUsageAuthStatus.set({ state: 'valid', message: 'Đã xác minh khóa phiên' });
     // Update tray title with usage stats
     // Claude API returns { five_hour: { utilization }, seven_day: { utilization } }
     // Also handle alternate shape: { standard: { percentUsed }, extended: { percentUsed } }
@@ -108,7 +108,7 @@ async function loadAgentUsageLimitsClaude() {
     agentUsageLimits.set(null);
     agentUsageAuthStatus.set({
       state: 'invalid',
-      message: typeof e === 'string' ? e : e?.message || 'Claude session key is expired or invalid',
+      message: typeof e === 'string' ? e : e?.message || 'Khóa phiên Claude đã hết hạn hoặc không hợp lệ',
     });
   }
 }
@@ -136,7 +136,7 @@ async function loadAgentUsageLimitsCodex() {
   try {
     const limits = await agentFetchCodexUsageLimits(token);
     agentUsageLimits.set(limits);
-    agentUsageAuthStatus.set({ state: 'valid', message: 'Codex token verified' });
+    agentUsageAuthStatus.set({ state: 'valid', message: 'Đã xác minh token Codex' });
     try {
       // wham/usage shape: rate_limit.{primary_window, secondary_window}.{used_percent, limit_window_seconds}
       const primary = limits?.rate_limit?.primary_window;
@@ -154,7 +154,7 @@ async function loadAgentUsageLimitsCodex() {
     agentUsageLimits.set(null);
     agentUsageAuthStatus.set({
       state: 'invalid',
-      message: typeof e === 'string' ? e : e?.message || 'Codex access token is expired or invalid',
+      message: typeof e === 'string' ? e : e?.message || 'Access token Codex đã hết hạn hoặc không hợp lệ',
     });
   }
 }

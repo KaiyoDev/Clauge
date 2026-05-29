@@ -669,9 +669,9 @@
 <div class="query-editor">
   <div class="qe-editor" bind:this={editorContainer}></div>
   {#if schemaLoading}
-    <div class="qe-schema-loading" title="Fetching column metadata for autocomplete. Suggestions improve as this completes.">
+    <div class="qe-schema-loading" title="Đang lấy metadata cột để autocomplete. Gợi ý sẽ tốt hơn khi tải xong.">
       <span class="qe-spinner"></span>
-      <span>Loading schema for autocomplete…</span>
+      <span>Đang tải schema cho autocomplete…</span>
     </div>
   {/if}
 </div>

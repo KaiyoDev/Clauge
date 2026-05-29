@@ -99,7 +99,7 @@ const themes: Record<string, Theme> = {
   'dark-glass': {
     id: 'dark-glass',
     name: 'Dark Glass',
-    description: 'Translucent with native blur',
+    description: 'Trong mờ với hiệu ứng blur tự nhiên',
     // Surface alphas tuned aggressively for "wallpaper reads through,
     // text stays legible". 0.40 puts 60% of the vibrancy / desktop
     // bleed at the surface — visibly glassy even on a dark wallpaper.
@@ -143,7 +143,7 @@ const themes: Record<string, Theme> = {
   'dark-solid': {
     id: 'dark-solid',
     name: 'Dark Solid',
-    description: 'Opaque dark with purple tints',
+    description: 'Tối đặc với sắc tím',
     sidebar: '#12121f',
     nav: '#161629',
     navHeader: '#1c1c35',
@@ -175,7 +175,7 @@ const themes: Record<string, Theme> = {
   'midnight': {
     id: 'midnight',
     name: 'Midnight',
-    description: 'Pure black, zero distraction',
+    description: 'Đen tuyền, không gây phân tâm',
     sidebar: '#000000',
     nav: '#0a0a0a',
     navHeader: '#121212',
@@ -205,7 +205,7 @@ const themes: Record<string, Theme> = {
   'rose-pine-moon': {
     id: 'rose-pine-moon',
     name: 'Rose Pine Moon',
-    description: 'Warm pastel pinks and lavenders',
+    description: 'Hồng pastel ấm và tím lavender',
     sidebar: '#232136',
     nav: '#232136',
     navHeader: '#2a273f',
@@ -238,7 +238,7 @@ const themes: Record<string, Theme> = {
   'rose-pine-dawn': {
     id: 'rose-pine-dawn',
     name: 'Rose Pine Dawn',
-    description: 'Warm cream light — Rose Pine sister to Moon',
+    description: 'Sắc kem ấm — phiên bản sáng của Rose Pine Moon',
     sidebar: '#fffaf3',
     nav: '#faf4ed',
     navHeader: '#f2e9e1',
@@ -273,7 +273,7 @@ const themes: Record<string, Theme> = {
   'atelier': {
     id: 'atelier',
     name: 'Atelier',
-    description: 'Blush + botanical wallpaper — pixel critters wander the footer',
+    description: 'Hồng phấn với hoa văn thực vật — bầy mèo pixel dạo dưới chân',
     sidebar: '#fbe8eb',
     nav: '#f9e0e5',
     navHeader: '#f3d4dc',
@@ -306,7 +306,7 @@ const themes: Record<string, Theme> = {
   'petal': {
     id: 'petal',
     name: 'Petal',
-    description: 'Plum twilight with falling cherry petals',
+    description: 'Tím mận hoàng hôn với cánh anh đào rơi',
     sidebar: '#221730',
     nav: '#1a0f28',
     navHeader: '#2c1d3d',
@@ -340,7 +340,7 @@ const themes: Record<string, Theme> = {
   'celeste': {
     id: 'celeste',
     name: 'Celeste',
-    description: 'Cosmic violet-black with twinkling stars',
+    description: 'Tím vũ trụ đen với những vì sao lấp lánh',
     sidebar: '#0d0a1a',
     nav: '#08061a',
     navHeader: '#13102a',
@@ -376,7 +376,7 @@ const themes: Record<string, Theme> = {
   'hearth': {
     id: 'hearth',
     name: 'Hearth',
-    description: 'Warm charcoal with rising embers — animated firelight',
+    description: 'Than ấm với đốm lửa bay lên — ánh lửa chuyển động',
     sidebar: '#1c1812',
     nav: '#18140f',
     navHeader: '#25201a',
@@ -404,7 +404,7 @@ const themes: Record<string, Theme> = {
   'carbon-grain': {
     id: 'carbon-grain',
     name: 'Carbon Grain',
-    description: 'Warm-neutral dark with subtle film-grain texture',
+    description: 'Tối trung tính ấm với hiệu ứng hạt phim nhẹ',
     sidebar: '#14141a',
     nav: '#14141a',
     navHeader: '#1d1d24',
@@ -431,7 +431,7 @@ const themes: Record<string, Theme> = {
   'crt-phosphor': {
     id: 'crt-phosphor',
     name: 'CRT Phosphor',
-    description: 'Retro green terminal with horizontal scanlines',
+    description: 'Terminal xanh hoài cổ với scanline ngang',
     sidebar: '#060a06',
     nav: '#060a06',
     navHeader: '#0a100a',
@@ -458,7 +458,7 @@ const themes: Record<string, Theme> = {
   'aurora-drift': {
     id: 'aurora-drift',
     name: 'Aurora Drift',
-    description: 'Animated aurora gradient drifting behind the surfaces',
+    description: 'Gradient cực quang chuyển động phía sau bề mặt',
     sidebar: 'rgba(14,17,30,0.78)',
     nav: 'rgba(14,17,30,0.78)',
     navHeader: 'rgba(20,23,38,0.85)',

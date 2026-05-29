@@ -144,7 +144,7 @@
 
   async function createInline(name: string) {
     if (!VAR_NAME_RE.test(name)) {
-      showToast('Variable names use letters, digits, _ and -', 'error');
+      showToast('Tên biến chỉ dùng chữ cái, số, _ và -', 'error');
       return;
     }
     try {
@@ -172,9 +172,9 @@
 
       // Finally drop the chip into the field.
       selectItem(name);
-      showToast(`Added {{${name}}} to environment`, 'success');
+      showToast(`Đã thêm {{${name}}} vào môi trường`, 'success');
     } catch (e) {
-      errorToast('Failed to create variable', e);
+      errorToast('Không thể tạo biến', e);
     }
   }
 

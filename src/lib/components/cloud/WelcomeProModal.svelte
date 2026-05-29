@@ -41,11 +41,11 @@
 
     let tierLabel = $derived(
         isLifetime
-            ? "Lifetime"
+            ? "Trọn đời"
             : interval === "yearly"
-              ? "Yearly"
+              ? "Hằng năm"
               : interval === "monthly"
-                ? "Monthly"
+                ? "Hằng tháng"
                 : null,
     );
 
@@ -53,20 +53,20 @@
     // claim is gated on lifetime — recurring users see a neutral message.
     let subtitle = $derived(
         isLifetime
-            ? "Pro is unlocked forever. Everything is ready to go."
-            : "Pro is unlocked. Everything is ready to go.",
+            ? "Pro đã được mở khóa vĩnh viễn. Mọi thứ sẵn sàng cho bạn."
+            : "Pro đã được mở khóa. Mọi thứ sẵn sàng cho bạn.",
     );
 
     // Verifying-state subtitle. Uses the URL hint so we can name the tier
     // even before /api/auth/me catches up. Falls back to generic copy.
     let verifyingSubtitle = $derived(
         $welcomeProPlanHint === "lifetime"
-            ? "Activating Pro Lifetime — your one-time purchase is confirming with our servers."
+            ? "Đang kích hoạt Pro Trọn đời — giao dịch một lần đang được xác nhận với máy chủ."
             : $welcomeProPlanHint === "yearly"
-              ? "Activating Pro Yearly — your subscription is confirming with our servers."
+              ? "Đang kích hoạt Pro Hằng năm — gói đăng ký đang được xác nhận với máy chủ."
               : $welcomeProPlanHint === "monthly"
-                ? "Activating Pro Monthly — your subscription is confirming with our servers."
-                : "Activating Pro — your purchase is confirming with our servers.",
+                ? "Đang kích hoạt Pro Hằng tháng — gói đăng ký đang được xác nhận với máy chủ."
+                : "Đang kích hoạt Pro — giao dịch đang được xác nhận với máy chủ.",
     );
 </script>
 
@@ -93,12 +93,12 @@
                 </div>
 
                 <h2 id="welcome-pro-title" class="title">
-                    Confirming your purchase
+                    Đang xác nhận giao dịch
                 </h2>
 
                 <p class="sub">{verifyingSubtitle}</p>
 
-                <p class="hint">This usually takes a few seconds.</p>
+                <p class="hint">Việc này thường mất vài giây.</p>
             {:else}
                 <!-- ── Celebration state: confirmed Pro ───────────────── -->
                 <div class="badge" aria-hidden="true">
@@ -107,7 +107,7 @@
                     </svg>
                 </div>
 
-                <h2 id="welcome-pro-title" class="title">Welcome to Clauge Pro</h2>
+                <h2 id="welcome-pro-title" class="title">Chào mừng đến với Clauge Pro</h2>
 
                 {#if tierLabel}
                     <span class="tier-pill">{tierLabel}</span>
@@ -115,8 +115,8 @@
 
                 <p class="sub">{subtitle}</p>
 
-                <button class="cta" onclick={close}>Continue</button>
-                <button class="link" onclick={openManage}>Manage subscription</button>
+                <button class="cta" onclick={close}>Tiếp tục</button>
+                <button class="link" onclick={openManage}>Quản lý gói đăng ký</button>
             {/if}
         </div>
     </div>

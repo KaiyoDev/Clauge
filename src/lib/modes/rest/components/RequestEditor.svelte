@@ -58,8 +58,8 @@
   const tabs: { id: Tab; label: string }[] = [
     { id: 'body', label: 'Body' },
     { id: 'headers', label: 'Headers' },
-    { id: 'auth', label: 'Auth' },
-    { id: 'params', label: 'Params' },
+    { id: 'auth', label: 'Xác thực' },
+    { id: 'params', label: 'Tham số' },
     { id: 'pre-script', label: 'Pre-script' },
   ];
 
@@ -190,7 +190,7 @@
     {:else if activeTab === 'headers'}
       <KVTable
         items={headers}
-        label="Add header"
+        label="Thêm header"
         showKeySuggestions={true}
         onchange={handleHeadersChange}
       />
@@ -203,14 +203,14 @@
     {:else if activeTab === 'params'}
       <KVTable
         items={params}
-        label="Add param"
+        label="Thêm tham số"
         onchange={handleParamsChange}
       />
     {:else if activeTab === 'pre-script'}
       <textarea
         class="editor"
         spellcheck="false"
-        placeholder="// Pre-request script (not executed yet)"
+        placeholder="// Pre-request script (chưa chạy)"
         value={preScript}
         oninput={handlePreScriptInput}
       ></textarea>

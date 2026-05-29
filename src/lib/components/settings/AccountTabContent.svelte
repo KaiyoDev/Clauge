@@ -126,7 +126,7 @@
                 const s = await cloudLinkProvider(detail.provider, detail.code);
                 if (s.user)
                     setConnected(s.user, s.providers, s.activeProvider, s.plan);
-                showToast(`Linked ${detail.provider}`, "success");
+                showToast(`Đã liên kết ${detail.provider}`, "success");
             } catch (err) {
                 showToast(friendlyError(err), "error");
             } finally {
@@ -142,7 +142,7 @@
                 setConnected(s.user, s.providers, s.activeProvider, s.plan);
                 setLastSyncedForKinds(s.lastSynced);
                 showToast(
-                    `Connected as ${s.user.displayName || s.user.slug}`,
+                    `Đã kết nối với tên ${s.user.displayName || s.user.slug}`,
                     "success",
                 );
             }
@@ -244,7 +244,7 @@
             });
             if (s.user)
                 setConnected(s.user, s.providers, s.activeProvider, s.plan);
-            showToast("Profile updated", "success");
+            showToast("Đã cập nhật hồ sơ", "success");
         } catch (e) {
             showToast(friendlyError(e), "error");
         } finally {
@@ -282,7 +282,7 @@
             const s = await cloudUnlinkProvider(provider);
             if (s.user)
                 setConnected(s.user, s.providers, s.activeProvider, s.plan);
-            showToast(`Unlinked ${provider}`, "info");
+            showToast(`Đã hủy liên kết ${provider}`, "info");
         } catch (e) {
             showToast(friendlyError(e), "error");
         }
@@ -292,7 +292,7 @@
         try {
             await cloudLogout();
             setDisconnected();
-            showToast("Signed out", "info");
+            showToast("Đã đăng xuất", "info");
         } catch (e) {
             showToast(friendlyError(e), "error");
         }
@@ -317,7 +317,7 @@
             if (elapsed < 350)
                 await new Promise((r) => setTimeout(r, 350 - elapsed));
             showToast(
-                pushed.length ? "Synced" : "Already up to date",
+                pushed.length ? "Đã đồng bộ" : "Đã cập nhật mới nhất",
                 "success",
             );
         } catch (e) {
@@ -348,7 +348,7 @@
                 "$lib/stores/missingCredentials"
             );
             const shown = await announceRestoreCompletion();
-            if (!shown) showToast("Restored from cloud", "success");
+            if (!shown) showToast("Đã khôi phục từ đám mây", "success");
         } catch (e) {
             showToast(friendlyError(e), "error");
         } finally {
@@ -366,7 +366,7 @@
             // status so the `lastSyncedByKind` row in the UI clears to
             // reflect the empty cloud state.
             await refreshStatus();
-            showToast("Cloud data wiped — local data intact", "success");
+            showToast("Đã xóa dữ liệu đám mây — dữ liệu cục bộ vẫn nguyên", "success");
             confirmingWipe = false;
         } catch (e) {
             showToast(friendlyError(e), "error");
@@ -378,7 +378,7 @@
     async function deleteAccount() {
         if (deleting) return; // guard against double-click
         if (!slugMatches) {
-            showToast("Type your handle exactly to confirm", "error");
+            showToast("Nhập handle chính xác để xác nhận", "error");
             return;
         }
         // Snapshot BEFORE the async block — `setDisconnected()` clears
@@ -394,10 +394,10 @@
             setDisconnected();
             showToast(
                 wasProRecurring
-                    ? "Account deleted and subscription cancelled"
+                    ? "Đã xóa tài khoản và hủy gói đăng ký"
                     : wasProLifetime
-                      ? "Account and lifetime Pro purchase deleted"
-                      : "Account deleted — local data intact",
+                      ? "Đã xóa tài khoản và gói Pro trọn đời"
+                      : "Đã xóa tài khoản — dữ liệu cục bộ vẫn nguyên",
                 "success",
             );
             confirmingDelete = false;
@@ -430,9 +430,9 @@
         }
         if (!max) return null;
         const diff = Math.max(0, Date.now() - max);
-        if (diff < 60_000) return "just now";
-        if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
-        if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
+        if (diff < 60_000) return "vừa xong";
+        if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} phút trước`;
+        if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} giờ trước`;
         return new Date(max).toLocaleDateString();
     });
 
@@ -441,9 +441,9 @@
         if (!slug) return;
         try {
             navigator.clipboard.writeText(`@${slug}`);
-            showToast("Handle copied", "info");
+            showToast("Đã sao chép handle", "info");
         } catch {
-            showToast("Could not copy", "error");
+            showToast("Không thể sao chép", "error");
         }
     }
 
@@ -493,9 +493,9 @@
         if (!resetsAt) return "";
         const reset = new Date(resetsAt).getTime();
         const days = Math.max(0, Math.ceil((reset - Date.now()) / 86400000));
-        if (days === 0) return "Resets today";
-        if (days === 1) return "Resets tomorrow";
-        return `Resets in ${days} days`;
+        if (days === 0) return "Đặt lại hôm nay";
+        if (days === 1) return "Đặt lại ngày mai";
+        return `Đặt lại sau ${days} ngày`;
     }
 
     // Absolute date for the subscription card (e.g. "Jun 17, 2026").
@@ -518,9 +518,9 @@
         return Math.max(0, Math.ceil((t - Date.now()) / 86400000));
     }
     function fmtDaysCount(n: number): string {
-        if (n === 0) return "today";
-        if (n === 1) return "tomorrow";
-        return `in ${n} days`;
+        if (n === 0) return "hôm nay";
+        if (n === 1) return "ngày mai";
+        return `sau ${n} ngày`;
     }
     // Coarse-grained "how long ago" for Member Since. ISO → "8 months" / "2 years".
     function fmtRelativeSince(iso: string | null | undefined): string {
@@ -528,11 +528,11 @@
         const then = new Date(iso).getTime();
         if (Number.isNaN(then)) return "";
         const days = Math.max(0, Math.floor((Date.now() - then) / 86400000));
-        if (days < 30) return days <= 1 ? "today" : `${days} days`;
+        if (days < 30) return days <= 1 ? "hôm nay" : `${days} ngày`;
         const months = Math.floor(days / 30);
-        if (months < 12) return months === 1 ? "1 month" : `${months} months`;
+        if (months < 12) return months === 1 ? "1 tháng" : `${months} tháng`;
         const years = Math.floor(days / 365);
-        return years === 1 ? "1 year" : `${years} years`;
+        return years === 1 ? "1 năm" : `${years} năm`;
     }
     function capitalize(s: string): string {
         return s ? s[0].toUpperCase() + s.slice(1) : s;
@@ -545,26 +545,26 @@
 
     let menuItems = $derived([
         {
-            label: refreshing ? "Refreshing…" : "Refresh status",
+            label: refreshing ? "Đang làm mới…" : "Làm mới trạng thái",
             action: () => {
                 refreshStatus();
             },
         },
         {
-            label: "Pull from cloud",
+            label: "Kéo từ đám mây",
             action: () => {
                 confirmPull = true;
             },
         },
         {
-            label: "Copy handle",
+            label: "Sao chép handle",
             action: () => {
                 copyHandle();
             },
         },
         { separator: true, label: "", action: () => {} },
         {
-            label: "Sign out",
+            label: "Đăng xuất",
             action: () => {
                 signOut();
             },
@@ -585,8 +585,8 @@
 
 <div class="acc-pane">
     <header class="acc-page-head">
-        <h1>Account settings</h1>
-        <p>Manage your profile and preferences</p>
+        <h1>Cài đặt tài khoản</h1>
+        <p>Quản lý hồ sơ và tùy chọn của bạn</p>
     </header>
 
     {#if !$cloudConnected}
@@ -608,9 +608,9 @@
                     <line x1="12" y1="12" x2="12" y2="21" />
                 </svg>
             </div>
-            <h2>Sign in to Clauge cloud</h2>
+            <h2>Đăng nhập vào Clauge cloud</h2>
             <p class="acc-signin-sub">
-                Sync your work across every device, automatically.
+                Đồng bộ công việc của bạn trên mọi thiết bị, tự động.
             </p>
 
             <!-- <ul class="acc-signin-features">
@@ -638,7 +638,7 @@
                             /></svg
                         >
                     {/if}
-                    <span>Continue with GitHub</span>
+                    <span>Tiếp tục với GitHub</span>
                 </button>
                 <button
                     class="acc-oauth-btn"
@@ -664,7 +664,7 @@
                             /></svg
                         >
                     {/if}
-                    <span>Continue with Google</span>
+                    <span>Tiếp tục với Google</span>
                 </button>
             </div>
 
@@ -672,21 +672,21 @@
                 <div class="acc-waiting">
                     <span class="acc-spinner acc-spinner-light"></span>
                     <span class="acc-waiting-text"
-                        >Waiting for {signingIn === "github"
+                        >Đang chờ ủy quyền {signingIn === "github"
                             ? "GitHub"
-                            : "Google"} authorization in your browser…</span
+                            : "Google"} trong trình duyệt của bạn…</span
                     >
                     <button
                         class="acc-waiting-cancel"
-                        onclick={() => (signingIn = null)}>Cancel</button
+                        onclick={() => (signingIn = null)}>Hủy</button
                     >
                 </div>
             {/if}
 
             <hr class="acc-signin-sep" />
             <p class="acc-signin-fine">
-                We only request your basic profile — no access to your repos,
-                files, or email content.
+                Chúng tôi chỉ yêu cầu hồ sơ cơ bản — không truy cập kho lưu trữ,
+                tệp tin hay nội dung email của bạn.
             </p>
         </section>
     {:else if $cloudUser}
@@ -694,12 +694,12 @@
             <!-- Profile card -->
             <section class="acc-card">
                 <div class="acc-card-head">
-                    <h3 class="acc-card-title">Profile</h3>
+                    <h3 class="acc-card-title">Hồ sơ</h3>
                     <div class="acc-sync-controls">
                         <div class="acc-sync-status">
-                            <span class="acc-sync-label">Last sync</span>
+                            <span class="acc-sync-label">Lần đồng bộ cuối</span>
                             <span class="acc-sync-value"
-                                >{lastSyncOverall ?? "Never"}</span
+                                >{lastSyncOverall ?? "Chưa bao giờ"}</span
                             >
                         </div>
                         {#if $cloudConflicts.length > 0}
@@ -709,21 +709,21 @@
                             <button
                                 class="acc-sync-btn acc-sync-btn-action"
                                 onclick={() => (conflictResolverOpen = true)}
-                                title="Resolve sync conflicts"
+                                title="Giải quyết xung đột đồng bộ"
                             >
                                 <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
                                     <line x1="12" y1="9" x2="12" y2="13"/>
                                     <line x1="12" y1="17" x2="12.01" y2="17"/>
                                 </svg>
-                                <span>Action Required ({$cloudConflicts.length})</span>
+                                <span>Cần xử lý ({$cloudConflicts.length})</span>
                             </button>
                         {:else}
                             <button
                                 class="acc-sync-btn"
                                 onclick={syncNow}
                                 disabled={$syncing}
-                                title="Sync now"
+                                title="Đồng bộ ngay"
                             >
                                 {#if $syncing}
                                     <span
@@ -750,14 +750,14 @@
                                         />
                                     </svg>
                                 {/if}
-                                <span>{$syncing ? "Syncing…" : "Sync"}</span>
+                                <span>{$syncing ? "Đang đồng bộ…" : "Đồng bộ"}</span>
                             </button>
                         {/if}
                         <button
                             class="acc-kebab-btn"
                             onclick={openMenu}
-                            title="More options"
-                            aria-label="Account menu"
+                            title="Tùy chọn khác"
+                            aria-label="Menu tài khoản"
                         >
                             <svg
                                 viewBox="0 0 24 24"
@@ -800,12 +800,12 @@
                                 class="acc-plan-pill"
                                 class:is-pro={$cloudPlan === "pro"}
                             >
-                                {$cloudPlan === "pro" ? "Pro" : "Free"}
+                                {$cloudPlan === "pro" ? "Pro" : "Miễn phí"}
                             </span>
                             {#if $cloudUser.email}
                                 <span
                                     class="acc-handle-pill"
-                                    title="Provider handle"
+                                    title="Handle nhà cung cấp"
                                     >@{$cloudUser.slug}</span
                                 >
                             {/if}
@@ -815,7 +815,7 @@
 
                 <div class="acc-fields">
                     <label class="acc-field">
-                        <span class="acc-field-label">Display name</span>
+                        <span class="acc-field-label">Tên hiển thị</span>
                         <input
                             type="text"
                             bind:value={displayNameInput}
@@ -824,7 +824,7 @@
                     </label>
                     <div class="acc-field-row">
                         <label class="acc-field">
-                            <span class="acc-field-label">First name</span>
+                            <span class="acc-field-label">Họ</span>
                             <input
                                 type="text"
                                 bind:value={firstNameInput}
@@ -832,7 +832,7 @@
                             />
                         </label>
                         <label class="acc-field">
-                            <span class="acc-field-label">Last name</span>
+                            <span class="acc-field-label">Tên</span>
                             <input
                                 type="text"
                                 bind:value={lastNameInput}
@@ -852,8 +852,8 @@
                                 ></span>{/if}
                             <span
                                 >{savingProfile
-                                    ? "Saving…"
-                                    : "Save changes"}</span
+                                    ? "Đang lưu…"
+                                    : "Lưu thay đổi"}</span
                             >
                         </button>
                     </div>
@@ -914,9 +914,9 @@
                                             $cloudSub?.status !== "past_due"}
                                     >
                                         {#if isLifetime && !cancelling && $cloudSub?.status !== "past_due"}
-                                            Lifetime
+                                            Trọn đời
                                         {:else if cancelling}
-                                            Cancelling
+                                            Đang hủy
                                         {:else}
                                             {capitalize(
                                                 $cloudSub?.status ?? "active",
@@ -927,14 +927,14 @@
                                 {#if periodEnd}
                                     <p class="acc-sub-sub">
                                         {#if isLifetime}
-                                            One-time purchase
+                                            Mua một lần
                                             <span class="acc-sub-dot">·</span>
-                                            no renewal
+                                            không gia hạn
                                         {:else}
-                                            {#if interval}Billed {interval}
+                                            {#if interval}Thanh toán {interval === "monthly" ? "hằng tháng" : interval === "yearly" ? "hằng năm" : interval}
                                                 <span class="acc-sub-dot">·</span>
                                             {/if}
-                                            {cancelling ? "ends" : "renews"}
+                                            {cancelling ? "kết thúc" : "gia hạn"}
                                             {fmtAbsDate(periodEnd)}
                                         {/if}
                                     </p>
@@ -946,8 +946,8 @@
                                 disabled={openingPortal}
                             >
                                 {openingPortal
-                                    ? "Opening…"
-                                    : "Manage subscription"}
+                                    ? "Đang mở…"
+                                    : "Quản lý gói đăng ký"}
                             </button>
                         </header>
 
@@ -977,9 +977,9 @@
                                             >{$cloudCredits.remaining.toLocaleString()}</strong
                                         >
                                         / {$cloudCredits.allowance.toLocaleString()}
-                                        remaining
+                                        còn lại
                                     {:else}
-                                        Loading…
+                                        Đang tải…
                                     {/if}
                                 </span>
                             </div>
@@ -991,8 +991,8 @@
                             </div>
                             {#if $cloudCredits}
                                 <p class="acc-sub-credits-meta">
-                                    {used.toLocaleString()} credits used{#if periodEnd}
-                                        <span class="acc-sub-dot">·</span> resets {fmtAbsDate(
+                                    Đã dùng {used.toLocaleString()} credits{#if periodEnd}
+                                        <span class="acc-sub-dot">·</span> đặt lại {fmtAbsDate(
                                             periodEnd,
                                         )}
                                     {/if}
@@ -1005,19 +1005,19 @@
                         <!-- Row 3: meta grid -->
                         <div class="acc-sub-meta">
                             <div class="acc-sub-meta-col">
-                                <span class="acc-sub-meta-label">PLAN</span>
+                                <span class="acc-sub-meta-label">GÓI</span>
                                 <strong class="acc-sub-meta-val">
                                     {interval
-                                        ? capitalize(interval)
+                                        ? capitalize(interval === "monthly" ? "hằng tháng" : interval === "yearly" ? "hằng năm" : interval === "lifetime" ? "trọn đời" : interval)
                                         : "Pro"}
                                 </strong>
                                 {#if $cloudSub?.priceUsd && interval}
                                     {@const priceUnit =
                                         interval === "lifetime"
-                                            ? "once"
+                                            ? "một lần"
                                             : interval === "yearly"
-                                              ? "/ year"
-                                              : "/ month"}
+                                              ? "/ năm"
+                                              : "/ tháng"}
                                     <span class="acc-sub-meta-sub">
                                         ${$cloudSub.priceUsd} {priceUnit}
                                     </span>
@@ -1031,11 +1031,11 @@
                                 <div class="acc-sub-meta-col">
                                     <span class="acc-sub-meta-label">
                                         {#if isLifetime}
-                                            PURCHASED
+                                            ĐÃ MUA
                                         {:else if cancelling}
-                                            ENDS
+                                            KẾT THÚC
                                         {:else}
-                                            NEXT RENEWAL
+                                            GIA HẠN KẾ TIẾP
                                         {/if}
                                     </span>
                                     <strong class="acc-sub-meta-val"
@@ -1053,7 +1053,7 @@
                             {#if $cloudUser?.createdAt}
                                 <div class="acc-sub-meta-col">
                                     <span class="acc-sub-meta-label"
-                                        >MEMBER SINCE</span
+                                        >THÀNH VIÊN TỪ</span
                                     >
                                     <strong class="acc-sub-meta-val"
                                         >{fmtAbsDate(
@@ -1073,11 +1073,11 @@
                         <header class="acc-sub-head">
                             <div class="acc-sub-head-left">
                                 <strong class="acc-sub-title"
-                                    >Free plan</strong
+                                    >Gói miễn phí</strong
                                 >
                                 <p class="acc-sub-sub">
-                                    Upgrade for managed AI assistance and
-                                    premium features.
+                                    Nâng cấp để có hỗ trợ AI quản lý và các
+                                    tính năng cao cấp.
                                 </p>
                             </div>
                             <button
@@ -1096,7 +1096,7 @@
                                         d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
                                     /></svg
                                 >
-                                <span>Upgrade to Pro</span>
+                                <span>Nâng cấp lên Pro</span>
                             </button>
                         </header>
                     {/if}
@@ -1106,7 +1106,7 @@
             <!-- Linked accounts -->
             <section class="acc-card">
                 <h3 class="acc-card-title acc-card-title-solo">
-                    Linked accounts
+                    Tài khoản đã liên kết
                 </h3>
                 {#each ["github", "google"] as p}
                     {@const linked = providerLinked(p as Provider)}
@@ -1159,7 +1159,7 @@
                                 >
                             {:else}
                                 <span class="acc-prov-sub acc-prov-empty"
-                                    >Not linked</span
+                                    >Chưa liên kết</span
                                 >
                             {/if}
                         </div>
@@ -1168,12 +1168,12 @@
                                 <button
                                     class="acc-mini-btn"
                                     onclick={() => unlink(p as Provider)}
-                                    >Unlink</button
+                                    >Hủy liên kết</button
                                 >
                             {:else}
                                 <span class="acc-prov-primary"
                                     ><span class="acc-primary-dot"
-                                    ></span>primary</span
+                                    ></span>chính</span
                                 >
                             {/if}
                         {:else}
@@ -1186,7 +1186,7 @@
                                         class="acc-spinner acc-spinner-light acc-spinner-tiny"
                                     ></span>{/if}
                                 <span
-                                    >{linking === p ? "Opening…" : "Link"}</span
+                                    >{linking === p ? "Đang mở…" : "Liên kết"}</span
                                 >
                             </button>
                         {/if}
@@ -1197,37 +1197,37 @@
             <!-- Danger zone -->
             <section class="acc-card acc-card-danger">
                 <h3 class="acc-card-title acc-card-title-solo acc-danger-title">
-                    Danger zone
+                    Khu vực nguy hiểm
                 </h3>
                 {#if !confirmingWipe && !confirmingDelete}
                     <div class="acc-danger-row">
                         <div>
-                            <strong>Wipe cloud data</strong>
+                            <strong>Xóa dữ liệu đám mây</strong>
                             <p>
-                                Removes synced data from our servers. Your
-                                account stays, local data stays — you can
-                                re-push anytime.
+                                Xóa dữ liệu đã đồng bộ khỏi máy chủ của chúng tôi.
+                                Tài khoản và dữ liệu cục bộ vẫn còn — bạn có thể
+                                đẩy lại bất cứ lúc nào.
                             </p>
                         </div>
                         <button
                             class="acc-danger-btn"
                             onclick={() => (confirmingWipe = true)}
-                            >Wipe data</button
+                            >Xóa dữ liệu</button
                         >
                     </div>
                     <div class="acc-danger-row">
                         <div>
-                            <strong>Delete account</strong>
+                            <strong>Xóa tài khoản</strong>
                             <p>
-                                Permanently removes your Clauge account, all
-                                linked providers, and cloud data. Cannot be
-                                undone.
+                                Xóa vĩnh viễn tài khoản Clauge, tất cả nhà cung
+                                cấp đã liên kết và dữ liệu đám mây của bạn.
+                                Không thể hoàn tác.
                             </p>
                         </div>
                         <button
                             class="acc-danger-btn acc-danger-strong"
                             onclick={() => (confirmingDelete = true)}
-                            >Delete account</button
+                            >Xóa tài khoản</button
                         >
                     </div>
                 {/if}
@@ -1235,7 +1235,7 @@
                     <div
                         class="acc-confirm"
                         role="alertdialog"
-                        aria-label="Confirm wipe cloud data"
+                        aria-label="Xác nhận xóa dữ liệu đám mây"
                         onkeydown={(e) => {
                             if (e.key === "Escape" && !wiping) {
                                 confirmingWipe = false;
@@ -1243,24 +1243,24 @@
                         }}
                     >
                         <p>
-                            This deletes synced data from our servers. Your
-                            local data stays — your account stays. You can
-                            re-push anytime.
+                            Hành động này sẽ xóa dữ liệu đã đồng bộ khỏi máy chủ
+                            của chúng tôi. Dữ liệu cục bộ vẫn còn — tài khoản
+                            của bạn vẫn còn. Bạn có thể đẩy lại bất cứ lúc nào.
                         </p>
                         <div class="acc-confirm-row">
                             <button
                                 class="acc-btn acc-btn-ghost"
                                 disabled={wiping}
                                 onclick={() => (confirmingWipe = false)}
-                                >Cancel</button
+                                >Hủy</button
                             >
                             <button
                                 class="acc-danger-btn"
                                 disabled={wiping}
                                 onclick={wipeRemote}
                                 >{wiping
-                                    ? "Wiping…"
-                                    : "Yes, wipe cloud data"}</button
+                                    ? "Đang xóa…"
+                                    : "Có, xóa dữ liệu đám mây"}</button
                             >
                         </div>
                     </div>
@@ -1269,7 +1269,7 @@
                     <div
                         class="acc-confirm"
                         role="alertdialog"
-                        aria-label="Confirm delete account"
+                        aria-label="Xác nhận xóa tài khoản"
                         onkeydown={(e) => {
                             if (e.key === "Escape" && !deleting) {
                                 confirmingDelete = false;
@@ -1285,68 +1285,65 @@
                     >
                         {#if isProRecurring}
                             <div class="acc-confirm-warn" role="alert">
-                                <strong>⚠ Active subscription</strong>
+                                <strong>⚠ Gói đăng ký đang hoạt động</strong>
                                 <p>
-                                    Deleting your account will also cancel
-                                    your Clauge Pro
-                                    {$cloudSub?.interval}
-                                    subscription{$cloudSub?.currentPeriodEnd
-                                        ? ` (next renewal: ${new Date($cloudSub.currentPeriodEnd).toLocaleDateString()})`
+                                    Xóa tài khoản cũng sẽ hủy gói Clauge Pro
+                                    {$cloudSub?.interval === "monthly" ? "hằng tháng" : $cloudSub?.interval === "yearly" ? "hằng năm" : $cloudSub?.interval}{$cloudSub?.currentPeriodEnd
+                                        ? ` (gia hạn kế tiếp: ${new Date($cloudSub.currentPeriodEnd).toLocaleDateString()})`
                                         : ""}.
-                                    You will not be charged again. Access ends
-                                    immediately. This cannot be undone.
+                                    Bạn sẽ không bị tính phí thêm. Quyền truy
+                                    cập kết thúc ngay lập tức. Không thể hoàn tác.
                                 </p>
                             </div>
                         {:else if isProLifetime}
                             <div class="acc-confirm-warn" role="alert">
-                                <strong>⚠ Lifetime Pro purchase</strong>
+                                <strong>⚠ Gói Pro trọn đời</strong>
                                 <p>
-                                    Deleting your account will permanently
-                                    remove your one-time Clauge Pro Lifetime
-                                    purchase and any remaining credits. The
-                                    purchase amount is non-refundable. You
-                                    will lose access to Pro features
-                                    immediately. This cannot be undone.
+                                    Xóa tài khoản sẽ xóa vĩnh viễn gói mua một
+                                    lần Clauge Pro Lifetime và mọi credits còn
+                                    lại. Số tiền đã mua không thể hoàn lại. Bạn
+                                    sẽ mất quyền truy cập tính năng Pro ngay lập
+                                    tức. Không thể hoàn tác.
                                 </p>
                             </div>
                         {/if}
                         <p>
-                            This permanently removes:
+                            Hành động này sẽ xóa vĩnh viễn:
                         </p>
                         <ul class="acc-confirm-bullets">
                             <li>
-                                Your Clauge account and handle
+                                Tài khoản Clauge và handle
                                 <code>@{slugExpected}</code>
                             </li>
-                            <li>All linked sign-in providers</li>
-                            <li>All synced cloud data</li>
+                            <li>Tất cả nhà cung cấp đăng nhập đã liên kết</li>
+                            <li>Tất cả dữ liệu đã đồng bộ trên đám mây</li>
                             {#if isPro}
                                 <li>
-                                    Your Pro plan{$cloudCredits?.remaining
-                                        ? ` and ${$cloudCredits.remaining.toLocaleString()} remaining Clauge AI credit${$cloudCredits.remaining === 1 ? "" : "s"}`
+                                    Gói Pro của bạn{$cloudCredits?.remaining
+                                        ? ` và ${$cloudCredits.remaining.toLocaleString()} Clauge AI credit${$cloudCredits.remaining === 1 ? "" : "s"} còn lại`
                                         : ""}
                                 </li>
                             {/if}
                             {#if isProRecurring}
                                 <li>
-                                    Your active subscription (cancelled at
-                                    Polar — no further charges)
+                                    Gói đăng ký đang hoạt động (đã hủy tại
+                                    Polar — không bị tính phí thêm)
                                 </li>
                             {:else if isProLifetime}
                                 <li>
-                                    Your lifetime entitlement (non-refundable)
+                                    Quyền lợi trọn đời (không hoàn tiền)
                                 </li>
                             {/if}
                         </ul>
                         <p>
-                            Type your handle <code>{slugExpected}</code>
-                            to confirm:
+                            Nhập handle <code>{slugExpected}</code>
+                            để xác nhận:
                         </p>
                         <input
                             class="acc-confirm-input"
                             bind:value={deleteSlugInput}
-                            placeholder="Type your handle exactly"
-                            aria-label="Type your handle to confirm deletion"
+                            placeholder="Nhập chính xác handle của bạn"
+                            aria-label="Nhập handle để xác nhận xóa"
                             autocomplete="off"
                             autocapitalize="off"
                             spellcheck="false"
@@ -1363,8 +1360,8 @@
                                 class:acc-confirm-hint-ok={slugMatches}
                             >
                                 {slugMatches
-                                    ? "✓ Handle matches"
-                                    : "Doesn't match — keep typing"}
+                                    ? "✓ Handle khớp"
+                                    : "Chưa khớp — tiếp tục nhập"}
                             </p>
                         {/if}
                         <div class="acc-confirm-row">
@@ -1374,15 +1371,15 @@
                                 onclick={() => {
                                     confirmingDelete = false;
                                     deleteSlugInput = "";
-                                }}>Cancel</button
+                                }}>Hủy</button
                             >
                             <button
                                 class="acc-danger-btn acc-danger-strong"
                                 onclick={deleteAccount}
                                 disabled={!slugMatches || deleting}
                                 >{deleting
-                                    ? "Deleting…"
-                                    : "Delete account"}</button
+                                    ? "Đang xóa…"
+                                    : "Xóa tài khoản"}</button
                             >
                         </div>
                     </div>
@@ -1401,9 +1398,9 @@
 
 <ConfirmDialog
     bind:show={confirmPull}
-    title="Pull from cloud?"
-    message="This overwrites local collections, connections, queries, agents, SSH profiles, explorer paths, and workspace coworkers with the latest from cloud. Local-only items that haven't been pushed yet will be lost."
-    confirmText="Pull from cloud"
+    title="Kéo từ đám mây?"
+    message="Hành động này sẽ ghi đè collections, kết nối, queries, agents, hồ sơ SSH, đường dẫn explorer và workspace coworkers cục bộ bằng dữ liệu mới nhất từ đám mây. Các mục cục bộ chưa được đẩy lên sẽ bị mất."
+    confirmText="Kéo từ đám mây"
     confirmColor="var(--acc)"
     onconfirm={() => {
         confirmPull = false;

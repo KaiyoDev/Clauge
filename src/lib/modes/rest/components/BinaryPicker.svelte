@@ -62,8 +62,8 @@
         <span class="bin-name">{fileName}</span>
         <span class="bin-path" title={filePath}>{filePath}</span>
       </div>
-      <button class="bin-change" onclick={pickFile}>Change</button>
-      <button class="bin-clear" onclick={clearFile} title="Remove file">
+      <button class="bin-change" onclick={pickFile}>Đổi</button>
+      <button class="bin-clear" onclick={clearFile} title="Xóa tệp">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
     </div>

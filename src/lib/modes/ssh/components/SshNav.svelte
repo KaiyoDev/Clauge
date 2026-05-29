@@ -182,10 +182,10 @@
           next.set(tabKey, 'error');
           return next;
         });
-        errorToast('SFTP connection failed', err);
+        errorToast('Kết nối SFTP thất bại', err);
       }
     } catch (e: any) {
-      errorToast('Open files failed', e);
+      errorToast('Mở tệp thất bại', e);
     }
   }
 
@@ -233,17 +233,17 @@
 
     if (hasConnected) {
       items.push({
-        label: 'Disconnect',
+        label: 'Ngắt kết nối',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18.36 6.64a9 9 0 11-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>',
         action: () => showConfirm(
-          'Disconnect SSH session',
-          `Disconnect from "${profile.name}"? Any open terminal tabs for this connection will be closed.`,
+          'Ngắt phiên SSH',
+          `Ngắt kết nối "${profile.name}"? Tất cả tab terminal đang mở của kết nối này sẽ bị đóng.`,
           false,
           async () => { disconnectAllForProfile(profile); },
         ),
       });
       items.push({
-        label: 'Duplicate Session',
+        label: 'Nhân đôi phiên',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>',
         action: () => {
           window.dispatchEvent(new CustomEvent(SSH_EVENT.DUPLICATE_SESSION, { detail: profile }));
@@ -251,7 +251,7 @@
       });
     } else {
       items.push({
-        label: 'Connect',
+        label: 'Kết nối',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>',
         action: () => handleSelect(profile),
       });
@@ -259,13 +259,13 @@
 
     items.push({ label: '', action: () => {}, separator: true });
     items.push({
-      label: 'Open files (SFTP)',
+      label: 'Mở tệp (SFTP)',
       icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>',
       action: () => openSftpForProfile(profile),
     });
     items.push({ label: '', action: () => {}, separator: true });
     items.push({
-      label: 'Edit',
+      label: 'Chỉnh sửa',
       icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
       action: () => {
         editTarget = profile;
@@ -275,12 +275,12 @@
 
     items.push({ label: '', action: () => {}, separator: true });
     items.push({
-      label: 'Delete',
+      label: 'Xóa',
       icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
       danger: true,
       action: () => showConfirm(
-        'Delete SSH Profile',
-        `Delete "${profile.name}"? This cannot be undone.`,
+        'Xóa profile SSH',
+        `Xóa "${profile.name}"? Hành động này không thể hoàn tác.`,
         true,
         async () => {
           // Close any open tabs / kill any live sessions for this profile
@@ -290,7 +290,7 @@
           try {
             await sshDeleteProfile(profile.id);
             await loadSshProfiles();
-            showToast('Profile deleted', 'success');
+            showToast('Đã xóa profile', 'success');
           } catch (e: any) {
             showToast(String(e), 'error');
           }
@@ -308,7 +308,7 @@
   }
 
   function relativeTime(iso: string | null): string {
-    if (!iso) return 'never';
+    if (!iso) return 'chưa từng';
     let normalized = iso;
     // SQLite "YYYY-MM-DD HH:MM:SS" (UTC) → ISO with T and Z.
     if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(normalized)) {
@@ -382,9 +382,9 @@
               <line x1="6" y1="17" x2="6.01" y2="17"/>
             </svg>
             {#if connected}
-              <span class="conn-dot" aria-label="Connected" title="Connected"></span>
+              <span class="conn-dot" aria-label="Đã kết nối" title="Đã kết nối"></span>
             {:else if connecting}
-              <span class="conn-dot conn-dot-connecting" aria-label="Connecting" title="Connecting…"></span>
+              <span class="conn-dot conn-dot-connecting" aria-label="Đang kết nối" title="Đang kết nối…"></span>
             {/if}
           </div>
           <div class="ncoll-text">

@@ -68,7 +68,7 @@
     diffFile = file.path;
     try {
       diffContent = await agentGitDiffFile(pp, file.path);
-    } catch { diffContent = 'Failed to load diff'; }
+    } catch { diffContent = 'Không tải được diff'; }
   }
 
   function closeDiff() {
@@ -121,9 +121,9 @@
       await agentGitCommit(pp, commitMsg.trim());
       commitMsg = '';
       stagedFiles = new Set();
-      showStatus('Committed');
+      showStatus('Đã commit');
       await refreshAgentGitStatus();
-    } catch { showStatus('Commit failed'); }
+    } catch { showStatus('Commit thất bại'); }
     loading = '';
   }
 
@@ -144,14 +144,14 @@
   async function switchBranch(name: string) {
     const pp = getProjectPath();
     if (!pp) return;
-    confirmGitAction('Switch Branch', `Switch to branch "${name}"? Uncommitted changes may be lost.`, async () => {
+    confirmGitAction('Đổi nhánh', `Chuyển sang nhánh "${name}"? Các thay đổi chưa commit có thể bị mất.`, async () => {
       loading = 'branch';
       try {
         await agentGitSwitchBranch(pp, name);
-        showStatus(`Switched to ${name}`);
+        showStatus(`Đã chuyển sang ${name}`);
         await refreshAgentGitStatus();
         await loadBranches();
-      } catch { showStatus('Switch failed'); }
+      } catch { showStatus('Đổi nhánh thất bại'); }
       loading = '';
     });
   }
@@ -163,9 +163,9 @@
     loading = 'stash';
     try {
       await agentGitStash(pp);
-      showStatus('Stashed');
+      showStatus('Đã stash');
       await refreshAgentGitStatus();
-    } catch { showStatus('Stash failed'); }
+    } catch { showStatus('Stash thất bại'); }
     loading = '';
   }
 
@@ -175,9 +175,9 @@
     loading = 'stashpop';
     try {
       await agentGitStashPop(pp);
-      showStatus('Stash popped');
+      showStatus('Đã pop stash');
       await refreshAgentGitStatus();
-    } catch { showStatus('Pop failed'); }
+    } catch { showStatus('Pop thất bại'); }
     loading = '';
   }
 
@@ -187,9 +187,9 @@
     loading = 'pull';
     try {
       await agentGitPull(pp);
-      showStatus('Pulled');
+      showStatus('Đã pull');
       await refreshAgentGitStatus();
-    } catch { showStatus('Pull failed'); }
+    } catch { showStatus('Pull thất bại'); }
     loading = '';
   }
 
@@ -199,9 +199,9 @@
     loading = 'push';
     try {
       await agentGitPush(pp);
-      showStatus('Pushed');
+      showStatus('Đã push');
       await refreshAgentGitStatus();
-    } catch { showStatus('Push failed'); }
+    } catch { showStatus('Push thất bại'); }
     loading = '';
   }
 
@@ -221,26 +221,26 @@
     <!-- Tabs + Actions -->
     <div class="gp-tabs">
       <button class="gp-tab" class:active={activeTab === 'changes'} onclick={() => handleTabClick('changes')}>
-        Changes{$agentGitFiles.length > 0 ? ` (${$agentGitFiles.length})` : ''}
+        Thay đổi{$agentGitFiles.length > 0 ? ` (${$agentGitFiles.length})` : ''}
       </button>
-      <button class="gp-tab" class:active={activeTab === 'history'} onclick={() => handleTabClick('history')}>History</button>
-      <button class="gp-tab" class:active={activeTab === 'branches'} onclick={() => handleTabClick('branches')}>Branches</button>
+      <button class="gp-tab" class:active={activeTab === 'history'} onclick={() => handleTabClick('history')}>Lịch sử</button>
+      <button class="gp-tab" class:active={activeTab === 'branches'} onclick={() => handleTabClick('branches')}>Nhánh</button>
       <div class="gp-tab-actions">
-        <button class="gp-action has-tooltip" disabled={!!loading} onclick={() => confirmGitAction('Stash', 'Stash all uncommitted changes?', doStash)}>
+        <button class="gp-action has-tooltip" disabled={!!loading} onclick={() => confirmGitAction('Stash', 'Stash tất cả thay đổi chưa commit?', doStash)}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2z"/><path d="M17 21v-8H7v8"/><path d="M7 3v5h8"/></svg>
           <span class="gp-tooltip">Stash</span>
         </button>
-        <button class="gp-action has-tooltip" disabled={!!loading} onclick={() => confirmGitAction('Pop Stash', 'Restore previously stashed changes?', doStashPop)}>
+        <button class="gp-action has-tooltip" disabled={!!loading} onclick={() => confirmGitAction('Pop Stash', 'Khôi phục thay đổi đã stash trước đó?', doStashPop)}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2z"/><polyline points="12 8 12 16"/><polyline points="8 12 12 8 16 12"/></svg>
           <span class="gp-tooltip">Pop Stash</span>
         </button>
-        <button class="gp-action has-tooltip" disabled={loading === 'pull'} onclick={() => confirmGitAction('Pull', 'Pull latest changes from remote?', doPull)}>
+        <button class="gp-action has-tooltip" disabled={loading === 'pull'} onclick={() => confirmGitAction('Pull', 'Kéo thay đổi mới nhất từ remote?', doPull)}>
           <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12a.75.75 0 01-.75-.75V4.56L5.03 6.78a.75.75 0 01-1.06-1.06l3.5-3.5a.75.75 0 011.06 0l3.5 3.5a.75.75 0 01-1.06 1.06L8.75 4.56v6.69A.75.75 0 018 12z"/><path d="M2.75 13a.75.75 0 000 1.5h10.5a.75.75 0 000-1.5H2.75z"/></svg>
-          <span class="gp-tooltip">{loading === 'pull' ? 'Pulling...' : 'Pull'}</span>
+          <span class="gp-tooltip">{loading === 'pull' ? 'Đang kéo...' : 'Pull'}</span>
         </button>
-        <button class="gp-action has-tooltip" disabled={loading === 'push'} onclick={() => confirmGitAction('Push', 'Push local commits to remote?', doPush)}>
+        <button class="gp-action has-tooltip" disabled={loading === 'push'} onclick={() => confirmGitAction('Push', 'Đẩy commit cục bộ lên remote?', doPush)}>
           <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 4a.75.75 0 01.75.75v6.69l2.22-2.22a.75.75 0 011.06 1.06l-3.5 3.5a.75.75 0 01-1.06 0l-3.5-3.5a.75.75 0 011.06-1.06l2.22 2.22V4.75A.75.75 0 018 4z"/><path d="M2.75 1.5a.75.75 0 000 1.5h10.5a.75.75 0 000-1.5H2.75z"/></svg>
-          <span class="gp-tooltip">{loading === 'push' ? 'Pushing...' : 'Push'}</span>
+          <span class="gp-tooltip">{loading === 'push' ? 'Đang đẩy...' : 'Push'}</span>
         </button>
       </div>
     </div>
@@ -266,8 +266,8 @@
         </div>
       {:else if $agentGitFiles.length > 0}
         <div class="gp-stage-actions">
-          <button class="gp-stage-btn" onclick={stageAll}>Stage All</button>
-          <button class="gp-stage-btn" onclick={unstageAll}>Unstage All</button>
+          <button class="gp-stage-btn" onclick={stageAll}>Stage tất cả</button>
+          <button class="gp-stage-btn" onclick={unstageAll}>Unstage tất cả</button>
         </div>
         <div class="gp-file-list">
           {#each $agentGitFiles as file}
@@ -287,13 +287,13 @@
           {/each}
         </div>
         <div class="gp-commit-row">
-          <textarea class="gp-commit-input" bind:value={commitMsg} placeholder="Commit message..." rows="2" onkeydown={(e) => { if (e.key === 'Enter' && !e.shiftKey && commitMsg.trim()) { e.preventDefault(); doCommit(); } }}></textarea>
+          <textarea class="gp-commit-input" bind:value={commitMsg} placeholder="Tin nhắn commit..." rows="2" onkeydown={(e) => { if (e.key === 'Enter' && !e.shiftKey && commitMsg.trim()) { e.preventDefault(); doCommit(); } }}></textarea>
           <button class="gp-commit-btn" disabled={!commitMsg.trim() || loading === 'commit'} onclick={doCommit}>
             {loading === 'commit' ? '...' : 'Commit'}
           </button>
         </div>
       {:else}
-        <div class="gp-empty">Working tree clean</div>
+        <div class="gp-empty">Working tree sạch</div>
       {/if}
 
     <!-- History Tab -->
@@ -306,7 +306,7 @@
             <span class="gp-commit-meta">{commit.author || ''} {commit.date || ''}</span>
           </div>
         {:else}
-          <div class="gp-empty">No commits</div>
+          <div class="gp-empty">Chưa có commit nào</div>
         {/each}
       </div>
 
@@ -322,7 +322,7 @@
             <span class="gp-branch-name">{branch.name}</span>
           </div>
         {:else}
-          <div class="gp-empty">No branches</div>
+          <div class="gp-empty">Chưa có nhánh nào</div>
         {/each}
       </div>
     {/if}
@@ -336,7 +336,7 @@
     <div class="gp-confirm" onclick={(e) => e.stopPropagation()}>
       <p class="gp-confirm-text">{confirmAction.description}</p>
       <div class="gp-confirm-actions">
-        <button class="gp-confirm-cancel" onclick={() => confirmAction = null}>Cancel</button>
+        <button class="gp-confirm-cancel" onclick={() => confirmAction = null}>Hủy</button>
         <button class="gp-confirm-ok" onclick={executeConfirmed}>{confirmAction.label}</button>
       </div>
     </div>

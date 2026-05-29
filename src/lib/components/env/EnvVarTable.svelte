@@ -72,7 +72,7 @@
     } else {
       deleteEnvVariable(v.id)
         .then(() => { variables = variables.filter((_, i) => i !== idx); })
-        .catch(() => showToast('Failed to delete variable', 'error'));
+        .catch(() => showToast('Không thể xóa biến', 'error'));
     }
   }
 
@@ -111,18 +111,18 @@
     saving = false;
     if (errorCount > 0) {
       dirty = true; // Keep dirty so user can retry
-      showToast(`${errorCount} variable(s) failed to save`, 'error');
+      showToast(`${errorCount} biến không lưu được`, 'error');
     } else {
       dirty = false;
-      showToast('Variables saved', 'success');
+      showToast('Đã lưu biến', 'success');
     }
   }
 </script>
 
 <div class="env-var-table">
   <div class="var-header">
-    <span class="var-col-key">Key</span>
-    <span class="var-col-val">Value</span>
+    <span class="var-col-key">Khóa</span>
+    <span class="var-col-val">Giá trị</span>
     <span class="var-col-act"></span>
   </div>
 
@@ -131,7 +131,7 @@
       <input
         class="var-input var-key"
         type="text"
-        placeholder="KEY"
+        placeholder="KHÓA"
         bind:value={v.key}
         oninput={() => { dirty = true; }}
       />
@@ -147,7 +147,7 @@
           <input
             class="var-input var-val"
             type="text"
-            placeholder="value"
+            placeholder="giá trị"
             bind:value={v.value}
             oninput={() => { dirty = true; }}
           />
@@ -155,7 +155,7 @@
         <button
           class="var-eye"
           class:active={v.isSecret === 1}
-          title={v.isSecret ? 'Secret (click to toggle)' : 'Not secret (click to toggle)'}
+          title={v.isSecret ? 'Bí mật (nhấn để bật/tắt)' : 'Không bí mật (nhấn để bật/tắt)'}
           onclick={() => handleSecretToggle(idx)}
         >
           {#if v.isSecret}
@@ -174,22 +174,22 @@
         {#if v.isSecret}
           <button
             class="var-reveal"
-            title={revealedIds.has(v.id) ? 'Hide' : 'Reveal'}
+            title={revealedIds.has(v.id) ? 'Ẩn' : 'Hiện'}
             onclick={() => toggleReveal(v.id)}
           >
-            {revealedIds.has(v.id) ? 'hide' : 'show'}
+            {revealedIds.has(v.id) ? 'ẩn' : 'hiện'}
           </button>
         {/if}
       </div>
-      <button class="var-del" title="Delete variable" onclick={() => handleDelete(idx)}>&times;</button>
+      <button class="var-del" title="Xóa biến" onclick={() => handleDelete(idx)}>&times;</button>
     </div>
   {/each}
 
   <div class="var-actions">
-    <button class="var-add" onclick={addVariable}>+ Add Variable</button>
+    <button class="var-add" onclick={addVariable}>+ Thêm biến</button>
     {#if dirty}
       <button class="var-save" onclick={saveAll} disabled={saving}>
-        {saving ? 'Saving...' : 'Save'}
+        {saving ? 'Đang lưu...' : 'Lưu'}
       </button>
     {/if}
   </div>

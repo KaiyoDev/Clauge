@@ -28,9 +28,9 @@
     addingCollection = false;
     try {
       await createCollection(name);
-      showToast('Collection created', 'success');
+      showToast('Đã tạo collection', 'success');
     } catch (err) {
-      showToast('Failed to create collection', 'error');
+      showToast('Không thể tạo collection', 'error');
     }
   }
 
@@ -48,11 +48,11 @@
   {#if filteredCollections.length === 0 && !addingCollection}
     <div class="nav-empty">
       {#if searchQuery}
-        <span>No results for "{searchQuery}"</span>
+        <span>Không có kết quả cho "{searchQuery}"</span>
       {:else}
-        <span>No collections yet</span>
+        <span>Chưa có collection nào</span>
         <button class="nav-empty-btn" onclick={() => addingCollection = true}>
-          + New Collection
+          + Collection mới
         </button>
       {/if}
     </div>
@@ -68,7 +68,7 @@
   {#if addingCollection}
     <div class="inline-add-coll">
       <InlineInput
-        placeholder="Collection name..."
+        placeholder="Tên collection..."
         onsubmit={handleAddCollection}
         oncancel={cancelAddCollection}
       />

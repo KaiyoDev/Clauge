@@ -36,12 +36,12 @@
     <div class="un-header">
       <svg class="un-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
       <div class="un-text">
-        <span class="un-title">Clauge v{$updateAvailable.version} is available</span>
+        <span class="un-title">Clauge v{$updateAvailable.version} đã có sẵn</span>
         <span class="un-desc">
           {#if infoOnly}
-            Download the new version to update.
+            Tải xuống phiên bản mới để cập nhật.
           {:else}
-            A new version has been downloaded. Restart to apply.
+            Phiên bản mới đã được tải. Khởi động lại để áp dụng.
           {/if}
         </span>
       </div>
@@ -50,16 +50,16 @@
     <div class="un-actions">
       {#if infoOnly}
         <button class="un-btn primary" onclick={handleDownload}>
-          Download
+          Tải xuống
           <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
         </button>
       {:else}
         <button class="un-btn primary" onclick={handleInstall} disabled={installing}>
-          {installing ? 'Restarting...' : 'Restart to Update'}
+          {installing ? 'Đang khởi động lại...' : 'Khởi động lại để cập nhật'}
         </button>
       {/if}
       <button class="un-btn secondary" onclick={handleWhatsNew}>
-        What's New
+        Có gì mới
         <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
       </button>
     </div>

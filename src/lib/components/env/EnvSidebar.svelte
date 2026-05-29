@@ -24,13 +24,13 @@
         <span class="env-dot" style="background: {env.color}"></span>
         <span class="env-name">{env.name}</span>
         {#if env.isDefault === 1}
-          <span class="env-default">(default)</span>
+          <span class="env-default">(mặc định)</span>
         {/if}
       </div>
     {/each}
   </div>
 
-  <button class="env-new-btn" onclick={oncreate}>+ New Environment</button>
+  <button class="env-new-btn" onclick={oncreate}>+ Môi trường mới</button>
 </div>
 
 <style>

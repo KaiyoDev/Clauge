@@ -37,11 +37,11 @@
    *  wham/usage endpoint returns the window length but no friendly name,
    *  so we infer from duration: 5h = Session, 1d = Daily, 7d = Weekly. */
   function codexWindowLabel(seconds: number | null | undefined): string {
-    if (seconds == null) return 'Limit';
-    if (seconds <= 18000) return 'Session';   // ≤ 5h
-    if (seconds <= 86400) return 'Daily';     // ≤ 1d
-    if (seconds <= 604800) return 'Weekly';   // ≤ 7d
-    return 'Monthly';
+    if (seconds == null) return 'Giới hạn';
+    if (seconds <= 18000) return 'Phiên';   // ≤ 5h
+    if (seconds <= 86400) return 'Hằng ngày';     // ≤ 1d
+    if (seconds <= 604800) return 'Hằng tuần';   // ≤ 7d
+    return 'Hằng tháng';
   }
 
   let usageChips = $derived.by((): UsageChip[] => {
@@ -73,11 +73,11 @@
     const sonnetPct = limits.seven_day_sonnet?.utilization ?? null;
     if (sessionPct != null) {
       const pct = Math.round(sessionPct);
-      chips.push({ label: 'Session', pct, color: usageColor(pct) });
+      chips.push({ label: 'Phiên', pct, color: usageColor(pct) });
     }
     if (weeklyPct != null) {
       const pct = Math.round(weeklyPct);
-      chips.push({ label: 'Weekly', pct, color: usageColor(pct) });
+      chips.push({ label: 'Hằng tuần', pct, color: usageColor(pct) });
     }
     if (sonnetPct != null) {
       const pct = Math.round(sonnetPct);
@@ -130,14 +130,14 @@
            rather than asking the user to configure something that
            doesn't exist. -->
       <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-      <div class="si setup-usage" class:invalid={$agentUsageAuthStatus.state === 'invalid'} onclick={() => openSettingsTab('agent')} title={$agentUsageAuthStatus.message || `Configure ${$agentFooterProvider === 'codex' ? 'Codex' : 'Claude'} usage tracking`}>
+      <div class="si setup-usage" class:invalid={$agentUsageAuthStatus.state === 'invalid'} onclick={() => openSettingsTab('agent')} title={$agentUsageAuthStatus.message || `Cấu hình theo dõi sử dụng ${$agentFooterProvider === 'codex' ? 'Codex' : 'Claude'}`}>
         <svg style="width:10px;height:10px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-        <span>{$agentUsageAuthStatus.state === 'invalid' ? 'Usage key expired · reconfigure' : 'Set up usage tracking'}</span>
+        <span>{$agentUsageAuthStatus.state === 'invalid' ? 'Khóa sử dụng đã hết hạn · cấu hình lại' : 'Cài đặt theo dõi sử dụng'}</span>
       </div>
     {:else if $agentUsageAuthStatus.state === 'checking'}
       <div class="si setup-usage">
         <span class="usage-checking-dot"></span>
-        <span>Checking usage key...</span>
+        <span>Đang kiểm tra khóa sử dụng...</span>
       </div>
     {/if}
   </div>
@@ -148,9 +148,9 @@
       <span style="color:{$agentShellOpen ? 'var(--acc)' : ''}">Shell</span>
     </div>
     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-    <div class="si mcp-clickable" onclick={openMcpSettings} title={$mcpStatus.running ? `MCP server running on :${$mcpStatus.port}` : 'MCP server stopped — click to configure'}>
+    <div class="si mcp-clickable" onclick={openMcpSettings} title={$mcpStatus.running ? `Máy chủ MCP đang chạy ở :${$mcpStatus.port}` : 'Máy chủ MCP đã dừng — nhấn để cấu hình'}>
       <span class="sled mcp-led" class:on={$mcpStatus.running}></span>
-      <span>MCP{$mcpStatus.running ? ` · :${$mcpStatus.port}` : ' · off'}</span>
+      <span>MCP{$mcpStatus.running ? ` · :${$mcpStatus.port}` : ' · tắt'}</span>
     </div>
     {#if appVersion}<div class="si">Clauge v{appVersion}</div>{/if}
     <div class="si"><GetProButton /></div>
@@ -160,16 +160,16 @@
 <footer class="statusbar glass-surface">
   <div class="sr">
     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-    <div class="si mcp-clickable" onclick={openMcpSettings} title={$mcpStatus.running ? `MCP server running on :${$mcpStatus.port}` : 'MCP server stopped — click to configure'}>
+    <div class="si mcp-clickable" onclick={openMcpSettings} title={$mcpStatus.running ? `Máy chủ MCP đang chạy ở :${$mcpStatus.port}` : 'Máy chủ MCP đã dừng — nhấn để cấu hình'}>
       <span class="sled mcp-led" class:on={$mcpStatus.running}></span>
-      <span>MCP{$mcpStatus.running ? ` · :${$mcpStatus.port}` : ' · off'}</span>
+      <span>MCP{$mcpStatus.running ? ` · :${$mcpStatus.port}` : ' · tắt'}</span>
     </div>
     {#if $updateAvailable}
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="si update-hint" onclick={openUpdateModal}>
         <span class="sled update-dot"></span>
-        <span>Update available · v{$updateAvailable.version}</span>
+        <span>Có bản cập nhật · v{$updateAvailable.version}</span>
       </div>
     {/if}
     {#if appVersion}<div class="si">Clauge v{appVersion}</div>{/if}

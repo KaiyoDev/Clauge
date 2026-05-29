@@ -391,18 +391,18 @@
 
     showContextMenu(e.clientX, e.clientY, [
       {
-        label: 'Create Collection',
+        label: 'Tạo Collection',
         icon: icons.addColl,
         action: () => showRename('', async (name) => {
           try {
             await nosqlCreateCollection(liveId, db, name);
             await loadCollections(connId, db);
-            showToast(`Created ${name}`, 'success');
+            showToast(`Đã tạo ${name}`, 'success');
           } catch (e: any) { showToast(friendlyError(e), 'error'); }
-        }, 'Create Collection', 'Create'),
+        }, 'Tạo Collection', 'Tạo'),
       },
       {
-        label: 'Refresh',
+        label: 'Làm mới',
         icon: icons.refresh,
         action: async () => {
           collCache = new Map([...collCache].filter(([k]) => !k.startsWith(`${connId}:${db}`)));
@@ -411,18 +411,18 @@
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Drop Database',
+        label: 'Xóa CSDL',
         icon: icons.dropDb,
         danger: true,
-        action: () => showConfirm('Drop Database', `Drop "${db}"? All collections and documents will be permanently deleted.`, true, async () => {
+        action: () => showConfirm('Xóa CSDL', `Xóa "${db}"? Tất cả collection và tài liệu sẽ bị xóa vĩnh viễn.`, true, async () => {
           try {
             await nosqlDropDatabase(liveId, db);
             dbCache = new Map([...dbCache].filter(([k]) => k !== connId));
             collCache = new Map([...collCache].filter(([k]) => !k.startsWith(`${connId}:${db}`)));
             await loadDatabases(connId);
-            showToast(`Dropped ${db}`, 'success');
+            showToast(`Đã xóa ${db}`, 'success');
           } catch (e: any) { showToast(friendlyError(e), 'error'); }
-        }, 'Drop'),
+        }, 'Xóa'),
       },
     ]);
   }
@@ -435,34 +435,34 @@
 
     showContextMenu(e.clientX, e.clientY, [
       {
-        label: 'Open in New Tab',
+        label: 'Mở trong tab mới',
         icon: icons.openTab,
         action: () => handleCollectionClick(connId, db, coll),
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Rename Collection',
+        label: 'Đổi tên Collection',
         icon: icons.rename,
         action: () => showRename(coll, async (newName) => {
           try {
             await nosqlRenameCollection(liveId, db, coll, newName);
             await loadCollections(connId, db);
-            showToast(`Renamed to ${newName}`, 'success');
+            showToast(`Đã đổi tên thành ${newName}`, 'success');
           } catch (e: any) { showToast(friendlyError(e), 'error'); }
         }),
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Drop Collection',
+        label: 'Xóa Collection',
         icon: icons.drop,
         danger: true,
-        action: () => showConfirm('Drop Collection', `Drop "${coll}"? All documents will be permanently deleted.`, true, async () => {
+        action: () => showConfirm('Xóa Collection', `Xóa "${coll}"? Tất cả tài liệu sẽ bị xóa vĩnh viễn.`, true, async () => {
           try {
             await nosqlDropCollection(liveId, db, coll);
             await loadCollections(connId, db);
-            showToast(`Dropped ${coll}`, 'success');
+            showToast(`Đã xóa ${coll}`, 'success');
           } catch (e: any) { showToast(friendlyError(e), 'error'); }
-        }, 'Drop'),
+        }, 'Xóa'),
       },
     ]);
   }
@@ -506,7 +506,7 @@
         >
           <div class="coll-icon">
             <BrandBadge brand={conn.driver} />
-            {#if isConnected}<span class="conn-dot" aria-label="Connected" title="Connected"></span>{/if}
+            {#if isConnected}<span class="conn-dot" aria-label="Đã kết nối" title="Đã kết nối"></span>{/if}
           </div>
           <div class="ncoll-text">
             <div class="ncoll-row-top">
@@ -514,7 +514,7 @@
             </div>
             <div class="ncoll-row-bot">
               {#if isConnecting}
-                <span class="ncoll-sub">Connecting<span class="nn-dots"></span></span>
+                <span class="ncoll-sub">Đang kết nối<span class="nn-dots"></span></span>
               {:else}
                 <span class="ncoll-sub">{connectionDetail(conn)}</span>
               {/if}
@@ -523,15 +523,15 @@
           {#if isConnected}
             <button
               class="coll-menu"
-              title="Refresh"
-              onclick={async (e) => { e.stopPropagation(); if (conn.driver !== 'mongodb') { showToast('Refreshed', 'success'); return; } dbCache = new Map([...dbCache].filter(([k]) => k !== conn.id)); collCache = new Map([...collCache].filter(([k]) => !k.startsWith(`${conn.id}:`))); await loadDatabases(conn.id); const dbs = dbCache.get(conn.id) ?? []; for (const db of dbs) { const key = `${conn.id}:${db}`; if (expandedDbs.has(key)) loadCollections(conn.id, db); } showToast('Refreshed', 'success'); }}
+              title="Làm mới"
+              onclick={async (e) => { e.stopPropagation(); if (conn.driver !== 'mongodb') { showToast('Đã làm mới', 'success'); return; } dbCache = new Map([...dbCache].filter(([k]) => k !== conn.id)); collCache = new Map([...collCache].filter(([k]) => !k.startsWith(`${conn.id}:`))); await loadDatabases(conn.id); const dbs = dbCache.get(conn.id) ?? []; for (const db of dbs) { const key = `${conn.id}:${db}`; if (expandedDbs.has(key)) loadCollections(conn.id, db); } showToast('Đã làm mới', 'success'); }}
             >
               {@html icons.refresh}
             </button>
           {/if}
           <button
             class="coll-menu"
-            title="More"
+            title="Thêm"
             onclick={(e) => { e.stopPropagation(); showConnMenu(e, conn); }}
           >
             {@html icons.ellipsisV}
@@ -547,7 +547,7 @@
       {#if ((isExpanded || searchQuery) && !collapsedDuringSearch.has(`conn:${conn.id}`)) && conn.driver === 'mongodb' && isConnected}
         {@const dbs = dbCache.get(conn.id) ?? []}
         {#if loadingDbs.has(conn.id)}
-          <div class="tree-loading" style="padding-left:16px">Loading databases<span class="nn-dots"></span></div>
+          <div class="tree-loading" style="padding-left:16px">Đang tải CSDL<span class="nn-dots"></span></div>
         {:else}
           {#each dbs as db}
             {@const dbKey = `${conn.id}:${db}`}
@@ -571,11 +571,11 @@
                   <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
                 </svg>
                 <span class="tree-label">{db}</span>
-                <span class="db-action" role="button" tabindex="-1" title="Create Collection"
-                  onclick={(e) => { e.stopPropagation(); const liveId = $nosqlLiveConnectionIds[conn.id]; if (liveId) showRename('', async (name) => { try { await nosqlCreateCollection(liveId, db, name); await loadCollections(conn.id, db); showToast(`Created ${name}`, 'success'); } catch (err) { showToast(friendlyError(err), 'error'); } }, 'Create Collection', 'Create'); }}>
+                <span class="db-action" role="button" tabindex="-1" title="Tạo Collection"
+                  onclick={(e) => { e.stopPropagation(); const liveId = $nosqlLiveConnectionIds[conn.id]; if (liveId) showRename('', async (name) => { try { await nosqlCreateCollection(liveId, db, name); await loadCollections(conn.id, db); showToast(`Đã tạo ${name}`, 'success'); } catch (err) { showToast(friendlyError(err), 'error'); } }, 'Tạo Collection', 'Tạo'); }}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
                 </span>
-                <span class="db-action db-action-danger" role="button" tabindex="-1" title="Drop Database"
+                <span class="db-action db-action-danger" role="button" tabindex="-1" title="Xóa CSDL"
                   onclick={(e) => { e.stopPropagation(); const liveId = $nosqlLiveConnectionIds[conn.id]; if (liveId) showConfirm('Drop Database', `Drop "${db}"? All collections and documents will be permanently deleted.`, true, async () => { try { await nosqlDropDatabase(liveId, db); dbCache = new Map([...dbCache].filter(([k]) => k !== conn.id)); collCache = new Map([...collCache].filter(([k]) => !k.startsWith(`${conn.id}:${db}`))); await loadDatabases(conn.id); showToast(`Dropped ${db}`, 'success'); } catch (err) { showToast(friendlyError(err), 'error'); } }, 'Drop'); }}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                 </span>
@@ -584,9 +584,9 @@
               {#if dbExpanded || autoExpand}
                 {@const colls = collCache.get(dbKey) ?? []}
                 {#if loadingColls.has(dbKey)}
-                  <div class="tree-loading" style="padding-left:26px">Loading<span class="nn-dots"></span></div>
+                  <div class="tree-loading" style="padding-left:26px">Đang tải<span class="nn-dots"></span></div>
                 {:else if colls.length === 0}
-                  <div class="tree-loading" style="padding-left:26px">No collections</div>
+                  <div class="tree-loading" style="padding-left:26px">Chưa có collection</div>
                 {:else}
                   {#each colls as coll}
                     {#if !searchQuery || collMatchesSearch(coll)}
@@ -639,12 +639,12 @@
         class="nn-rename-input"
         type="text"
         bind:value={renameValue}
-        placeholder="Collection name"
+        placeholder="Tên collection"
         onkeydown={(e) => { if (e.key === 'Enter') handleRenameOk(); }}
         autofocus
       />
       <div class="nn-confirm-actions">
-        <button class="nn-confirm-btn" onclick={() => renameShow = false}>Cancel</button>
+        <button class="nn-confirm-btn" onclick={() => renameShow = false}>Hủy</button>
         <button class="nn-confirm-btn primary" onclick={handleRenameOk} disabled={!renameValue.trim()}>{renameButtonLabel}</button>
       </div>
     </div>

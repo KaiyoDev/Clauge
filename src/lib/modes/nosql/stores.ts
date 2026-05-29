@@ -185,11 +185,11 @@ export async function connectToNoSql(id: string): Promise<string> {
   if (getNoSqlConnState(id) === 'connecting') {
     const existing = get(nosqlLiveConnectionIds)[id];
     if (existing) return existing;
-    throw new Error('Connection already in progress');
+    throw new Error('Đang kết nối, vui lòng đợi');
   }
   const allConns = get(nosqlConnections);
   const conn = allConns.find((c) => c.id === id);
-  if (!conn) throw new Error('Connection not found');
+  if (!conn) throw new Error('Không tìm thấy kết nối');
   setNoSqlConnState(id, 'connecting');
   setNoSqlConnError(id, null);
   let liveId: string;

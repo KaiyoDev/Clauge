@@ -25,11 +25,11 @@
   }
 </script>
 
-<Modal bind:show title="GitHub CLI Not Found" width="460px">
+<Modal bind:show title="Không tìm thấy GitHub CLI" width="460px">
   <div class="cn-body">
     <p class="cn-desc">
-      The <code class="cn-code">gh</code> CLI wasn't found on your <code class="cn-code">PATH</code>.
-      Clauge uses it to create issues, push branches, and open PRs from cards.
+      Không tìm thấy <code class="cn-code">gh</code> CLI trong <code class="cn-code">PATH</code>.
+      Clauge dùng nó để tạo issue, đẩy nhánh và mở PR từ thẻ.
     </p>
 
     {#if platform === 'windows'}
@@ -44,13 +44,13 @@
       {@render cmdBlock('Arch', 'sudo pacman -S github-cli')}
     {/if}
 
-    {@render cmdBlock('Then sign in', 'gh auth login')}
+    {@render cmdBlock('Sau đó đăng nhập', 'gh auth login')}
 
     <div class="cn-after">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
       </svg>
-      After installing + signing in, restart Clauge so it picks up your updated <code class="cn-code">PATH</code>.
+      Sau khi cài và đăng nhập, hãy khởi động lại Clauge để cập nhật <code class="cn-code">PATH</code>.
     </div>
 
     <div class="cn-footer">
@@ -61,7 +61,7 @@
         </svg>
         cli.github.com
       </button>
-      <button class="cn-btn-close" onclick={() => (show = false)}>Close</button>
+      <button class="cn-btn-close" onclick={() => (show = false)}>Đóng</button>
     </div>
   </div>
 </Modal>
@@ -74,8 +74,8 @@
       <button
         class="cn-copy"
         onclick={() => copy(cmd)}
-        title="Copy"
-        aria-label="Copy command"
+        title="Sao chép"
+        aria-label="Sao chép lệnh"
       >
         {#if copiedCmd === cmd}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

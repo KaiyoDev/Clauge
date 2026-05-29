@@ -88,31 +88,31 @@
   }
 </script>
 
-<Modal bind:show title="Board project" width="440px" {onclose}>
+<Modal bind:show title="Dự án của bảng" width="440px" {onclose}>
   <div class="bc-form">
     <p class="bc-help">
-      Bind this board to a project. Pick a local folder, paste a GitHub /
-      GitLab URL, or both. Leave both blank to inherit from the workspace.
+      Liên kết bảng này với một dự án. Chọn thư mục cục bộ, dán URL GitHub /
+      GitLab, hoặc cả hai. Bỏ trống cả hai để kế thừa từ workspace.
     </p>
 
     <label class="bc-field">
-      <span class="bc-label">Project folder</span>
+      <span class="bc-label">Thư mục dự án</span>
       <div class="bc-row">
         <input
           class="bc-input"
           type="text"
-          placeholder="/path/to/project"
+          placeholder="/đường/dẫn/dự-án"
           bind:value={projectPath}
           spellcheck="false"
         />
-        <button class="bc-browse" onclick={pickFolder}>Browse</button>
+        <button class="bc-browse" onclick={pickFolder}>Duyệt</button>
       </div>
     </label>
 
-    <div class="bc-or"><span>or</span></div>
+    <div class="bc-or"><span>hoặc</span></div>
 
     <label class="bc-field">
-      <span class="bc-label">Project URL</span>
+      <span class="bc-label">URL dự án</span>
       <input
         class="bc-input"
         type="text"
@@ -120,17 +120,17 @@
         bind:value={projectUrl}
         spellcheck="false"
       />
-      <span class="bc-hint">No local clone needed — issues are fetched via the URL.</span>
+      <span class="bc-hint">Không cần clone cục bộ — issue được lấy qua URL.</span>
     </label>
 
     <div class="bc-actions">
       {#if initialPath || initialUrl}
-        <button class="bc-btn-clear" onclick={clear} disabled={saving}>Use workspace project</button>
+        <button class="bc-btn-clear" onclick={clear} disabled={saving}>Dùng dự án workspace</button>
       {/if}
       <span style="flex:1"></span>
-      <button class="bc-btn-cancel" onclick={() => { show = false; onclose?.(); }}>Cancel</button>
+      <button class="bc-btn-cancel" onclick={() => { show = false; onclose?.(); }}>Hủy</button>
       <button class="bc-btn-save" onclick={save} disabled={saving}>
-        {saving ? 'Saving…' : 'Save'}
+        {saving ? 'Đang lưu…' : 'Lưu'}
       </button>
     </div>
   </div>

@@ -137,9 +137,9 @@
     try {
       await updateCollection(collection.id, newName, collection.envId);
       collection.name = newName;
-      showToast('Collection renamed', 'success');
+      showToast('Đã đổi tên collection', 'success');
     } catch (err) {
-      showToast('Failed to rename collection', 'error');
+      showToast('Không đổi tên collection được', 'error');
     }
   }
 
@@ -169,7 +169,7 @@
       const colors2 = METHOD_COLORS['GET'];
       addTab(label, 'rest', req.id, colors2.color);
 
-      showToast('Request created', 'success');
+      showToast('Đã tạo yêu cầu', 'success');
     } catch (err: any) {
       showToast(friendlyError(err), 'error');
       console.error('Create request error:', err);
@@ -190,10 +190,10 @@
         if (tab) closeTab(tab.id);
       }
       await deleteCollection(collection.id);
-      showToast('Collection deleted', 'success');
+      showToast('Đã xóa collection', 'success');
       ondeleted?.();
     } catch (err) {
-      showToast('Failed to delete collection', 'error');
+      showToast('Không xóa collection được', 'error');
     }
   }
 
@@ -258,7 +258,7 @@
       {#if renaming}
         <InlineInput
           value={collection.name}
-          placeholder="Collection name..."
+          placeholder="Tên collection..."
           onsubmit={handleRename}
           oncancel={cancelRename}
         />
@@ -309,7 +309,7 @@
     {#if addingRequest}
       <div class="inline-add-req">
         <InlineInput
-          placeholder="Request name..."
+          placeholder="Tên yêu cầu..."
           onsubmit={handleAddRequest}
           oncancel={cancelAddRequest}
         />

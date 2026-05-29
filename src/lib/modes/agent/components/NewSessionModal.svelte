@@ -261,7 +261,7 @@
   );
 </script>
 
-<Modal bind:show title="New session" width="680px">
+<Modal bind:show title="Phiên mới" width="680px">
   <!-- Bleed the Modal primitive's body padding so the left rail + right
        pane go edge-to-edge, and the footer reaches the card borders. -->
   <div class="ns-shell">
@@ -273,7 +273,7 @@
           <button
             class="ns-prov-row"
             class:selected={provider === p.id}
-            title={`Use ${p.label}`}
+            title={`Dùng ${p.label}`}
             onclick={() => { provider = p.id; }}
           >
             <span class="ns-prov-icon">
@@ -298,7 +298,7 @@
             role="tab"
             aria-selected={activeTab === 'general'}
             onclick={() => activeTab = 'general'}
-          >General</button>
+          >Chung</button>
           <!-- svelte-ignore a11y_click_events_have_key_events -->
           <button
             class="ns-tab"
@@ -306,40 +306,40 @@
             role="tab"
             aria-selected={activeTab === 'advanced'}
             onclick={() => activeTab = 'advanced'}
-          >Advanced</button>
+          >Nâng cao</button>
         </div>
 
         {#if activeTab === 'general'}
           <label class="ns-field">
-            <span class="ns-label">Project Folder</span>
+            <span class="ns-label">Thư mục dự án</span>
             <div class="ns-path-row">
               <input
                 class="ns-input ns-path-input"
                 type="text"
                 bind:value={projectPath}
-                placeholder="/path/to/project"
+                placeholder="/đường/dẫn/dự-án"
                 onblur={() => { if (projectPath.trim()) loadDiscoveredSessions(projectPath.trim()); }}
               />
               <button class="ns-btn-browse" onclick={pickFolder}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-                Browse
+                Duyệt
               </button>
             </div>
           </label>
 
           <label class="ns-field">
-            <span class="ns-label">Session Title</span>
-            <input class="ns-input" type="text" bind:value={title} placeholder="e.g. Auth Refactor" />
+            <span class="ns-label">Tiêu đề phiên</span>
+            <input class="ns-input" type="text" bind:value={title} placeholder="vd. Refactor xác thực" />
           </label>
 
           <div class="ns-field">
-            <span class="ns-label">Purpose</span>
+            <span class="ns-label">Mục đích</span>
             <div class="ns-chips">
               {#each purposes as p}
                 {#if !projectPath.trim()}
                   <span class="ns-chip disabled">{p.label}</span>
                 {:else if p.label !== 'Custom' && isPurposeUsed(p.label)}
-                  <span class="ns-chip disabled" title="{p.label} already active for this project">{p.label}</span>
+                  <span class="ns-chip disabled" title="{p.label} đã được dùng cho dự án này">{p.label}</span>
                 {:else}
                   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
                   <span
@@ -357,16 +357,16 @@
             <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
             <div class="ns-hint" onclick={() => { purpose = 'Custom'; }}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-              <span>{discoveredSessions.length} previous session{discoveredSessions.length > 1 ? 's' : ''} found — <strong style="color:var(--acc);cursor:pointer;">resume via Custom</strong></span>
+              <span>Tìm thấy {discoveredSessions.length} phiên trước — <strong style="color:var(--acc);cursor:pointer;">tiếp tục qua Custom</strong></span>
             </div>
           {/if}
 
           {#if purpose === 'Custom'}
             {#if discoveredSessions.length > 0}
               <label class="ns-field">
-                <span class="ns-label">Resume Existing Session</span>
+                <span class="ns-label">Tiếp tục phiên có sẵn</span>
                 <select class="ns-select" bind:value={selectedSessionId}>
-                  <option value="">Start fresh</option>
+                  <option value="">Bắt đầu mới</option>
                   {#each discoveredSessions as s}
                     <option value={s.sessionId}>{s.preview || s.sessionId.slice(0, 8)} — {new Date(s.modifiedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</option>
                   {/each}
@@ -374,8 +374,8 @@
               </label>
             {/if}
             <label class="ns-field">
-              <span class="ns-label">System Prompt <span class="ns-optional">(optional)</span></span>
-              <textarea class="ns-textarea" bind:value={customPrompt} placeholder="Custom instructions for this session..." rows="2"></textarea>
+              <span class="ns-label">System Prompt <span class="ns-optional">(tùy chọn)</span></span>
+              <textarea class="ns-textarea" bind:value={customPrompt} placeholder="Hướng dẫn riêng cho phiên này..." rows="2"></textarea>
             </label>
           {/if}
         {:else}
@@ -391,8 +391,8 @@
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19.69 14a6.9 6.9 0 00.31-2V5l-8-3-3.16 1.18"/><path d="M4.73 4.73L4 5v7c0 6 8 10 8 10a20.29 20.29 0 005.62-4.38"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                 </span>
                 <div class="ns-adv-info">
-                  <span class="ns-adv-title">Skip permissions</span>
-                  <span class="ns-adv-desc">Auto-approve all tool calls without confirmation</span>
+                  <span class="ns-adv-title">Bỏ qua quyền</span>
+                  <span class="ns-adv-desc">Tự động duyệt mọi tool call mà không hỏi</span>
                 </div>
                 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
                 <button class="ns-toggle" class:on={skipPermissions} onclick={() => skipPermissions = !skipPermissions}>
@@ -409,8 +409,8 @@
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 01-9 9"/></svg>
                 </span>
                 <div class="ns-adv-info">
-                  <span class="ns-adv-title">Git identity</span>
-                  <span class="ns-adv-desc">Override git author name and email for this session</span>
+                  <span class="ns-adv-title">Danh tính Git</span>
+                  <span class="ns-adv-desc">Thay tên và email tác giả Git cho phiên này</span>
                 </div>
                 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
                 <button class="ns-toggle" class:on={gitEnabled} onclick={() => gitEnabled = !gitEnabled}>
@@ -421,12 +421,12 @@
                 <div class="ns-adv-body">
                   <div class="ns-row">
                     <label class="ns-adv-field">
-                      <span class="ns-adv-label-sm">Name <span class="ns-required">*</span></span>
-                      <input type="text" class="ns-input" bind:value={gitName} placeholder="e.g. John Doe" />
+                      <span class="ns-adv-label-sm">Tên <span class="ns-required">*</span></span>
+                      <input type="text" class="ns-input" bind:value={gitName} placeholder="vd. Nguyễn Văn A" />
                     </label>
                     <label class="ns-adv-field">
                       <span class="ns-adv-label-sm">Email <span class="ns-required">*</span></span>
-                      <input type="text" class="ns-input" bind:value={gitEmail} placeholder="e.g. john@example.com" />
+                      <input type="text" class="ns-input" bind:value={gitEmail} placeholder="vd. a@example.com" />
                     </label>
                   </div>
                 </div>
@@ -441,8 +441,8 @@
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
                 </span>
                 <div class="ns-adv-info">
-                  <span class="ns-adv-title">Custom binary path</span>
-                  <span class="ns-adv-desc">Use a specific {provider} binary for this session instead of $PATH</span>
+                  <span class="ns-adv-title">Đường dẫn binary tùy chỉnh</span>
+                  <span class="ns-adv-desc">Dùng binary {provider} cụ thể cho phiên này thay vì $PATH</span>
                 </div>
                 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
                 <button class="ns-toggle" class:on={useCustomBinary} onclick={() => { useCustomBinary = !useCustomBinary; if (!useCustomBinary) { customBinaryPath = ''; binaryProbeResult = { kind: 'idle', msg: '' }; } }}>
@@ -461,7 +461,7 @@
                     />
                     <button class="ns-btn-browse" onclick={pickBinaryFile}>
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-                      Browse
+                      Duyệt
                     </button>
                   </div>
                   {#if binaryProbeResult.kind === 'probing'}
@@ -469,7 +469,7 @@
                   {:else if binaryProbeResult.kind === 'ok'}
                     <div class="ns-probe-hint ns-probe-ok">✓ {binaryProbeResult.msg}</div>
                   {:else if binaryProbeResult.kind === 'err'}
-                    <div class="ns-probe-hint ns-probe-err">⚠ {binaryProbeResult.msg} — save anyway?</div>
+                    <div class="ns-probe-hint ns-probe-err">⚠ {binaryProbeResult.msg} — vẫn lưu?</div>
                   {/if}
                 </div>
               {/if}
@@ -483,8 +483,8 @@
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                 </span>
                 <div class="ns-adv-info">
-                  <span class="ns-adv-title">Attach contexts</span>
-                  <span class="ns-adv-desc">Inject context snippets into the project's agent file before each spawn</span>
+                  <span class="ns-adv-title">Đính kèm bối cảnh</span>
+                  <span class="ns-adv-desc">Chèn các đoạn bối cảnh vào file agent của dự án trước mỗi lần spawn</span>
                 </div>
                 <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
                 <button class="ns-toggle" class:on={contextEnabled} onclick={() => { contextEnabled = !contextEnabled; if (contextEnabled) loadContexts(); }}>
@@ -508,7 +508,7 @@
                     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
                     <button class="ns-ctx-add-btn" onclick={(e) => { e.stopPropagation(); showContextDropdown = !showContextDropdown; }}>
                       <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M7.75 2a.75.75 0 01.75.75V7h4.25a.75.75 0 010 1.5H8.5v4.25a.75.75 0 01-1.5 0V8.5H2.75a.75.75 0 010-1.5H7V2.75A.75.75 0 017.75 2z"/></svg>
-                      Add
+                      Thêm
                     </button>
                     {#if showContextDropdown}
                       <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
@@ -521,7 +521,7 @@
                             <span class="ns-ctx-dd-preview">{ctx.content.slice(0, 60)}</span>
                           </div>
                         {:else}
-                          <div class="ns-ctx-dd-empty">No more contexts available</div>
+                          <div class="ns-ctx-dd-empty">Không còn bối cảnh nào</div>
                         {/each}
                       </div>
                     {/if}
@@ -537,9 +537,9 @@
     <!-- FOOTER — full-width action bar. Same pattern as ConfirmDialog so
          buttons match the rest of the app visually. -->
     <div class="ns-actions">
-      <button class="ns-btn-cancel" onclick={() => { show = false; resetForm(); }}>Cancel</button>
+      <button class="ns-btn-cancel" onclick={() => { show = false; resetForm(); }}>Hủy</button>
       <button class="ns-btn-create" onclick={handleCreate} disabled={!canCreate || loading}>
-        {loading ? 'Creating…' : 'Create session'}
+        {loading ? 'Đang tạo…' : 'Tạo phiên'}
       </button>
     </div>
   </div>

@@ -92,7 +92,7 @@
 
   async function createEnvVarInline(name: string) {
     if (!VAR_NAME_RE.test(name)) {
-      showToast('Variable names use letters, digits, _ and -', 'error');
+      showToast('Tên biến chỉ gồm chữ cái, chữ số, _ và -', 'error');
       return;
     }
     try {
@@ -111,9 +111,9 @@
       await setEnvVariable(envId, name, '', 0);
       const vars = await getEnvVariablesForResolution(envId);
       envVarCache = Object.entries(vars).map(([key, value]) => ({ key, value }));
-      showToast(`Added {{${name}}} to environment`, 'success');
+      showToast(`Đã thêm {{${name}}} vào môi trường`, 'success');
     } catch (e) {
-      errorToast('Failed to create variable', e);
+      errorToast('Không thể tạo biến', e);
     }
   }
 
@@ -139,9 +139,9 @@
     const exact = envVarCache.some(v => v.key === afterBraces);
     if (afterBraces.length > 0 && !exact && VAR_NAME_RE.test(afterBraces)) {
       options.push({
-        label: `Create {{${afterBraces}}}`,
+        label: `Tạo {{${afterBraces}}}`,
         type: 'keyword',
-        detail: get(activeEnvId) ? 'in current env' : 'new env "Default"',
+        detail: get(activeEnvId) ? 'trong môi trường hiện tại' : 'môi trường mới "Default"',
         apply: (view, _completion, fromPos, toPos) => {
           // Insert chip immediately so the user doesn't wait on the async
           // create — the var is added in the background.
@@ -228,7 +228,7 @@
             from: start,
             to: Math.min(n, i),
             severity: 'error',
-            message: 'Unterminated string',
+            message: 'Chuỗi chưa đóng',
           };
         }
         expectValue = false;
@@ -250,7 +250,7 @@
       if (c === '}' || c === ']') {
         const top = stack.pop();
         if (!top) {
-          return { from: i, to: i + 1, severity: 'error', message: `Unexpected '${c}'` };
+          return { from: i, to: i + 1, severity: 'error', message: `Ký tự '${c}' không mong đợi` };
         }
         const expected = top.ch === '{' ? '}' : ']';
         if (c !== expected) {
@@ -258,7 +258,7 @@
             from: i,
             to: i + 1,
             severity: 'error',
-            message: `Mismatched bracket — expected '${expected}'`,
+            message: `Dấu ngoặc không khớp — mong đợi '${expected}'`,
           };
         }
         i++;
@@ -273,7 +273,7 @@
         const saved = i;
         skipWs();
         if (i < n && (text[i] === '}' || text[i] === ']')) {
-          return { from: commaPos, to: commaPos + 1, severity: 'error', message: 'Trailing comma' };
+          return { from: commaPos, to: commaPos + 1, severity: 'error', message: 'Dấu phẩy thừa' };
         }
         i = saved;
         expectValue = true;
@@ -293,7 +293,7 @@
         if (rest.startsWith('true')) { i += 4; expectValue = false; continue; }
         if (rest.startsWith('false')) { i += 5; expectValue = false; continue; }
         if (rest.startsWith('null')) { i += 4; expectValue = false; continue; }
-        return { from: i, to: i + 1, severity: 'error', message: `Unexpected token '${c}'` };
+        return { from: i, to: i + 1, severity: 'error', message: `Token '${c}' không mong đợi` };
       }
 
       // Numbers
@@ -311,14 +311,14 @@
           while (i < n && text[i] >= '0' && text[i] <= '9') i++;
         }
         if (i === start) {
-          return { from: i, to: i + 1, severity: 'error', message: 'Invalid number' };
+          return { from: i, to: i + 1, severity: 'error', message: 'Số không hợp lệ' };
         }
         expectValue = false;
         continue;
       }
 
       // Anything else here is unexpected
-      return { from: i, to: i + 1, severity: 'error', message: `Unexpected character '${c}'` };
+      return { from: i, to: i + 1, severity: 'error', message: `Ký tự '${c}' không mong đợi` };
     }
 
     // EOF — anything left unclosed?
@@ -328,7 +328,7 @@
         from: last.pos,
         to: last.pos + 1,
         severity: 'error',
-        message: `Unclosed '${last.ch}'`,
+        message: `Chưa đóng '${last.ch}'`,
       };
     }
 
@@ -349,7 +349,7 @@
   function placeholderFor(type: string): string {
     if (type === 'json') return '{\n  "key": "value"\n}';
     if (type === 'xml') return '<root>\n  <element>value</element>\n</root>';
-    return 'Enter request body...';
+    return 'Nhập body của yêu cầu...';
   }
 
   // ── Theme: matches SQL QueryEditor + adds wrap-aware tweaks ─────────
@@ -607,9 +607,9 @@
         localBody = formatted;
       }
       onchange(formatted, localType);
-      showToast('JSON formatted', 'success');
+      showToast('Đã định dạng JSON', 'success');
     } catch {
-      showToast('Invalid JSON', 'error');
+      showToast('JSON không hợp lệ', 'error');
     }
   }
 
@@ -623,24 +623,24 @@
   <div class="body-toolbar">
     <select class="body-type-sel" value={localType} onchange={handleTypeChange}>
       <option value="json">JSON</option>
-      <option value="text">Text</option>
+      <option value="text">Văn bản</option>
       <option value="xml">XML</option>
       <option value="urlencoded">Form URL-Encoded</option>
       <option value="multipart">Multipart Form</option>
       <option value="binary">Binary</option>
-      <option value="none">None</option>
+      <option value="none">Không có</option>
     </select>
     {#if localType === 'json'}
-      <button class="ph-btn" onclick={formatJson} title="Format JSON (pretty-print)">
+      <button class="ph-btn" onclick={formatJson} title="Định dạng JSON (pretty-print)">
         <svg viewBox="0 0 24 24" width="11" height="11"><path d="M4 7h16M4 12h10M4 17h6" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/></svg>
-        Format
+        Định dạng
       </button>
     {/if}
   </div>
 
   {#if localType === 'none'}
     <div class="body-empty">
-      <span class="body-empty-msg">No body for this request</span>
+      <span class="body-empty-msg">Yêu cầu này không có body</span>
     </div>
   {:else if localType === 'urlencoded'}
     <FormKVEditor body={localBody} onchange={handleStructuredChange} />

@@ -44,10 +44,10 @@
       const { open } = await import('@tauri-apps/plugin-dialog');
       const selected = await open({
         multiple: false,
-        title: 'Select SSH Private Key',
+        title: 'Chọn SSH Private Key',
         filters: [
           { name: 'SSH Keys', extensions: ['pem', 'key', 'ppk'] },
-          { name: 'All Files', extensions: ['*'] },
+          { name: 'Tất cả tệp', extensions: ['*'] },
         ],
       });
       if (typeof selected === 'string') {
@@ -112,13 +112,13 @@
   }
 
   async function handleSave() {
-    if (!name.trim()) { showToast('Name is required', 'error'); return; }
+    if (!name.trim()) { showToast('Tên là bắt buộc', 'error'); return; }
     if (source === 'profile' && !sshProfileId) {
-      showToast('Pick an SSH profile or switch to "New connection details"', 'error');
+      showToast('Chọn một profile SSH hoặc chuyển sang "Thông tin kết nối mới"', 'error');
       return;
     }
     if (source === 'direct' && !host.trim()) {
-      showToast('Host is required', 'error'); return;
+      showToast('Host là bắt buộc', 'error'); return;
     }
     saving = true;
     try {
@@ -154,35 +154,35 @@
         await setSecret(connId, secretName, secret);
       }
       await loadExplorerConnections();
-      showToast(isEdit ? 'SFTP connection updated' : 'SFTP connection saved', 'success');
+      showToast(isEdit ? 'Đã cập nhật kết nối SFTP' : 'Đã lưu kết nối SFTP', 'success');
       resetForm();
       show = false;
       onclose?.();
     } catch (e: any) {
-      errorToast('Save failed', e);
+      errorToast('Không lưu được', e);
     } finally {
       saving = false;
     }
   }
 </script>
 
-<Modal bind:show title={isEdit ? 'Edit SFTP connection' : 'New SFTP connection'} width="640px" onclose={() => { onclose?.(); }}>
+<Modal bind:show title={isEdit ? 'Chỉnh sửa kết nối SFTP' : 'Kết nối SFTP mới'} width="640px" onclose={() => { onclose?.(); }}>
   <div class="form">
     <label class="row">
-      <span>Name</span>
-      <input class="inp" type="text" bind:value={name} placeholder="e.g. Production server" />
+      <span>Tên</span>
+      <input class="inp" type="text" bind:value={name} placeholder="vd. Server production" />
     </label>
 
     <div class="seg">
-      <button class:on={source === 'direct'} onclick={() => source = 'direct'}>New connection details</button>
-      <button class:on={source === 'profile'} onclick={() => source = 'profile'}>Use existing SSH profile</button>
+      <button class:on={source === 'direct'} onclick={() => source = 'direct'}>Thông tin kết nối mới</button>
+      <button class:on={source === 'profile'} onclick={() => source = 'profile'}>Dùng profile SSH có sẵn</button>
     </div>
 
     {#if source === 'profile'}
       <label class="row">
-        <span>SSH profile</span>
+        <span>Profile SSH</span>
         {#if $sshProfiles.length === 0}
-          <span class="hint">No SSH profiles yet — add one in SSH mode first.</span>
+          <span class="hint">Chưa có profile SSH nào — hãy thêm trong chế độ SSH trước.</span>
         {:else}
           <select class="inp" bind:value={sshProfileId}>
             {#each $sshProfiles as p (p.id)}
@@ -197,50 +197,50 @@
         <input class="inp" type="text" bind:value={host} placeholder="server.example.com" />
       </label>
       <label class="row">
-        <span>Port</span>
+        <span>Cổng</span>
         <input class="inp" type="number" bind:value={port} />
       </label>
       <label class="row">
-        <span>Username</span>
+        <span>Tên đăng nhập</span>
         <input class="inp" type="text" bind:value={username} />
       </label>
       <label class="row">
-        <span>Auth</span>
+        <span>Xác thực</span>
         <select class="inp" bind:value={authType}>
-          <option value="password">Password</option>
+          <option value="password">Mật khẩu</option>
           <option value="key">Private key</option>
           <option value="agent">SSH agent</option>
         </select>
       </label>
       {#if authType === 'key'}
         <label class="row">
-          <span>Key path</span>
+          <span>Đường dẫn key</span>
           <div class="row-inline">
             <input class="inp" type="text" bind:value={keyPath} placeholder="~/.ssh/id_ed25519" />
-            <button type="button" class="btn-browse" onclick={pickKeyFile}>Choose…</button>
+            <button type="button" class="btn-browse" onclick={pickKeyFile}>Chọn…</button>
           </div>
         </label>
         <label class="row">
-          <span>Passphrase (if any)</span>
+          <span>Passphrase (nếu có)</span>
           <input class="inp" type="password" bind:value={secret} />
         </label>
       {:else if authType === 'password'}
         <label class="row">
-          <span>Password</span>
+          <span>Mật khẩu</span>
           <input class="inp" type="password" bind:value={secret} />
         </label>
       {/if}
     {/if}
 
     <label class="row">
-      <span>Working directory <span class="optional">(optional)</span></span>
+      <span>Thư mục làm việc <span class="optional">(tùy chọn)</span></span>
       <input class="inp" type="text" bind:value={workingDir} placeholder="/home/user" />
     </label>
 
     <div class="actions">
-      <button class="btn" onclick={() => { show = false; onclose?.(); }}>Cancel</button>
+      <button class="btn" onclick={() => { show = false; onclose?.(); }}>Hủy</button>
       <button class="btn primary" onclick={handleSave} disabled={saving}>
-        {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Save connection'}
+        {saving ? 'Đang lưu…' : isEdit ? 'Lưu thay đổi' : 'Lưu kết nối'}
       </button>
     </div>
   </div>

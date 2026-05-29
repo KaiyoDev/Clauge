@@ -42,13 +42,13 @@
    *  user's language, not the protocol's. */
   function label(kind: string): string {
     switch (kind) {
-      case 'rest':     return 'REST collections';
-      case 'sql':      return 'SQL connections';
-      case 'nosql':    return 'NoSQL connections';
-      case 'agent':    return 'Agent contexts';
-      case 'ssh':      return 'SSH profiles';
-      case 'explorer': return 'Explorer connections';
-      case 'coworkers': return 'Workspace coworkers';
+      case 'rest':     return 'Collection REST';
+      case 'sql':      return 'Kết nối SQL';
+      case 'nosql':    return 'Kết nối NoSQL';
+      case 'agent':    return 'Bối cảnh Agent';
+      case 'ssh':      return 'Profile SSH';
+      case 'explorer': return 'Kết nối Explorer';
+      case 'coworkers': return 'Đồng nghiệp Workspace';
       default:         return kind;
     }
   }
@@ -73,10 +73,10 @@
     try {
       await cloudResolveKeepLocal();
       await refreshConflictsStore();
-      showToast('Kept this device’s version', 'success');
+      showToast('Đã giữ phiên bản trên thiết bị này', 'success');
       show = false;
     } catch (e: any) {
-      showToast(`Couldn’t resolve: ${e?.message ?? e}`, 'error');
+      showToast(`Không xử lý được: ${e?.message ?? e}`, 'error');
     } finally {
       busy = null;
     }
@@ -87,10 +87,10 @@
     try {
       await cloudResolveUseRemote();
       await refreshConflictsStore();
-      showToast('Used the other device’s version', 'success');
+      showToast('Đã dùng phiên bản từ thiết bị khác', 'success');
       show = false;
     } catch (e: any) {
-      showToast(`Couldn’t resolve: ${e?.message ?? e}`, 'error');
+      showToast(`Không xử lý được: ${e?.message ?? e}`, 'error');
     } finally {
       busy = null;
     }
@@ -117,22 +117,22 @@
   <div class="cr-overlay" use:teleportToBody onclick={close}>
     <div class="cr-modal modal-card" onclick={(e: MouseEvent) => e.stopPropagation()} role="dialog" aria-modal="true">
       <header class="cr-hdr">
-        <span class="cr-title">Some changes need your attention</span>
-        <button class="cr-close" onclick={close} aria-label="Close" disabled={!!busy}>&times;</button>
+        <span class="cr-title">Một số thay đổi cần bạn xử lý</span>
+        <button class="cr-close" onclick={close} aria-label="Đóng" disabled={!!busy}>&times;</button>
       </header>
 
       <div class="cr-body">
         <p class="cr-lead">
-          Your other device made changes while you were editing on this one.
-          Pick which version to keep — your choice applies to everything
-          that diverged.
+          Thiết bị khác của bạn đã thay đổi dữ liệu trong khi bạn đang chỉnh
+          sửa ở đây. Hãy chọn phiên bản nào sẽ giữ — lựa chọn này áp dụng
+          cho tất cả phần đã rẽ nhánh.
         </p>
 
         <div class="cr-affected">
-          <span class="cr-affected-label">Affected:</span>
+          <span class="cr-affected-label">Bị ảnh hưởng:</span>
           <span class="cr-affected-list">
             {#if $cloudConflicts.length === 0}
-              Nothing to resolve.
+              Không có gì cần xử lý.
             {:else}
               {$cloudConflicts.map(label).join(' · ')}
             {/if}
@@ -140,28 +140,28 @@
         </div>
 
         <p class="cr-warn">
-          One of these may include deletions on either side. Review your
-          choice carefully — it can’t be undone from inside Clauge.
+          Một trong số này có thể bao gồm cả việc xóa ở một bên. Hãy cân
+          nhắc kỹ — Clauge không thể hoàn tác lựa chọn này.
         </p>
       </div>
 
       <footer class="cr-foot">
         <button class="cr-btn cr-btn-secondary" onclick={close} disabled={!!busy}>
-          Close
+          Đóng
         </button>
         <button
           class="cr-btn cr-btn-secondary"
           onclick={useRemote}
           disabled={!!busy || $cloudConflicts.length === 0}
         >
-          {busy === 'use' ? 'Applying…' : 'Use other device’s'}
+          {busy === 'use' ? 'Đang áp dụng…' : 'Dùng từ thiết bị khác'}
         </button>
         <button
           class="cr-btn cr-btn-primary"
           onclick={keepLocal}
           disabled={!!busy || $cloudConflicts.length === 0}
         >
-          {busy === 'keep' ? 'Saving…' : 'Keep my changes'}
+          {busy === 'keep' ? 'Đang lưu…' : 'Giữ thay đổi của tôi'}
         </button>
       </footer>
     </div>

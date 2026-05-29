@@ -4,7 +4,7 @@
   import EnvInput from '$lib/shared/primitives/EnvInput.svelte';
   import { KV_DEBOUNCE_MS, SUGGEST_CLOSE_MS } from '$lib/shared/constants/timings';
 
-  let { items = [], label = 'Add item', showKeySuggestions = false, onchange }: {
+  let { items = [], label = 'Thêm mục', showKeySuggestions = false, onchange }: {
     items: KVInput[];
     label?: string;
     showKeySuggestions?: boolean;
@@ -148,7 +148,7 @@
           <input
             class="kv-input kv-key"
             type="text"
-            placeholder="Key"
+            placeholder="Khóa"
             value={item.key}
             oninput={(e) => updateKey(i, (e.target as HTMLInputElement).value)}
             onkeydown={(e) => handleKeyKeydown(e, i)}
@@ -173,11 +173,11 @@
         <div class="kv-val">
           <EnvInput
             value={item.value}
-            placeholder="Value"
+            placeholder="Giá trị"
             onchange={(v) => updateValue(i, v)}
           />
         </div>
-        <button class="kv-del" onclick={() => removeRow(i)} title="Remove">
+        <button class="kv-del" onclick={() => removeRow(i)} title="Xóa">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>

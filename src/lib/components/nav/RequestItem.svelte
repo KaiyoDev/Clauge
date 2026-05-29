@@ -45,25 +45,25 @@
   function buildMenuItems() {
     return [
       {
-        label: 'Rename',
+        label: 'Đổi tên',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
         action: () => { renaming = true; },
       },
       {
-        label: 'Duplicate',
+        label: 'Nhân bản',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>',
         action: async () => {
           try {
             await cmd.duplicateRequest(request.id);
-            showToast('Request duplicated', 'success');
+            showToast('Đã nhân bản yêu cầu', 'success');
             ondeleted?.();
           } catch (err) {
-            showToast('Failed to duplicate request', 'error');
+            showToast('Không nhân bản được yêu cầu', 'error');
           }
         },
       },
       {
-        label: 'Copy as cURL',
+        label: 'Sao chép dạng cURL',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>',
         action: async () => {
           try {
@@ -73,15 +73,15 @@
             const envId = getEffectiveEnvId(request.id, get(requestEnvOverrides), get(activeEnvId)) || undefined;
             const curl = await cmd.exportAsCurl(request.id, envId);
             await writeText(curl);
-            showToast('Copied cURL to clipboard', 'success');
+            showToast('Đã sao chép cURL vào clipboard', 'success');
           } catch (err) {
-            showToast('Failed to copy cURL', 'error');
+            showToast('Không sao chép cURL được', 'error');
           }
         },
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Delete',
+        label: 'Xóa',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
         danger: true,
         action: () => { showDeleteConfirm = true; },
@@ -113,9 +113,9 @@
       if (openTab) {
         updateTab(openTab.id, { label: `${request.method} ${newName}` });
       }
-      showToast('Request renamed', 'success');
+      showToast('Đã đổi tên yêu cầu', 'success');
     } catch (err) {
-      showToast('Failed to rename request', 'error');
+      showToast('Không đổi tên yêu cầu được', 'error');
     }
   }
 
@@ -126,10 +126,10 @@
   async function handleDelete() {
     try {
       await deleteRequest(request.id);
-      showToast('Request deleted', 'success');
+      showToast('Đã xóa yêu cầu', 'success');
       ondeleted?.();
     } catch (err) {
-      showToast('Failed to delete request', 'error');
+      showToast('Không xóa yêu cầu được', 'error');
     }
   }
 </script>
@@ -142,20 +142,20 @@
   onclick={handleClick}
   oncontextmenu={handleContextMenu}
 >
-  <div class="drag-handle" title="Drag to reorder">
+  <div class="drag-handle" title="Kéo để sắp xếp">
     <svg viewBox="0 0 24 24" width="10" height="10"><circle cx="8" cy="6" r="1.5" fill="currentColor"/><circle cx="16" cy="6" r="1.5" fill="currentColor"/><circle cx="8" cy="12" r="1.5" fill="currentColor"/><circle cx="16" cy="12" r="1.5" fill="currentColor"/><circle cx="8" cy="18" r="1.5" fill="currentColor"/><circle cx="16" cy="18" r="1.5" fill="currentColor"/></svg>
   </div>
   <span class="nreq-method" style="background:{colors.bg};color:{colors.color}">{methodLabel}</span>
   {#if renaming}
     <InlineInput
       value={request.name}
-      placeholder="Request name..."
+      placeholder="Tên yêu cầu..."
       onsubmit={handleRename}
       oncancel={cancelRename}
     />
   {:else}
-    <span class="nreq-name">{request.name || request.url || 'Untitled'}</span>
-    <button class="nreq-menu" onclick={handleMenuBtn} title="Options" tabindex="-1">
+    <span class="nreq-name">{request.name || request.url || 'Không tên'}</span>
+    <button class="nreq-menu" onclick={handleMenuBtn} title="Tùy chọn" tabindex="-1">
       <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
     </button>
   {/if}
@@ -163,9 +163,9 @@
 
 <ConfirmDialog
   bind:show={showDeleteConfirm}
-  title="Delete Request"
-  message="Are you sure you want to delete '{request.name || 'Untitled'}'? This cannot be undone."
-  confirmText="Delete"
+  title="Xóa yêu cầu"
+  message="Bạn có chắc muốn xóa '{request.name || 'Không tên'}'? Không thể hoàn tác."
+  confirmText="Xóa"
   onconfirm={handleDelete}
 />
 

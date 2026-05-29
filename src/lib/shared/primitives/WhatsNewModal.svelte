@@ -48,24 +48,24 @@
     <div class="wn-modal modal-card">
       {#if $updateAvailable}
         <div class="wn-hdr">
-          <span class="wn-title">Update Available — v{$updateAvailable.version}</span>
+          <span class="wn-title">Có bản cập nhật — v{$updateAvailable.version}</span>
           <button class="wn-close" onclick={close}>&times;</button>
         </div>
         <div class="wn-body">{@html renderReleaseMarkdown($updateAvailable.body)}</div>
         <div class="wn-actions">
-          <button class="wn-btn" onclick={close}>Later</button>
+          <button class="wn-btn" onclick={close}>Để sau</button>
           <button class="wn-btn wn-btn-primary" onclick={handleRestart}>
-            {$updateAvailable.infoOnly ? 'Download' : 'Restart Now'}
+            {$updateAvailable.infoOnly ? 'Tải xuống' : 'Khởi động lại ngay'}
           </button>
         </div>
       {:else if $whatsNewContent}
         <div class="wn-hdr">
-          <span class="wn-title">What's New in v{$whatsNewContent.version}</span>
+          <span class="wn-title">Có gì mới trong v{$whatsNewContent.version}</span>
           <button class="wn-close" onclick={close}>&times;</button>
         </div>
         <div class="wn-body">{@html renderReleaseMarkdown($whatsNewContent.body)}</div>
         <div class="wn-actions">
-          <button class="wn-btn" onclick={close}>Got it</button>
+          <button class="wn-btn" onclick={close}>Đã hiểu</button>
         </div>
       {/if}
     </div>

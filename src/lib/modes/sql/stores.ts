@@ -540,7 +540,7 @@ export function resetSqlConnState(connId: string) {
  *  has children to render. Both side-effects are best-effort. */
 export async function connectToDb(connId: string): Promise<string> {
   const conn = get(connections).find((c) => c.id === connId);
-  if (!conn) throw new Error(`Saved connection record missing (id ${connId})`);
+  if (!conn) throw new Error(`Không tìm thấy bản ghi kết nối đã lưu (id ${connId})`);
   await ensureConnected(conn.id, conn.databaseName);
   expandedConnectionId.set(connId);
   // Best-effort: populate the connection's database list so the sidebar

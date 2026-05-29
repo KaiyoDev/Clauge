@@ -106,7 +106,7 @@
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const items: any[] = [
       {
-        label: hasProject ? 'Change project' : 'Set project',
+        label: hasProject ? 'Đổi dự án' : 'Đặt dự án',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/><path d="M9 13l2 2 4-4"/></svg>',
         action: () => { showConfigDialog = true; },
       },
@@ -118,8 +118,8 @@
       items.push({ label: '', action: () => {}, separator: true });
       items.push({
         label: bulkPushing
-          ? `Pushing ${localCards.length} card${localCards.length === 1 ? '' : 's'}…`
-          : `Create ${repoLabel} issues for ${localCards.length} local card${localCards.length === 1 ? '' : 's'}`,
+          ? `Đang đẩy ${localCards.length} thẻ…`
+          : `Tạo issue ${repoLabel} cho ${localCards.length} thẻ cục bộ`,
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 5 12 19"/><polyline points="5 12 12 19 19 12"/></svg>',
         action: () => bulkPushLocalCards(),
       });
@@ -174,12 +174,12 @@
   async function bulkPushLocalCards() {
     if (bulkPushing) return;
     if (!repoUrl) {
-      showToast(`Set the workspace repo URL first`, 'error');
+      showToast(`Hãy đặt repo URL của workspace trước`, 'error');
       return;
     }
     const targets = localCards.slice();
     if (targets.length === 0) {
-      showToast('No local cards to push', 'info');
+      showToast('Không có thẻ cục bộ nào để đẩy', 'info');
       return;
     }
     bulkPushing = true;
@@ -199,27 +199,27 @@
     }
     await loadBoardContents(boardId);
     bulkPushing = false;
-    if (ok > 0 && failed === 0) showToast(`Created ${ok} issue${ok === 1 ? '' : 's'} on ${repoLabel}`, 'success');
-    else if (ok > 0 && failed > 0) showToast(`Created ${ok}, failed ${failed}`, 'info');
-    else if (failed > 0) showToast(`Failed to push ${failed} card${failed === 1 ? '' : 's'}`, 'error');
+    if (ok > 0 && failed === 0) showToast(`Đã tạo ${ok} issue trên ${repoLabel}`, 'success');
+    else if (ok > 0 && failed > 0) showToast(`Đã tạo ${ok}, thất bại ${failed}`, 'info');
+    else if (failed > 0) showToast(`Đẩy ${failed} thẻ thất bại`, 'error');
   }
 
   /** Single-card create-issue from the right-click menu. */
   async function pushOneCardAsIssue(c: WorkspaceBoardCard) {
     if (!repoUrl) {
-      showToast(`Set the workspace repo URL first`, 'error');
+      showToast(`Hãy đặt repo URL của workspace trước`, 'error');
       return;
     }
     try {
       const r = await workspaceCardPushToRepo(c.id, currentUserActor());
-      showToast(`Created issue ${r.externalId}`, 'success');
+      showToast(`Đã tạo issue ${r.externalId}`, 'success');
       await loadBoardContents(boardId);
     } catch (e) {
       const msg = `${e}`;
       const missing = detectMissingCli(msg);
       if (missing === 'gh') showGhNotInstalled = true;
       else if (missing === 'glab') showGlabNotInstalled = true;
-      else showToast(`Issue creation failed: ${msg}`, 'error');
+      else showToast(`Tạo issue thất bại: ${msg}`, 'error');
     }
   }
 
@@ -235,9 +235,9 @@
   async function copyToClipboard(text: string, label: string) {
     try {
       await navigator.clipboard.writeText(text);
-      showToast(`Copied ${label}`, 'success');
+      showToast(`Đã sao chép ${label}`, 'success');
     } catch {
-      showToast('Copy failed', 'error');
+      showToast('Sao chép thất bại', 'error');
     }
   }
 
@@ -271,7 +271,7 @@
       nameDraft = board.name;
       await loadBoardContents(id);
     } catch (e) {
-      errorToast('Failed to load board', e);
+      errorToast('Tải board thất bại', e);
     }
   }
 
@@ -286,7 +286,7 @@
       const myTab = get(sharedTabs).find(t => t.mode === 'workspace' && t.key === `board:${current.id}`);
       if (myTab) updateTab(myTab.id, { label: trimmed });
     } catch (e) {
-      errorToast('Rename failed', e);
+      errorToast('Đổi tên thất bại', e);
       nameDraft = current.name;
     }
   }
@@ -334,7 +334,7 @@
       );
       cardsByBoard.set(new Map(map).set(boardId, next));
     } catch (err) {
-      errorToast('Move failed', err);
+      errorToast('Di chuyển thất bại', err);
       await loadBoardContents(boardId);
     }
   }
@@ -353,7 +353,7 @@
       });
       await loadBoardContents(boardId);
     } catch (e) {
-      errorToast('Add card failed', e);
+      errorToast('Thêm thẻ thất bại', e);
     }
   }
 
@@ -363,9 +363,9 @@
     try {
       await workspaceCardClearReview(card.id, currentUserActor());
       await loadBoardContents(boardId);
-      showToast('Approved', 'success');
+      showToast('Đã duyệt', 'success');
     } catch (e) {
-      errorToast('Approve failed', e);
+      errorToast('Duyệt thất bại', e);
     }
   }
 
@@ -386,9 +386,9 @@
         actor: currentUserActor(),
       });
       await loadBoardContents(boardId);
-      showToast(`Moved back to ${active.name}`, 'success');
+      showToast(`Đã chuyển lại ${active.name}`, 'success');
     } catch (e) {
-      errorToast('Request changes failed', e);
+      errorToast('Yêu cầu sửa thất bại', e);
     }
   }
 
@@ -568,11 +568,11 @@
           size={Math.min(Math.max(nameDraft.length, 8), 38)}
           onblur={commitNameChange}
           onkeydown={(e) => { if (e.key === 'Enter') (e.currentTarget as HTMLInputElement).blur(); }}
-          placeholder="Board name"
+          placeholder="Tên bảng"
           spellcheck="false"
         />
-        <span class="bv-count">{cards.length} card{cards.length === 1 ? '' : 's'}</span>
-        <button class="bv-menu" onclick={showHeaderMenu} title="Board options" aria-label="Board options">
+        <span class="bv-count">{cards.length} thẻ</span>
+        <button class="bv-menu" onclick={showHeaderMenu} title="Tùy chọn bảng" aria-label="Tùy chọn bảng">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
         </button>
       </div>
@@ -629,14 +629,14 @@
               >
                 <div class="bv-card-top">
                   {#if unread}
-                    <span class="bv-card-unread-dot" title="New activity from {editor.label}"></span>
+                    <span class="bv-card-unread-dot" title="Hoạt động mới từ {editor.label}"></span>
                   {/if}
                   {#if card.priority}
                     <span class="bv-priority bv-priority-{card.priority.toLowerCase()}">{card.priority}</span>
                   {/if}
                   <span class="bv-card-title">{card.title}</span>
                   {#if card.reviewPending === 1}
-                    <span class="bv-review-badge" title="Pending review">Pending review</span>
+                    <span class="bv-review-badge" title="Đang chờ review">Đang chờ review</span>
                   {/if}
                 </div>
                 {#if tags.length > 0}
@@ -654,22 +654,22 @@
                          name is more informative than the generic agent
                          star, and lets the user scan the board by who's
                          doing what. -->
-                    <span class="bv-card-creator" title="Created by @{creatorCw.name}">
+                    <span class="bv-card-creator" title="Tạo bởi @{creatorCw.name}">
                       <CoworkerAvatar seed={creatorCw.avatarSeed} style={creatorCw.avatarStyle} size={12} />
                       <span>@{creatorCw.name}</span>
                     </span>
                   {:else if editor.kind === 'coworker'}
-                    <span class="bv-card-creator" title="Last edit by @{editor.label}">
+                    <span class="bv-card-creator" title="Sửa cuối bởi @{editor.label}">
                       <CoworkerAvatar seed={editor.coworkerSeed ?? editor.label} style={editor.coworkerStyle ?? 'personas'} size={12} />
                       <span>@{editor.label}</span>
                     </span>
                   {:else if editor.kind === 'agent'}
-                    <span class="bv-card-actor bv-card-actor-agent" title="Last edit by {editor.label}">
+                    <span class="bv-card-actor bv-card-actor-agent" title="Sửa cuối bởi {editor.label}">
                       <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.8L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.2L12 3z"/></svg>
                       {editor.label}
                     </span>
                   {:else if editor.kind === 'user'}
-                    <span class="bv-card-creator" title="Last edit by @{editor.label}">
+                    <span class="bv-card-creator" title="Sửa cuối bởi @{editor.label}">
                       {#if editor.avatarUrl}
                         <img class="bv-card-actor-avatar" src={editor.avatarUrl} alt="" width="12" height="12" />
                       {:else}
@@ -678,14 +678,14 @@
                       <span>@{editor.label}</span>
                     </span>
                   {:else}
-                    <span class="bv-card-actor bv-card-actor-anon" title="Last edit by you">
+                    <span class="bv-card-actor bv-card-actor-anon" title="Sửa cuối bởi bạn">
                       <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 10-16 0"/><circle cx="12" cy="7" r="4"/></svg>
                       {editor.label}
                     </span>
                   {/if}
                   <span class="bv-card-time">· {formatAttribution(card.updatedBy, card.updatedAt).split('· ')[1] ?? ''}</span>
                   {#if card.commentCount > 0}
-                    <span class="bv-card-comments" title="{card.commentCount} {card.commentCount === 1 ? 'comment' : 'comments'}">
+                    <span class="bv-card-comments" title="{card.commentCount} bình luận">
                       <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                       {card.commentCount}
                     </span>
@@ -694,13 +694,13 @@
                     <span
                       class="bv-card-inflight-chip"
                       style={`color: ${inflightIco.color}; background: color-mix(in srgb, ${inflightIco.color} 16%, transparent); border-color: color-mix(in srgb, ${inflightIco.color} 45%, transparent);`}
-                      title={`@${inflightProvider} is working on this card…`}
+                      title={`@${inflightProvider} đang xử lý thẻ này…`}
                     >
                       <span class="bv-card-inflight-pulse">
                         <!-- eslint-disable-next-line svelte/no-at-html-tags -->
                         {@html inflightIco.svg}
                       </span>
-                      <span>thinking…</span>
+                      <span>đang xử lý…</span>
                     </span>
                   {/if}
                   {#if card.prUrl}
@@ -709,7 +709,7 @@
                       href={card.prUrl}
                       target="_blank"
                       rel="noreferrer noopener"
-                      title="Open PR · {card.prUrl}"
+                      title="Mở PR · {card.prUrl}"
                       onclick={(e) => e.stopPropagation()}
                     >
                       <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -725,7 +725,7 @@
                       href={src.url ?? '#'}
                       target="_blank"
                       rel="noreferrer noopener"
-                      title="Linked issue · open in browser"
+                      title="Issue liên kết · mở trong trình duyệt"
                       onclick={(e) => e.stopPropagation()}
                     >
                       {#if src.kind === 'github'}
@@ -738,7 +738,7 @@
                       <span>{src.label}</span>
                     </a>
                   {:else}
-                    <span class="bv-card-source bv-card-source-local" title="Local card — not pushed to a repo">local</span>
+                    <span class="bv-card-source bv-card-source-local" title="Thẻ cục bộ — chưa đẩy lên repo">cục bộ</span>
                   {/if}
                 </div>
               </div>
@@ -749,7 +749,7 @@
             <input
               class="bv-add-input"
               type="text"
-              placeholder="+ Add a card"
+              placeholder="+ Thêm thẻ"
               value={inlineNewByColumn[col.id] ?? ''}
               oninput={(e) => inlineNewByColumn = { ...inlineNewByColumn, [col.id]: e.currentTarget.value }}
               onkeydown={(e) => { if (e.key === 'Enter') addInlineCard(col.id); }}
@@ -784,9 +784,9 @@
 
 <ConfirmDialog
   bind:show={confirmShow}
-  title="Delete card"
-  message={confirmTarget ? `Delete "${confirmTarget.title}"? This cannot be undone.` : ''}
-  confirmText="Delete"
+  title="Xóa thẻ"
+  message={confirmTarget ? `Xóa "${confirmTarget.title}"? Không thể hoàn tác.` : ''}
+  confirmText="Xóa"
   onconfirm={handleConfirmDelete}
 />
 

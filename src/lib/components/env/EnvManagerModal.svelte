@@ -82,7 +82,7 @@
         try {
           await updateEnvironment(selectedId, nameValue.trim(), colorValue);
         } catch (err) {
-          showToast('Failed to update environment', 'error');
+          showToast('Không thể cập nhật môi trường', 'error');
         }
       }
     }, ENV_SAVE_DEBOUNCE_MS);
@@ -102,21 +102,21 @@
     if (!selectedId) return;
     try {
       await setDefaultEnv(selectedId);
-      showToast('Default environment updated', 'success');
+      showToast('Đã cập nhật môi trường mặc định', 'success');
     } catch (err) {
-      showToast('Failed to set default', 'error');
+      showToast('Không thể đặt làm mặc định', 'error');
     }
   }
 
   async function handleCreate() {
     try {
-      const env = await createEnvironment('New Environment', PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)]);
+      const env = await createEnvironment('Môi trường mới', PRESET_COLORS[Math.floor(Math.random() * PRESET_COLORS.length)]);
       selectedId = env.id;
       await tick();
       nameInput?.focus();
       nameInput?.select();
     } catch (err) {
-      showToast('Failed to create environment', 'error');
+      showToast('Không thể tạo môi trường', 'error');
     }
   }
 
@@ -136,9 +136,9 @@
       // After delete, select next available env or null
       const remaining = envList.filter(e => e.id !== delId);
       selectedId = remaining.length > 0 ? remaining[0].id : null;
-      showToast('Environment deleted', 'success');
+      showToast('Đã xóa môi trường', 'success');
     } catch (err) {
-      showToast('Failed to delete environment', 'error');
+      showToast('Không thể xóa môi trường', 'error');
     }
   }
 
@@ -152,7 +152,7 @@
   });
 </script>
 
-<Modal bind:show title="Environments" width="680px" onclose={handleClose}>
+<Modal bind:show title="Môi trường" width="680px" onclose={handleClose}>
   <div class="env-manager">
     <EnvSidebar
       environments={envList}
@@ -164,7 +164,7 @@
     <div class="env-detail">
       {#if selectedEnv}
         <div class="env-detail-section">
-          <label class="env-label">Name</label>
+          <label class="env-label">Tên</label>
           <input
             bind:this={nameInput}
             class="env-name-input"
@@ -175,7 +175,7 @@
         </div>
 
         <div class="env-detail-section">
-          <label class="env-label">Color</label>
+          <label class="env-label">Màu sắc</label>
           <div class="color-swatches">
             {#each PRESET_COLORS as color}
               <button
@@ -191,29 +191,29 @@
 
         {#if isDefault}
           <div class="env-detail-section">
-            <span class="env-is-default">Default environment</span>
+            <span class="env-is-default">Môi trường mặc định</span>
           </div>
         {:else if envList.length > 1}
           <div class="env-detail-section">
             <button class="env-set-default" onclick={handleSetDefault}>
-              Set as Default
+              Đặt làm mặc định
             </button>
           </div>
         {/if}
 
         <div class="env-detail-section env-vars-section">
-          <label class="env-label">Variables</label>
+          <label class="env-label">Biến</label>
           <EnvVarTable environmentId={selectedEnv.id} />
         </div>
 
         <div class="env-detail-footer">
           <button class="env-delete-btn" onclick={confirmDelete}>
-            Delete Environment
+            Xóa môi trường
           </button>
         </div>
       {:else}
         <div class="env-empty">
-          <span>Select or create an environment</span>
+          <span>Chọn hoặc tạo một môi trường</span>
         </div>
       {/if}
     </div>
@@ -222,9 +222,9 @@
 
 <ConfirmDialog
   bind:show={showDeleteConfirm}
-  title="Delete Environment"
-  message="Are you sure you want to delete this environment? All variables will be lost."
-  confirmText="Delete"
+  title="Xóa môi trường"
+  message="Bạn có chắc muốn xóa môi trường này? Tất cả biến sẽ bị mất."
+  confirmText="Xóa"
   onconfirm={handleDelete}
 />
 

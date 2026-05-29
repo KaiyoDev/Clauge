@@ -55,12 +55,12 @@
 
   function dmlVerb(q: string): string {
     const m = q.trim().match(/^\s*(\w+)/);
-    if (!m) return 'Affected';
+    if (!m) return 'Đã tác động';
     const v = m[1].toUpperCase();
-    if (v === 'UPDATE') return 'Updated';
-    if (v === 'INSERT') return 'Inserted';
-    if (v === 'DELETE') return 'Deleted';
-    return 'Affected';
+    if (v === 'UPDATE') return 'Đã cập nhật';
+    if (v === 'INSERT') return 'Đã chèn';
+    if (v === 'DELETE') return 'Đã xóa';
+    return 'Đã tác động';
   }
 
   function fmtTs(ts: number): string {
@@ -300,7 +300,7 @@
   function discardChanges() {
     dirtyRows = new Map();
     deletedRows = new Set();
-    showToast('Changes discarded', 'info');
+    showToast('Đã bỏ qua thay đổi', 'info');
   }
 
   function parseTableName(sql: string): string | null {
@@ -326,7 +326,7 @@
 
     const tableName = parseTableName(query);
     if (!tableName) {
-      showToast('Could not determine table name from query', 'error');
+      showToast('Không xác định được tên bảng từ truy vấn', 'error');
       return;
     }
 
@@ -359,7 +359,7 @@
     // sqlExecuteQuery signature. If the split fails (no `:`), bail.
     const colon = liveConnectionId.indexOf(':');
     if (colon < 0) {
-      showToast('Connection target unset — pick a database first', 'error');
+      showToast('Chưa đặt mục tiêu kết nối — chọn một CSDL trước', 'error');
       return;
     }
     const connId = liveConnectionId.slice(0, colon);
@@ -375,7 +375,7 @@
         successCount++;
       } catch (e: any) {
         errorCount++;
-        errorToast('Failed', e);
+        errorToast('Thất bại', e);
       }
     }
 
@@ -383,7 +383,7 @@
     showSaveModal = false;
 
     if (successCount > 0) {
-      showToast(`${successCount} change(s) saved`, 'success');
+      showToast(`Đã lưu ${successCount} thay đổi`, 'success');
 
       // Apply edits in-place (like DBeaver) — no re-query, row stays in position
       if (result) {
@@ -454,9 +454,9 @@
   async function copyToClipboard(text: string) {
     try {
       await writeText(text);
-      showToast('Copied', 'success');
+      showToast('Đã sao chép', 'success');
     } catch {
-      showToast('Failed to copy', 'error');
+      showToast('Sao chép thất bại', 'error');
     }
   }
 
@@ -682,31 +682,31 @@
     </div>
 
     <div class="rt-footer">
-      <span class="rt-footer-item">{result.rows.length} row{result.rows.length !== 1 ? 's' : ''}</span>
+      <span class="rt-footer-item">{result.rows.length} dòng</span>
       {#if isLimitHit}
-        <span class="rt-footer-truncated" title="Result was limited to {$sqlRowLimit} rows">limit reached</span>
+        <span class="rt-footer-truncated" title="Kết quả đã giới hạn ở {$sqlRowLimit} dòng">đã đạt giới hạn</span>
       {/if}
       <span class="rt-footer-sep">&middot;</span>
-      <span class="rt-footer-item">{result.columns.length} col{result.columns.length !== 1 ? 's' : ''}</span>
+      <span class="rt-footer-item">{result.columns.length} cột</span>
       <span class="rt-footer-sep">&middot;</span>
       <span class="rt-footer-item">{result.durationMs}ms</span>
       {#if result.affectedRows > 0}
         <span class="rt-footer-sep">&middot;</span>
-        <span class="rt-footer-item">{result.affectedRows} affected</span>
+        <span class="rt-footer-item">{result.affectedRows} dòng bị ảnh hưởng</span>
       {/if}
       {#if hasPendingChanges}
         <span class="rt-footer-sep">&middot;</span>
-        <span class="rt-footer-dirty">{dirtyRows.size + deletedRows.size} pending</span>
-        <button class="rt-footer-btn rt-save-btn" onclick={saveChanges} title={`Generate SQL (${m}+S)`}>
-          Save
+        <span class="rt-footer-dirty">{dirtyRows.size + deletedRows.size} chờ lưu</span>
+        <button class="rt-footer-btn rt-save-btn" onclick={saveChanges} title={`Tạo SQL (${m}+S)`}>
+          Lưu
         </button>
-        <button class="rt-footer-btn rt-discard-btn" onclick={discardChanges} title="Discard changes">
-          Discard
+        <button class="rt-footer-btn rt-discard-btn" onclick={discardChanges} title="Bỏ thay đổi">
+          Bỏ
         </button>
       {/if}
       <div class="rt-footer-spacer"></div>
-      <label class="rt-limit-label" title="Max rows to fetch (0 = no limit)">
-        Limit
+      <label class="rt-limit-label" title="Số dòng tối đa lấy về (0 = không giới hạn)">
+        Giới hạn
         <input
           class="rt-limit-input"
           type="number"
@@ -718,13 +718,13 @@
         />
       </label>
       <span class="rt-footer-sep">&middot;</span>
-      <button class="rt-footer-btn" onclick={exportCsv} title="Export CSV">
+      <button class="rt-footer-btn" onclick={exportCsv} title="Xuất CSV">
         <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         CSV
       </button>
-      <button class="rt-footer-btn" onclick={copyAllResults} title="Copy all">
+      <button class="rt-footer-btn" onclick={copyAllResults} title="Sao chép tất cả">
         <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-        Copy
+        Sao chép
       </button>
     </div>
   {/if}
@@ -748,12 +748,12 @@
 {/if}
 
 <!-- Save Confirmation Modal -->
-<Modal bind:show={showSaveModal} title="Review Changes" width="560px">
+<Modal bind:show={showSaveModal} title="Xem lại thay đổi" width="560px">
   {#snippet children()}
     <div class="rt-save-meta">
-      <span class="rt-save-db">{databaseName || 'Unknown database'}</span>
+      <span class="rt-save-db">{databaseName || 'CSDL không xác định'}</span>
       <span class="rt-save-count">
-        {saveStatements.length} statement{saveStatements.length !== 1 ? 's' : ''} will be executed
+        {saveStatements.length} lệnh sẽ được thực thi
       </span>
     </div>
     <div class="rt-save-sql">

@@ -78,7 +78,7 @@
   /** Per-call button verb. Most destructive flows want "Delete" (the
    *  default), but DDL ops like Truncate need their own word so the
    *  button matches the title verb. */
-  let confirmText = $state('Delete');
+  let confirmText = $state('Xóa');
   let confirmAction: (() => Promise<void>) | null = $state(null);
 
   // Create database dialog
@@ -118,7 +118,7 @@
       const parts = splitLid(lid);
       if (!parts) throw new Error('Invalid connection key');
       await sqlCreateDatabase(parts.connId, parts.db, createDbName.trim());
-      showToast(`Database "${createDbName.trim()}" created`, 'success');
+      showToast(`Đã tạo cơ sở dữ liệu "${createDbName.trim()}"`, 'success');
       createDbShow = false;
       // Refresh connection's database list from server
       clearConnectionCaches(createDbConnId);
@@ -231,7 +231,7 @@
     confirmTitle = title;
     confirmMessage = message;
     confirmDanger = danger;
-    confirmText = verb ?? (danger ? 'Delete' : 'Confirm');
+    confirmText = verb ?? (danger ? 'Xóa' : 'Xác nhận');
     confirmAction = action;
     confirmShow = true;
   }
@@ -259,7 +259,7 @@
       if (state === 'error') resetSqlConnState(conn.id);
       try {
         await connectToDb(conn.id);
-        showToast(`Connected to ${conn.name}`, 'success');
+        showToast(`Đã kết nối đến ${conn.name}`, 'success');
       } catch (e: any) {
         showToast(friendlyError(e), 'error');
       }
@@ -384,7 +384,7 @@
         tableCache = new Map([...tableCache, [dbKey, []]]);
       }
       loadingTables = new Set([...loadingTables].filter(k => k !== dbKey));
-      showToast('Refreshed', 'success');
+      showToast('Đã làm mới', 'success');
       return;
     }
 
@@ -405,7 +405,7 @@
       schemaCache = new Map([...schemaCache, [dbKey, ['public']]]);
     }
     loadingSchemas = new Set([...loadingSchemas].filter(k => k !== dbKey));
-    showToast('Refreshed', 'success');
+    showToast('Đã làm mới', 'success');
   }
 
   // ── Schema handlers ──
@@ -537,7 +537,7 @@ ORDER BY ordinal_position;`);
       ? columns.map(c => c.name).join(', ')
       : '*';
     const q = `SELECT ${cols} FROM ${qualifiedName(schema, table)};`;
-    writeText(q).then(() => showToast('SELECT copied', 'success')).catch(() => showToast('Failed to copy', 'error'));
+    writeText(q).then(() => showToast('Đã sao chép SELECT', 'success')).catch(() => showToast('Sao chép thất bại', 'error'));
   }
 
   function genCopyInsert(connId: string, db: string, schema: string, table: string) {
@@ -548,7 +548,7 @@ ORDER BY ordinal_position;`);
       : ['column1', 'column2'];
     const placeholders = cols.map(() => '?').join(', ');
     const q = `INSERT INTO ${qualifiedName(schema, table)} (${cols.join(', ')}) VALUES (${placeholders});`;
-    writeText(q).then(() => showToast('INSERT template copied', 'success')).catch(() => showToast('Failed to copy', 'error'));
+    writeText(q).then(() => showToast('Đã sao chép mẫu INSERT', 'success')).catch(() => showToast('Sao chép thất bại', 'error'));
   }
 
   // ── Context menus ──
@@ -561,7 +561,7 @@ ORDER BY ordinal_position;`);
 
     showContextMenu(e.clientX, e.clientY, [
       ...(isConnected ? [{
-        label: 'Refresh',
+        label: 'Làm mới',
         icon: icons.refresh,
         action: async () => {
           clearConnectionCaches(conn.id);
@@ -587,7 +587,7 @@ ORDER BY ordinal_position;`);
       ...(isConnected ? [
         { label: '', action: () => {}, separator: true },
         {
-          label: 'Disconnect',
+          label: 'Ngắt kết nối',
           icon: icons.disconnect,
           action: () => {
             sqlDisconnectTarget.set(conn);
@@ -595,13 +595,13 @@ ORDER BY ordinal_position;`);
           },
         },
       ] : [{
-        label: 'Connect',
+        label: 'Kết nối',
         icon: icons.connect,
         action: () => handleClickConnection(conn),
       }]),
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Edit',
+        label: 'Chỉnh sửa',
         icon: icons.edit,
         action: () => {
           editingSqlConnection.set(conn);
@@ -609,7 +609,7 @@ ORDER BY ordinal_position;`);
         },
       },
       {
-        label: 'Duplicate',
+        label: 'Nhân bản',
         icon: icons.duplicate,
         action: async () => {
           try {
@@ -623,28 +623,28 @@ ORDER BY ordinal_position;`);
               password: conn.password,
               ssl: !!conn.ssl,
             });
-            showToast('Connection duplicated', 'success');
+            showToast('Đã nhân bản kết nối', 'success');
           } catch (err: any) { showToast(friendlyError(err), 'error'); }
         },
       },
       {
-        label: 'Copy Connection String',
+        label: 'Sao chép chuỗi kết nối',
         icon: icons.copy,
         action: async () => {
           await writeText(connString);
-          showToast('Copied to clipboard', 'success');
+          showToast('Đã sao chép', 'success');
         },
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Delete',
+        label: 'Xóa',
         icon: icons.trash,
         danger: true,
-        action: () => showConfirm('Delete Connection', `Delete "${conn.name}"? This cannot be undone.`, true, async () => {
+        action: () => showConfirm('Xóa kết nối', `Xóa "${conn.name}"? Hành động này không thể hoàn tác.`, true, async () => {
           try {
             await deleteConnection(conn.id);
             clearConnectionCaches(conn.id);
-            showToast('Connection removed', 'success');
+            showToast('Đã xóa kết nối', 'success');
           } catch (err: any) { showToast(friendlyError(err), 'error'); }
         }),
       },
@@ -670,29 +670,29 @@ ORDER BY ordinal_position;`);
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Copy Name',
+        label: 'Sao chép tên',
         icon: icons.copy,
         action: async () => {
           await writeText(db);
-          showToast('Copied', 'success');
+          showToast('Đã sao chép', 'success');
         },
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Drop Database',
+        label: 'Xóa CSDL',
         icon: icons.drop,
         danger: true,
-        action: () => showConfirm('Drop Database', `Drop "${db}"? This will permanently delete the database and all its data.`, true, async () => {
+        action: () => showConfirm('Xóa CSDL', `Xóa "${db}"? Việc này sẽ xóa vĩnh viễn CSDL và toàn bộ dữ liệu.`, true, async () => {
           try {
             const lid = getLiveId(connId);
-            if (!lid) throw new Error('Not connected');
+            if (!lid) throw new Error('Chưa kết nối');
             const parts = splitLid(lid);
-            if (!parts) throw new Error('Invalid connection key');
+            if (!parts) throw new Error('Khóa kết nối không hợp lệ');
             const conn = $connections.find(c => c.id === connId);
             const q = descriptorFor(conn?.driver ?? '')?.identifierQuote ?? '"';
             const dropStmt = `DROP DATABASE ${q}${db}${q}`;
             await sqlExecuteQuery(parts.connId, parts.db, dropStmt, makeQueryId());
-            showToast(`Dropped database "${db}"`, 'success');
+            showToast(`Đã xóa CSDL "${db}"`, 'success');
             // Refresh connection's database list from server
             clearConnectionCaches(connId);
             const dbs = await (await import('../commands')).sqlListDatabases(parts.connId, parts.db);
@@ -704,7 +704,7 @@ ORDER BY ordinal_position;`);
             expandedConnectionId.set(null);
             setTimeout(() => expandedConnectionId.set(connId), 50);
           } catch (e: any) { showToast(friendlyError(e), 'error'); }
-        }, 'Drop'),
+        }, 'Xóa'),
       },
     ]);
   }
@@ -725,47 +725,47 @@ ORDER BY ordinal_position;`);
         action: () => genSelectCount(connId, db, schema, table),
       },
       {
-        label: 'Describe Table',
+        label: 'Mô tả bảng',
         icon: icons.describe,
         action: () => genDescribeTable(connId, db, schema, table),
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Copy SELECT Statement',
+        label: 'Sao chép câu SELECT',
         icon: icons.selectAll,
         action: () => genCopySelect(connId, db, schema, table),
       },
       {
-        label: 'Copy INSERT Template',
+        label: 'Sao chép mẫu INSERT',
         icon: icons.insert,
         action: () => genCopyInsert(connId, db, schema, table),
       },
       {
-        label: 'Copy Name',
+        label: 'Sao chép tên',
         icon: icons.copy,
         action: async () => {
           await writeText(table);
-          showToast('Copied', 'success');
+          showToast('Đã sao chép', 'success');
         },
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Truncate Table',
+        label: 'Truncate bảng',
         icon: icons.truncate,
         danger: true,
-        action: () => showConfirm('Truncate Table', `Truncate "${table}"? All rows will be permanently deleted. The table structure will remain.`, true, async () => {
+        action: () => showConfirm('Truncate bảng', `Truncate "${table}"? Toàn bộ dòng sẽ bị xóa vĩnh viễn. Cấu trúc bảng được giữ lại.`, true, async () => {
           try {
             await connectToDatabase(connId, db);
             await sqlExecuteQuery(connId, db, `TRUNCATE TABLE ${qualifiedName(schema, table)}`, makeQueryId());
-            showToast(`Truncated ${table}`, 'success');
+            showToast(`Đã truncate ${table}`, 'success');
           } catch (e: any) { showToast(friendlyError(e), 'error'); }
         }, 'Truncate'),
       },
       {
-        label: 'Drop Table',
+        label: 'Xóa bảng',
         icon: icons.drop,
         danger: true,
-        action: () => showConfirm('Drop Table', `Drop "${table}"? The table and all its data will be permanently deleted.`, true, async () => {
+        action: () => showConfirm('Xóa bảng', `Xóa "${table}"? Bảng và toàn bộ dữ liệu sẽ bị xóa vĩnh viễn.`, true, async () => {
           try {
             await connectToDatabase(connId, db);
             await sqlExecuteQuery(connId, db, `DROP TABLE ${qualifiedName(schema, table)}`, makeQueryId());
@@ -774,9 +774,9 @@ ORDER BY ordinal_position;`);
             tableCache = new Map([...tableCache].filter(([k]) => k !== sKey));
             const tables = await (await import('../commands')).sqlListTables(connId, db, schema);
             tableCache = new Map([...tableCache, [sKey, tables]]);
-            showToast(`Dropped ${table}`, 'success');
+            showToast(`Đã xóa ${table}`, 'success');
           } catch (e: any) { showToast(friendlyError(e), 'error'); }
-        }, 'Drop'),
+        }, 'Xóa'),
       },
     ]);
   }
@@ -786,11 +786,11 @@ ORDER BY ordinal_position;`);
     e.stopPropagation();
     showContextMenu(e.clientX, e.clientY, [
       {
-        label: 'Copy Name',
+        label: 'Sao chép tên',
         icon: icons.copy,
         action: async () => {
           await writeText(col.name);
-          showToast('Copied', 'success');
+          showToast('Đã sao chép', 'success');
         },
       },
     ]);
@@ -912,7 +912,7 @@ ORDER BY ordinal_position;`);
         >
           <div class="coll-icon">
             <BrandBadge brand={conn.driver} />
-            {#if isConnected}<span class="conn-dot" aria-label="Connected" title="Connected"></span>{/if}
+            {#if isConnected}<span class="conn-dot" aria-label="Đã kết nối" title="Đã kết nối"></span>{/if}
           </div>
           <div class="ncoll-text">
             <div class="ncoll-row-top">
@@ -920,9 +920,9 @@ ORDER BY ordinal_position;`);
             </div>
             <div class="ncoll-row-bot">
               {#if isConnecting}
-                <span class="ncoll-sub">Connecting<span class="conn-dots"></span></span>
+                <span class="ncoll-sub">Đang kết nối<span class="conn-dots"></span></span>
               {:else if conn.driver === 'sqlite'}
-                <span class="ncoll-sub">Local file</span>
+                <span class="ncoll-sub">Tệp cục bộ</span>
               {:else}
                 <span class="ncoll-sub">{conn.username}{conn.username ? '@' : ''}{conn.host}{conn.port ? `:${conn.port}` : ''}</span>
               {/if}
@@ -931,7 +931,7 @@ ORDER BY ordinal_position;`);
           {#if isConnected}
             <button
               class="coll-menu"
-              title="Create Database"
+              title="Tạo CSDL"
               onclick={(e) => { e.stopPropagation(); openCreateDbDialog(conn.id); }}
             >
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
@@ -939,7 +939,7 @@ ORDER BY ordinal_position;`);
           {/if}
           <button
             class="coll-menu"
-            title="More"
+            title="Thêm"
             onclick={(e) => { e.stopPropagation(); showConnMenu(e, conn); }}
           >
             {@html icons.ellipsisV}
@@ -977,7 +977,7 @@ ORDER BY ordinal_position;`);
               <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
             </svg>
             <span class="tree-label">{db}</span>
-            <span class="db-ellipsis" role="button" tabindex="-1" title="More"
+            <span class="db-ellipsis" role="button" tabindex="-1" title="Thêm"
               onclick={(e) => { e.stopPropagation(); showDbMenu(e, conn.id, db); }}>
               {@html icons.ellipsisH}
             </span>
@@ -986,7 +986,7 @@ ORDER BY ordinal_position;`);
           {#if showDbChildren}
             {#if hasSchemaLayer(conn.driver)}
               {#if isLoadingSchema}
-                <div class="tree-loading" style="padding-left:28px">Loading schemas...</div>
+                <div class="tree-loading" style="padding-left:28px">Đang tải schema...</div>
               {:else}
                 {#each schemas as schema}
                   {@const schemaKey = `${conn.id}:${db}:${schema}`}

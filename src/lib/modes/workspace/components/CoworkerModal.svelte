@@ -52,14 +52,14 @@
   /** Available styles + their human labels for the picker. Only the
    *  collections we ship; user-friendly subset of dicebear's catalogue. */
   const STYLE_OPTIONS = [
-    { id: 'personas',   label: 'Personas (cartoon)' },
+    { id: 'personas',   label: 'Personas (hoạt hình)' },
     { id: 'avataaars',  label: 'Avataaars (Sketch)' },
     { id: 'bottts',     label: 'Bots' },
     { id: 'lorelei',    label: 'Lorelei' },
     { id: 'micah',      label: 'Micah' },
     { id: 'adventurer', label: 'Adventurer' },
     { id: 'big-smile',  label: 'Big smile' },
-    { id: 'thumbs',     label: 'Thumbs (mascot)' },
+    { id: 'thumbs',     label: 'Thumbs (linh vật)' },
   ];
 
   const isEdit = $derived(!!existing);
@@ -70,7 +70,7 @@
   const nameError = $derived.by(() => {
     const n = name.trim();
     if (!n) return null; // empty handled by Save-disabled
-    if (!NAME_RX.test(n)) return 'Use lowercase letters only — no spaces, digits, or punctuation.';
+    if (!NAME_RX.test(n)) return 'Chỉ dùng chữ cái thường — không khoảng trắng, chữ số hoặc dấu câu.';
     return null;
   });
   const canSave = $derived(name.trim().length > 0 && !nameError && !saving);
@@ -144,7 +144,7 @@
       onsaved?.(cw);
       show = false;
     } catch (e) {
-      errorToast('Save failed', e);
+      errorToast('Lưu thất bại', e);
     } finally {
       saving = false;
     }
@@ -158,7 +158,7 @@
       await loadCoworkers();
       show = false;
     } catch (e) {
-      errorToast('Delete failed', e);
+      errorToast('Xóa thất bại', e);
     } finally {
       saving = false;
       confirmingDelete = false;
@@ -191,7 +191,7 @@
     <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
     <div class="cm-modal modal-card" onclick={(e) => e.stopPropagation()}>
       <div class="cm-head">
-        <h2>{isEdit ? 'Edit coworker' : 'New coworker'}</h2>
+        <h2>{isEdit ? 'Chỉnh sửa đồng nghiệp' : 'Đồng nghiệp mới'}</h2>
         <button class="cm-x" onclick={() => { show = false; onclose?.(); }}>×</button>
       </div>
 
@@ -201,14 +201,14 @@
           <CoworkerAvatar seed={effectiveSeed} style={avatarStyle} size={92} ring />
           <div class="cm-avatar-actions">
             <label class="cm-field">
-              <span class="cm-label">Avatar style</span>
+              <span class="cm-label">Kiểu avatar</span>
               <select class="cm-input" bind:value={avatarStyle}>
                 {#each STYLE_OPTIONS as opt}
                   <option value={opt.id}>{opt.label}</option>
                 {/each}
               </select>
             </label>
-            <button class="cm-btn-secondary" onclick={reroll} type="button">↻ Re-roll</button>
+            <button class="cm-btn-secondary" onclick={reroll} type="button">↻ Đổi lại</button>
           </div>
         </div>
 
@@ -216,14 +216,14 @@
         <div class="cm-row">
           <label class="cm-field cm-field-grow">
             <span class="cm-label">
-              Name <span class="cm-req">*</span>
-              <span class="cm-hint">lowercase letters only</span>
+              Tên <span class="cm-req">*</span>
+              <span class="cm-hint">chỉ chữ cái thường</span>
             </span>
             <input
               class="cm-input"
               bind:value={name}
               oninput={onNameInput}
-              placeholder="e.g. alex"
+              placeholder="ví dụ: alex"
               spellcheck="false"
               autocapitalize="none"
               autofocus
@@ -233,11 +233,11 @@
             {/if}
           </label>
           <label class="cm-field cm-field-grow">
-            <span class="cm-label">Role / skill</span>
+            <span class="cm-label">Vai trò / kỹ năng</span>
             <input
               class="cm-input"
               bind:value={role}
-              placeholder="e.g. Code Reviewer, Technical Lead"
+              placeholder="ví dụ: Code Reviewer, Technical Lead"
               spellcheck="false"
             />
           </label>
@@ -246,19 +246,19 @@
         <!-- ─── System prompt ─── -->
         <label class="cm-field">
           <span class="cm-label">
-            How should @{name.trim() || 'them'} behave?
-            <span class="cm-hint">Appended to the agent's system prompt on every run.</span>
+            @{name.trim() || 'họ'} nên hành xử thế nào?
+            <span class="cm-hint">Sẽ được nối vào system prompt của agent mỗi lần chạy.</span>
           </span>
           <textarea
             class="cm-textarea"
             bind:value={systemPrompt}
-            placeholder="Focus on architecture and trade-offs. Ask clarifying questions before suggesting code. Be concise."
+            placeholder="Tập trung vào kiến trúc và sự đánh đổi. Hỏi rõ trước khi đề xuất code. Súc tích."
           ></textarea>
         </label>
 
         <!-- ─── Provider ─── -->
         <div class="cm-field">
-          <span class="cm-label">Powered by</span>
+          <span class="cm-label">Hỗ trợ bởi</span>
           <div class="cm-provider-list">
             {#each PROVIDER_OPTIONS as p}
               <button
@@ -277,28 +277,28 @@
 
       {#if showProRequired}
         <div class="cm-pro-gate">
-          <span class="cm-pro-gate-text">Free plan supports up to 3 coworkers.</span>
+          <span class="cm-pro-gate-text">Gói Free hỗ trợ tối đa 3 đồng nghiệp.</span>
           <button
             class="cm-btn-primary"
             onclick={() => { upgradeModalOpen.set(true); showProRequired = false; show = false; }}
-          >Upgrade to Pro</button>
-          <button class="cm-btn-secondary" onclick={() => (showProRequired = false)}>Cancel</button>
+          >Nâng cấp Pro</button>
+          <button class="cm-btn-secondary" onclick={() => (showProRequired = false)}>Hủy</button>
         </div>
       {:else}
       <div class="cm-foot">
         {#if isEdit}
           {#if confirmingDelete}
-            <span class="cm-confirm-text">Delete this coworker?</span>
-            <button class="cm-btn-danger" onclick={doDelete} disabled={saving}>Delete</button>
-            <button class="cm-btn-secondary" onclick={() => (confirmingDelete = false)}>Cancel</button>
+            <span class="cm-confirm-text">Xóa đồng nghiệp này?</span>
+            <button class="cm-btn-danger" onclick={doDelete} disabled={saving}>Xóa</button>
+            <button class="cm-btn-secondary" onclick={() => (confirmingDelete = false)}>Hủy</button>
           {:else}
-            <button class="cm-btn-quiet" onclick={() => (confirmingDelete = true)}>Delete</button>
+            <button class="cm-btn-quiet" onclick={() => (confirmingDelete = true)}>Xóa</button>
           {/if}
         {/if}
         <span class="cm-spacer"></span>
-        <button class="cm-btn-secondary" onclick={() => { show = false; onclose?.(); }}>Cancel</button>
+        <button class="cm-btn-secondary" onclick={() => { show = false; onclose?.(); }}>Hủy</button>
         <button class="cm-btn-primary" onclick={save} disabled={!canSave}>
-          {saving ? 'Saving…' : isEdit ? 'Save' : 'Create coworker'}
+          {saving ? 'Đang lưu…' : isEdit ? 'Lưu' : 'Tạo đồng nghiệp'}
         </button>
       </div>
       {/if}

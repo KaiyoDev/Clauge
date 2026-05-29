@@ -141,7 +141,7 @@
         openBoard(b);
       }
     } catch (e) {
-      showToast(`Failed to create ${kind}: ${friendlyError(e)}`, 'error');
+      showToast(`Không tạo được ${kind === 'note' ? 'ghi chú' : 'bảng'}: ${friendlyError(e)}`, 'error');
     }
   }
 
@@ -164,29 +164,29 @@
   function buildMenuItems() {
     return [
       {
-        label: 'Rename',
+        label: 'Đổi tên',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
         action: () => { renaming = true; },
       },
       {
-        label: 'New Note',
+        label: 'Ghi chú mới',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
         action: () => beginAdd('note'),
       },
       {
-        label: 'New Board',
+        label: 'Bảng mới',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="6" height="16" rx="1"/><rect x="11" y="4" width="6" height="10" rx="1"/><rect x="19" y="4" width="2" height="14" rx="1"/></svg>',
         action: () => beginAdd('board'),
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Change project',
+        label: 'Đổi dự án',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/><path d="M9 13l2 2 4-4"/></svg>',
         action: () => window.dispatchEvent(new CustomEvent(WORKSPACE_EVENT.EDIT_WORKSPACE, { detail: { workspace } })),
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Delete Workspace',
+        label: 'Xóa Workspace',
         danger: true,
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>',
         action: openDeleteConfirm,
@@ -206,7 +206,7 @@
         color: workspace.color,
       });
     } catch (e) {
-      errorToast('Rename failed', e);
+      errorToast('Đổi tên thất bại', e);
     }
   }
 
@@ -239,9 +239,9 @@
       // Only forward the flag when there's actually something to clean —
       // skips the no-op worktree-walk path on empty workspaces.
       await deleteWorkspace(workspace.id, hasWorktrees && deleteWorktrees);
-      showToast(`Deleted "${workspace.name}"`, 'success');
+      showToast(`Đã xóa "${workspace.name}"`, 'success');
     } catch (e) {
-      errorToast('Delete failed', e);
+      errorToast('Xóa thất bại', e);
     }
   }
 
@@ -254,9 +254,9 @@
       const key = `${kind}:${item.id}`;
       const t = get(sharedTabs).find(x => x.mode === 'workspace' && x.key === key);
       if (t) closeTab(t.id);
-      showToast(`Deleted "${label}"`, 'success');
+      showToast(`Đã xóa "${label}"`, 'success');
     } catch (e) {
-      errorToast('Delete failed', e);
+      errorToast('Xóa thất bại', e);
     }
   }
 
@@ -265,7 +265,7 @@
     e.stopPropagation();
     showContextMenu(e.clientX, e.clientY, [
       {
-        label: 'Open',
+        label: 'Mở',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 3h6v6"/><path d="M10 14L21 3"/><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/></svg>',
         action: () => kind === 'note' ? openNote(item as WorkspaceNote) : openBoard(item as WorkspaceBoard),
       },
@@ -314,7 +314,7 @@
       {#if renaming}
         <InlineInput
           value={workspace.name}
-          placeholder="Workspace name…"
+          placeholder="Tên workspace…"
           onsubmit={handleRename}
           oncancel={() => renaming = false}
         />
@@ -327,10 +327,10 @@
         </div>
       {/if}
     </div>
-    <button class="coll-add" title="Add note or board" onclick={handleAddBtn}>
+    <button class="coll-add" title="Thêm ghi chú hoặc bảng" onclick={handleAddBtn}>
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
     </button>
-    <button class="coll-menu" title="Options" onclick={handleMenuBtn}>
+    <button class="coll-menu" title="Tùy chọn" onclick={handleMenuBtn}>
       <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
         <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
       </svg>

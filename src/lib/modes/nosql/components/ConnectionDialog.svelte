@@ -158,7 +158,7 @@
           ? targetFromUri(connectionString.trim())
           : { host: host.trim(), port };
         if (target) {
-          testStatus = 'Testing tunnel…';
+          testStatus = 'Đang kiểm tra tunnel…';
           try {
             await invoke('ssh_tunnel_test', {
               profileId: selectedSshProfileId,
@@ -167,16 +167,16 @@
             });
           } catch (e: any) {
             if (!show) return;
-            showToast(`Tunnel test failed: ${friendlyError(e)}`, 'error');
+            showToast(`Kiểm tra tunnel thất bại: ${friendlyError(e)}`, 'error');
             return;
           }
           if (!show) return;
-          testStatus = 'Testing database…';
+          testStatus = 'Đang kiểm tra CSDL…';
         }
       }
       const msg = await nosqlTestConnection(buildConfig());
       if (!show) return;
-      showToast(msg || 'Connection successful', 'success');
+      showToast(msg || 'Kết nối thành công', 'success');
       testOk = true;
       setTimeout(() => { testOk = false; }, 2200);
     } catch (e: any) {
@@ -191,19 +191,19 @@
   async function handleSave() {
     const config = buildConfig();
     if (!config.name) {
-      showToast('Name is required', 'error');
+      showToast('Tên là bắt buộc', 'error');
       return;
     }
     if (useConnectionString && !config.connectionString) {
-      showToast('Connection string is required', 'error');
+      showToast('Connection string là bắt buộc', 'error');
       return;
     }
     if (!useConnectionString && !config.host) {
-      showToast('Host is required', 'error');
+      showToast('Host là bắt buộc', 'error');
       return;
     }
     if (useSshTunnel && !selectedSshProfileId) {
-      showToast('Pick an SSH profile or turn off the tunnel', 'error');
+      showToast('Chọn một profile SSH hoặc tắt tunnel', 'error');
       return;
     }
     saving = true;
@@ -264,7 +264,7 @@
           class="cd-input"
           type="text"
           bind:value={name}
-          placeholder="My connection"
+          placeholder="Kết nối của tôi"
           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
         />
       </div>
@@ -451,7 +451,7 @@
             <button
               type="button"
               role="switch"
-              aria-label="Direct connection"
+              aria-label="Kết nối trực tiếp"
               aria-checked={directConnection && driver === 'mongodb'}
               class="cd-toggle"
               class:on={directConnection && driver === 'mongodb'}

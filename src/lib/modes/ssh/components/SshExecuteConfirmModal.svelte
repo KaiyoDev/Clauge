@@ -45,26 +45,26 @@
             <line x1="12" y1="19" x2="20" y2="19" />
           </svg>
         </span>
-        <h3 id="ssh-confirm-title">Run command on <span class="ssh-modal-target">{target}</span>?</h3>
+        <h3 id="ssh-confirm-title">Chạy lệnh trên <span class="ssh-modal-target">{target}</span>?</h3>
       </header>
 
       <div class="ssh-modal-body">
         <pre class="ssh-modal-cmd"><code>{command}</code></pre>
         {#if reason}
           <div class="ssh-modal-reason">
-            <span class="ssh-modal-reason-label">Why:</span>
+            <span class="ssh-modal-reason-label">Lý do:</span>
             <span class="ssh-modal-reason-text">{reason}</span>
           </div>
         {/if}
         <p class="ssh-modal-note">
-          Output will stream into the terminal and be sent back to the AI for follow-up.
-          Secrets matching common patterns are redacted before reaching the AI.
+          Output sẽ stream vào terminal và gửi lại cho AI để xử lý tiếp.
+          Các giá trị bí mật khớp pattern phổ biến sẽ được che trước khi gửi tới AI.
         </p>
       </div>
 
       <footer class="ssh-modal-footer">
-        <button type="button" class="ssh-modal-btn ssh-modal-cancel" bind:this={cancelBtn} onclick={onCancel}>Cancel</button>
-        <button type="button" class="ssh-modal-btn ssh-modal-approve" onclick={onApprove}>Approve & run</button>
+        <button type="button" class="ssh-modal-btn ssh-modal-cancel" bind:this={cancelBtn} onclick={onCancel}>Hủy</button>
+        <button type="button" class="ssh-modal-btn ssh-modal-approve" onclick={onApprove}>Duyệt & chạy</button>
       </footer>
     </div>
   </div>

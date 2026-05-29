@@ -69,10 +69,10 @@
       const { open } = await import('@tauri-apps/plugin-dialog');
       const selected = await open({
         multiple: false,
-        title: 'Select SSH Private Key',
+        title: 'Chọn SSH Private Key',
         filters: [
           { name: 'SSH Keys', extensions: ['pem', 'key', 'ppk'] },
-          { name: 'All Files', extensions: ['*'] },
+          { name: 'Tất cả tệp', extensions: ['*'] },
         ],
       });
       if (typeof selected === 'string') keyPath = selected;
@@ -111,7 +111,7 @@
       await loadSshProfiles();
       window.dispatchEvent(new CustomEvent(SSH_EVENT.PROFILE_UPDATED, { detail: updated }));
       show = false;
-      showToast('SSH profile updated', 'success');
+      showToast('Đã cập nhật profile SSH', 'success');
     } catch (e: any) {
       showToast(String(e), 'error');
     } finally {
@@ -129,20 +129,20 @@
   let advancedDirty = $derived(connectionMode !== 'direct');
 </script>
 
-<Modal bind:show title="Edit SSH connection" width="560px">
+<Modal bind:show title="Chỉnh sửa kết nối SSH" width="560px">
   {#if profile}
     <div class="sshd-root">
       <div class="sshd-tabs" role="tablist">
-        <button type="button" role="tab" class="sshd-tab" class:active={activeTab === 'general'} aria-selected={activeTab === 'general'} onclick={() => (activeTab = 'general')}>General</button>
+        <button type="button" role="tab" class="sshd-tab" class:active={activeTab === 'general'} aria-selected={activeTab === 'general'} onclick={() => (activeTab = 'general')}>Chung</button>
         <button type="button" role="tab" class="sshd-tab" class:active={activeTab === 'advanced'} aria-selected={activeTab === 'advanced'} onclick={() => (activeTab = 'advanced')}>
-          Advanced
+          Nâng cao
           {#if advancedDirty}<span class="sshd-tab-dot" aria-hidden="true"></span>{/if}
         </button>
       </div>
 
       {#if activeTab === 'general'}
         <div class="sshd-block">
-          <span class="sshd-label">Connection name</span>
+          <span class="sshd-label">Tên kết nối</span>
           <input class="sshd-input" type="text" bind:value={name} />
         </div>
 
@@ -152,18 +152,18 @@
             <input class="sshd-input mono" type="text" bind:value={host} />
           </div>
           <div class="sshd-block narrow">
-            <span class="sshd-label">Port</span>
+            <span class="sshd-label">Cổng</span>
             <input class="sshd-input mono" type="number" min="1" max="65535" bind:value={port} />
           </div>
         </div>
 
         <div class="sshd-block">
-          <span class="sshd-label">Username</span>
+          <span class="sshd-label">Tên đăng nhập</span>
           <input class="sshd-input mono" type="text" bind:value={username} />
         </div>
 
         <div class="sshd-block">
-          <span class="sshd-label">Authentication</span>
+          <span class="sshd-label">Xác thực</span>
           <div class="sshd-tile-row">
             <button type="button" class="sshd-tile" class:active={authType === 'key'} onclick={() => (authType = 'key')}>
               <span class="sshd-tile-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><circle cx="8" cy="15" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M11 12l8-8M15 8l3 3M17 6l3 3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
@@ -171,7 +171,7 @@
             </button>
             <button type="button" class="sshd-tile" class:active={authType === 'password'} onclick={() => (authType = 'password')}>
               <span class="sshd-tile-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><circle cx="6.5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="17.5" cy="12" r="1.5" fill="currentColor"/><rect x="3" y="7" width="18" height="10" rx="2" stroke="currentColor" stroke-width="1.5"/></svg></span>
-              <span class="sshd-tile-label">Password</span>
+              <span class="sshd-tile-label">Mật khẩu</span>
             </button>
             <button type="button" class="sshd-tile" class:active={authType === 'agent'} onclick={() => (authType = 'agent')}>
               <span class="sshd-tile-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><path d="M4 7h12a3 3 0 010 6H8a3 3 0 000 6h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
@@ -181,13 +181,13 @@
         </div>
 
         {#if authType === 'agent'}
-          <div class="sshd-info">Uses keys from ssh-agent. Run <code>ssh-add</code> first. Required for hardware tokens.</div>
+          <div class="sshd-info">Sử dụng key từ ssh-agent. Chạy <code>ssh-add</code> trước. Bắt buộc cho hardware token.</div>
         {:else if authType === 'key'}
           <div class="sshd-block">
-            <span class="sshd-label">Private key file</span>
+            <span class="sshd-label">Tệp Private key</span>
             <div class="sshd-with-suffix">
               <input class="sshd-input mono" type="text" bind:value={keyPath} />
-              <button class="sshd-suffix-btn" onclick={pickKeyFile} type="button" title="Choose file" aria-label="Choose file">
+              <button class="sshd-suffix-btn" onclick={pickKeyFile} type="button" title="Chọn tệp" aria-label="Chọn tệp">
                 <svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M4 7a2 2 0 012-2h3l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.6"/></svg>
               </button>
             </div>
@@ -195,18 +195,18 @@
           <div class="sshd-block">
             <span class="sshd-label">Passphrase</span>
             <div class="sshd-with-suffix">
-              <input class="sshd-input" type={revealSecret ? 'text' : 'password'} bind:value={passphrase} placeholder="Blank = keep existing" autocomplete="off" />
-              <button class="sshd-suffix-btn" type="button" onclick={() => (revealSecret = !revealSecret)} aria-label={revealSecret ? 'Hide passphrase' : 'Show passphrase'}>
+              <input class="sshd-input" type={revealSecret ? 'text' : 'password'} bind:value={passphrase} placeholder="Để trống = giữ nguyên" autocomplete="off" />
+              <button class="sshd-suffix-btn" type="button" onclick={() => (revealSecret = !revealSecret)} aria-label={revealSecret ? 'Ẩn passphrase' : 'Hiện passphrase'}>
                 {#if revealSecret}<svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M4 4l16 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9.5 5.5A9 9 0 0121 12c-.6 1.2-1.4 2.3-2.4 3.2M14.5 18.5A9 9 0 013 12c.6-1.2 1.4-2.3 2.4-3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>{:else}<svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>{/if}
               </button>
             </div>
           </div>
         {:else}
           <div class="sshd-block">
-            <span class="sshd-label">Password <span class="sshd-optional">(optional)</span></span>
+            <span class="sshd-label">Mật khẩu <span class="sshd-optional">(tùy chọn)</span></span>
             <div class="sshd-with-suffix">
-              <input class="sshd-input" type={revealSecret ? 'text' : 'password'} bind:value={password} placeholder="Blank = keep existing" autocomplete="off" />
-              <button class="sshd-suffix-btn" type="button" onclick={() => (revealSecret = !revealSecret)} aria-label={revealSecret ? 'Hide password' : 'Show password'}>
+              <input class="sshd-input" type={revealSecret ? 'text' : 'password'} bind:value={password} placeholder="Để trống = giữ nguyên" autocomplete="off" />
+              <button class="sshd-suffix-btn" type="button" onclick={() => (revealSecret = !revealSecret)} aria-label={revealSecret ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}>
                 {#if revealSecret}<svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M4 4l16 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M9.5 5.5A9 9 0 0121 12c-.6 1.2-1.4 2.3-2.4 3.2M14.5 18.5A9 9 0 013 12c.6-1.2 1.4-2.3 2.4-3.2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>{:else}<svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6"/></svg>{/if}
               </button>
             </div>
@@ -214,11 +214,11 @@
         {/if}
       {:else}
         <div class="sshd-block">
-          <span class="sshd-label">Routing</span>
+          <span class="sshd-label">Định tuyến</span>
           <div class="sshd-tile-row">
             <button type="button" class="sshd-tile" class:active={connectionMode === 'direct'} onclick={() => (connectionMode = 'direct')}>
               <span class="sshd-tile-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><path d="M4 12h14M14 7l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
-              <span class="sshd-tile-label">Direct</span>
+              <span class="sshd-tile-label">Trực tiếp</span>
             </button>
             <button type="button" class="sshd-tile" class:active={connectionMode === 'jump'} onclick={() => (connectionMode = 'jump')}>
               <span class="sshd-tile-icon"><svg viewBox="0 0 24 24" width="15" height="15" fill="none"><circle cx="5" cy="17" r="2" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="7" r="2" stroke="currentColor" stroke-width="1.6"/><circle cx="19" cy="17" r="2" stroke="currentColor" stroke-width="1.6"/><path d="M6.6 15.5L10.6 8.5M13.4 8.5L17.4 15.5" stroke="currentColor" stroke-width="1.6"/></svg></span>
@@ -232,37 +232,37 @@
         </div>
 
         {#if connectionMode === 'direct'}
-          <div class="sshd-info">Direct TCP to the host. No bastion or proxy.</div>
+          <div class="sshd-info">TCP trực tiếp đến host. Không qua bastion hay proxy.</div>
         {:else if connectionMode === 'jump'}
           <div class="sshd-block">
-            <span class="sshd-label">Jump profile</span>
+            <span class="sshd-label">Profile jump</span>
             <div class="sshd-select-wrap">
               <select class="sshd-input mono sshd-select" bind:value={jumpProfileId}>
-                <option value="">— Select a jump profile —</option>
+                <option value="">— Chọn profile jump —</option>
                 {#each $sshProfiles.filter((p) => p.id !== profile.id) as p (p.id)}<option value={p.id}>{p.name}</option>{/each}
               </select>
               <svg class="sshd-select-chev" viewBox="0 0 24 24" width="14" height="14" fill="none" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </div>
-            <span class="sshd-caption">Connect to this profile first, then open a tunneled channel to the destination. For multi-hop chains, set the jump profile's own jump host.</span>
+            <span class="sshd-caption">Kết nối tới profile này trước, rồi mở kênh tunnel đến đích. Với chuỗi nhiều hop, đặt jump host cho chính profile jump.</span>
           </div>
         {:else}
           <div class="sshd-block">
             <span class="sshd-label">Proxy command</span>
             <input class="sshd-input mono" type="text" bind:value={proxyCommand} placeholder="cloudflared access ssh --hostname %h" autocomplete="off" spellcheck="false" />
-            <span class="sshd-caption"><code>%h</code> host · <code>%p</code> port · <code>%r</code> user · tokenized as argv, no shell.</span>
+            <span class="sshd-caption"><code>%h</code> host · <code>%p</code> port · <code>%r</code> user · tách thành argv, không qua shell.</span>
           </div>
         {/if}
       {/if}
 
       <div class="sshd-footer">
-        <span class="sshd-keychain-note" title="Secrets stay in your system keychain. Blank passphrase / password keeps the existing one.">
+        <span class="sshd-keychain-note" title="Bí mật vẫn nằm trong keychain hệ thống. Để trống passphrase / mật khẩu sẽ giữ giá trị cũ.">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.6"/></svg>
-          blank keeps existing
+          để trống = giữ nguyên
         </span>
         <div class="sshd-spacer"></div>
-        <button type="button" class="sshd-btn outline" onclick={() => (show = false)}>Cancel</button>
+        <button type="button" class="sshd-btn outline" onclick={() => (show = false)}>Hủy</button>
         <button type="button" class="sshd-btn primary" onclick={handleSave} disabled={!canSave || loading}>
-          {#if loading}<svg viewBox="0 0 24 24" width="13" height="13" fill="none" class="sshd-spin" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" stroke-opacity="0.3"/><path d="M12 4a8 8 0 018 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Saving…{:else}Save changes{/if}
+          {#if loading}<svg viewBox="0 0 24 24" width="13" height="13" fill="none" class="sshd-spin" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" stroke-opacity="0.3"/><path d="M12 4a8 8 0 018 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Đang lưu…{:else}Lưu thay đổi{/if}
         </button>
       </div>
     </div>

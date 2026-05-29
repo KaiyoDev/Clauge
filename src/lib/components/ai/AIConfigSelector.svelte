@@ -83,7 +83,7 @@
   onclick={toggle}
   aria-haspopup="listbox"
   aria-expanded={open}
-  title="Switch AI provider"
+  title="Đổi nhà cung cấp AI"
 >
   <span class="acs-dot" aria-hidden="true"></span>
   <span class="acs-label">{currentLabel}</span>
@@ -109,7 +109,7 @@
     bind:this={popoverEl}
     class="acs-popover"
     role="listbox"
-    aria-label="Choose AI provider"
+    aria-label="Chọn nhà cung cấp AI"
   >
     <!-- Clauge AI — pinned at top. Always shown; gated by Pro. -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -131,7 +131,7 @@
       <span class="acs-row-text">
         <span class="acs-row-name">Clauge AI</span>
         <span class="acs-row-sub">
-          {#if isPro}Managed · no API key needed{:else}Requires Pro{/if}
+          {#if isPro}Quản lý sẵn · không cần API key{:else}Yêu cầu Pro{/if}
         </span>
       </span>
       {#if !isPro}
@@ -147,7 +147,7 @@
 
     {#if configured.length > 0}
       <div class="acs-sep" aria-hidden="true">
-        <span>Your providers</span>
+        <span>Nhà cung cấp của bạn</span>
       </div>
 
       {#each configured as p (p.providerId)}

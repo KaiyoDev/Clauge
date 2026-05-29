@@ -438,7 +438,7 @@
 
   async function handleExecute(q: string) {
     if (!activeSqlTab || !binding) {
-      showToast('Pick a connection first', 'error');
+      showToast('Hãy chọn kết nối trước', 'error');
       return;
     }
     if (currentTabData?.inFlight) return; // structurally blocked, defensive
@@ -522,7 +522,7 @@
 
   async function handleExecuteMulti(queries: string[]) {
     if (!activeSqlTab || !binding) {
-      showToast('Pick a connection first', 'error');
+      showToast('Hãy chọn kết nối trước', 'error');
       return;
     }
     if (currentTabData?.inFlight) return;
@@ -717,7 +717,7 @@
             class:state-connecting={isConnecting}
             class:state-error={poolState === 'error'}
             onclick={toggleDbDropdown}
-            title="Select target connection / database"
+            title="Chọn kết nối / CSDL đích"
           >
             {#if currentDbDriver}
               <span class="db-pill-driver">{driverLabel(currentDbDriver)}</span>
@@ -732,15 +732,15 @@
               {#if binding && boundConnection}
                 {boundConnection.name} / {binding.database}
               {:else}
-                Pick connection
+                Chọn kết nối
               {/if}
             </span>
             {#if isConnecting}
-              <span class="state-dot connecting" title="Connecting…"></span>
+              <span class="state-dot connecting" title="Đang kết nối…"></span>
             {:else if reconnecting}
-              <span class="state-dot reconnecting" title="Reconnecting…"></span>
+              <span class="state-dot reconnecting" title="Đang kết nối lại…"></span>
             {:else if poolState === 'error'}
-              <span class="state-dot err" title={poolError ?? 'Connection error'}></span>
+              <span class="state-dot err" title={poolError ?? 'Lỗi kết nối'}></span>
             {/if}
             <svg class="db-pill-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></svg>
           </button>
@@ -749,7 +749,7 @@
             <!-- svelte-ignore a11y_no_static_element_interactions -->
             <div class="db-dropdown" onclick={(e) => e.stopPropagation()}>
               {#if dbGroups.length === 0}
-                <div class="db-dropdown-empty">No saved connections — create one from the SQL sidebar</div>
+                <div class="db-dropdown-empty">Chưa có kết nối nào — tạo từ thanh bên SQL</div>
               {:else}
                 {#each dbGroups as group, gi}
                   {#if gi > 0}
@@ -759,11 +759,11 @@
                     <span class="db-group-driver">{driverLabel(group.driver)}</span>
                     <span class="db-group-name">{group.connName}</span>
                     {#if group.state === 'connected'}
-                      <span class="group-state ok" title="Pool open"></span>
+                      <span class="group-state ok" title="Pool đang mở"></span>
                     {:else if group.state === 'connecting'}
-                      <span class="group-state connecting" title="Connecting…"></span>
+                      <span class="group-state connecting" title="Đang kết nối…"></span>
                     {:else if group.state === 'error'}
-                      <span class="group-state err" title="Connection error"></span>
+                      <span class="group-state err" title="Lỗi kết nối"></span>
                     {/if}
                   </div>
                   {#each group.databases as db}
@@ -792,22 +792,22 @@
 
       <div class="sql-action-right">
         {#if inFlight}
-          <button class="sql-cancel-btn" onclick={handleCancel} title="Cancel running query">
-            Cancel
+          <button class="sql-cancel-btn" onclick={handleCancel} title="Hủy truy vấn đang chạy">
+            Hủy
           </button>
         {/if}
         <button
           class="sql-execute-btn"
           onclick={() => queryEditorRef?.handleExecute()}
           disabled={!!inFlight || isConnecting || !binding || !currentQuery.trim()}
-          title={`Execute (${m}+Enter)`}
+          title={`Thực thi (${m}+Enter)`}
         >
           {#if inFlight}
-            Running…
+            Đang chạy…
           {:else if isConnecting}
-            Connecting…
+            Đang kết nối…
           {:else}
-            Execute &#9654;
+            Thực thi &#9654;
           {/if}
         </button>
       </div>

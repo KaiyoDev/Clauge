@@ -51,7 +51,7 @@
       const selected = await open({
         directory: false,
         multiple: false,
-        title: 'Select CLI binary',
+        title: 'Chọn binary CLI',
         filters: isWindows
           ? [{ name: 'Executables', extensions: ['exe', 'cmd', 'bat'] }, { name: 'All files', extensions: ['*'] }]
           : [{ name: 'All files', extensions: ['*'] }],
@@ -69,7 +69,7 @@
       binaryProbeResult = { kind: 'idle', msg: '' };
       return;
     }
-    binaryProbeResult = { kind: 'probing', msg: 'Checking…' };
+    binaryProbeResult = { kind: 'probing', msg: 'Đang kiểm tra…' };
     try {
       const banner = await agentValidateBinary(trimmed);
       binaryProbeResult = { kind: 'ok', msg: banner.split('\n')[0].slice(0, 80) };
@@ -142,7 +142,7 @@
         window.dispatchEvent(new CustomEvent(AGENT_EVENT.RELAUNCH_SESSION, { detail: { session: updated } }));
       }
       show = false;
-      showToast('Session updated', 'success');
+      showToast('Đã cập nhật phiên', 'success');
     } catch (e: any) {
       showToast(String(e), 'error');
     } finally {
@@ -156,42 +156,42 @@
   );
 </script>
 
-<Modal bind:show title="Edit Session" width="440px">
+<Modal bind:show title="Chỉnh sửa phiên" width="440px">
   {#if session}
     <div class="ns-form">
       <label class="ns-field">
-        <span class="ns-label">Title</span>
-        <input class="ns-input" type="text" bind:value={title} placeholder="Session title" />
+        <span class="ns-label">Tiêu đề</span>
+        <input class="ns-input" type="text" bind:value={title} placeholder="Tiêu đề phiên" />
       </label>
 
       <div class="ns-info-row">
-        <span class="ns-info-label">Purpose</span>
+        <span class="ns-info-label">Mục đích</span>
         <span class="ns-info-value">{session.purpose}</span>
       </div>
 
       {#if session.purpose === 'Custom'}
         <label class="ns-field">
-          <span class="ns-label">System Prompt <span class="ns-optional">(optional)</span></span>
+          <span class="ns-label">System Prompt <span class="ns-optional">(tùy chọn)</span></span>
           <textarea
             class="ns-textarea"
             bind:value={contextPrompt}
-            placeholder="Custom instructions for this session..."
+            placeholder="Hướng dẫn riêng cho phiên này..."
             rows="3"
           ></textarea>
         </label>
       {/if}
       <div class="ns-info-row">
-        <span class="ns-info-label">Project</span>
+        <span class="ns-info-label">Dự án</span>
         <span class="ns-info-value ns-mono">{session.projectPath}</span>
       </div>
 
-      <div class="ns-adv-label">Advanced</div>
+      <div class="ns-adv-label">Nâng cao</div>
 
       <!-- Skip Permissions toggle -->
       <div class="ns-toggle-row">
         <div class="ns-toggle-info">
-          <span class="ns-toggle-text">Skip permissions</span>
-          <span class="ns-toggle-hint">Auto-approve all tool calls without confirmation</span>
+          <span class="ns-toggle-text">Bỏ qua quyền</span>
+          <span class="ns-toggle-hint">Tự động duyệt mọi tool call mà không cần xác nhận</span>
         </div>
         <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
         <button class="ns-toggle" class:on={skipPermissions} onclick={() => skipPermissions = !skipPermissions}>
@@ -202,8 +202,8 @@
       <!-- Git Identity toggle -->
       <div class="ns-toggle-row">
         <div class="ns-toggle-info">
-          <span class="ns-toggle-text">Git Identity</span>
-          <span class="ns-toggle-hint">Override git author name and email for this session</span>
+          <span class="ns-toggle-text">Danh tính Git</span>
+          <span class="ns-toggle-hint">Thay tên và email tác giả Git cho phiên này</span>
         </div>
         <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
         <button class="ns-toggle" class:on={gitEnabled} onclick={() => gitEnabled = !gitEnabled}>
@@ -214,12 +214,12 @@
         <div class="ns-adv-body">
           <div class="ns-row">
             <label class="ns-adv-field">
-              <span class="ns-adv-label-sm">Name <span class="ns-required">*</span></span>
-              <input type="text" class="ns-input" bind:value={gitName} placeholder="e.g. John Doe" />
+              <span class="ns-adv-label-sm">Tên <span class="ns-required">*</span></span>
+              <input type="text" class="ns-input" bind:value={gitName} placeholder="vd. Nguyễn Văn A" />
             </label>
             <label class="ns-adv-field">
               <span class="ns-adv-label-sm">Email <span class="ns-required">*</span></span>
-              <input type="text" class="ns-input" bind:value={gitEmail} placeholder="e.g. john@example.com" />
+              <input type="text" class="ns-input" bind:value={gitEmail} placeholder="vd. a@example.com" />
             </label>
           </div>
         </div>
@@ -231,8 +231,8 @@
            time, or installed a newer version somewhere else). -->
       <div class="ns-toggle-row">
         <div class="ns-toggle-info">
-          <span class="ns-toggle-text">Custom Binary Path</span>
-          <span class="ns-toggle-hint">Use a specific {session.provider} binary for this session instead of $PATH</span>
+          <span class="ns-toggle-text">Đường dẫn binary tùy chỉnh</span>
+          <span class="ns-toggle-hint">Dùng binary {session.provider} cụ thể cho phiên này thay vì $PATH</span>
         </div>
         <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
         <button class="ns-toggle" class:on={useCustomBinary} onclick={() => { useCustomBinary = !useCustomBinary; if (!useCustomBinary) { customBinaryPath = ''; binaryProbeResult = { kind: 'idle', msg: '' }; } }}>
@@ -249,14 +249,14 @@
               placeholder="/usr/local/bin/{session.provider}"
               onblur={() => probeBinary(customBinaryPath)}
             />
-            <button class="ns-btn-browse" onclick={pickBinaryFile}>Browse</button>
+            <button class="ns-btn-browse" onclick={pickBinaryFile}>Duyệt</button>
           </div>
           {#if binaryProbeResult.kind === 'probing'}
             <div class="ns-probe-hint">{binaryProbeResult.msg}</div>
           {:else if binaryProbeResult.kind === 'ok'}
             <div class="ns-probe-hint ns-probe-ok">✓ {binaryProbeResult.msg}</div>
           {:else if binaryProbeResult.kind === 'err'}
-            <div class="ns-probe-hint ns-probe-err">⚠ {binaryProbeResult.msg} — save anyway?</div>
+            <div class="ns-probe-hint ns-probe-err">⚠ {binaryProbeResult.msg} — vẫn lưu?</div>
           {/if}
         </div>
       {/if}
@@ -264,8 +264,8 @@
       <!-- Attach Contexts toggle -->
       <div class="ns-toggle-row">
         <div class="ns-toggle-info">
-          <span class="ns-toggle-text">Attach Contexts</span>
-          <span class="ns-toggle-hint">Inject context snippets into the project's agent file before each spawn</span>
+          <span class="ns-toggle-text">Đính kèm bối cảnh</span>
+          <span class="ns-toggle-hint">Chèn các đoạn bối cảnh vào file agent của dự án trước mỗi lần spawn</span>
         </div>
         <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
         <button class="ns-toggle" class:on={contextEnabled} onclick={() => { contextEnabled = !contextEnabled; if (!contextEnabled) attachedContextIds = new Set(); }}>
@@ -289,7 +289,7 @@
             <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
             <button class="ns-ctx-add-btn" onclick={(e) => { e.stopPropagation(); showContextDropdown = !showContextDropdown; }}>
               <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor"><path d="M7.75 2a.75.75 0 01.75.75V7h4.25a.75.75 0 010 1.5H8.5v4.25a.75.75 0 01-1.5 0V8.5H2.75a.75.75 0 010-1.5H7V2.75A.75.75 0 017.75 2z"/></svg>
-              Add
+              Thêm
             </button>
             {#if showContextDropdown}
               <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
@@ -302,7 +302,7 @@
                     <span class="ns-ctx-dd-preview">{ctx.content.slice(0, 60)}</span>
                   </div>
                 {:else}
-                  <div class="ns-ctx-dd-empty">No more contexts available</div>
+                  <div class="ns-ctx-dd-empty">Không còn bối cảnh nào</div>
                 {/each}
               </div>
             {/if}
@@ -311,9 +311,9 @@
       {/if}
 
       <div class="ns-actions">
-        <button class="ns-btn-cancel" onclick={() => show = false}>Cancel</button>
+        <button class="ns-btn-cancel" onclick={() => show = false}>Hủy</button>
         <button class="ns-btn-create" onclick={handleSave} disabled={!canSave || loading}>
-          {loading ? 'Saving...' : 'Save Changes'}
+          {loading ? 'Đang lưu...' : 'Lưu thay đổi'}
         </button>
       </div>
     </div>

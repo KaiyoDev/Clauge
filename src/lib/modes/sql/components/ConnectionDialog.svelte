@@ -107,10 +107,10 @@
     const picked = await openFileDialog({
       multiple: false,
       directory: false,
-      title: 'Choose SQLite database file',
+      title: 'Chọn tệp database SQLite',
       filters: [
         { name: 'SQLite', extensions: ['db', 'sqlite', 'sqlite3', 'db3'] },
-        { name: 'All files', extensions: ['*'] },
+        { name: 'Tất cả tệp', extensions: ['*'] },
       ],
     });
     if (typeof picked === 'string' && picked) {
@@ -171,21 +171,21 @@
   // missing-field message or null when the config is shaped well enough
   // to send to the backend.
   function validateInputs(forSave: boolean): string | null {
-    if (forSave && !name.trim()) return 'Connection name is required';
+    if (forSave && !name.trim()) return 'Tên kết nối là bắt buộc';
     if (isD1) {
-      if (!host.trim()) return 'Account ID is required';
-      if (!database.trim()) return 'Database ID is required';
-      if (!password.trim()) return 'API token is required';
+      if (!host.trim()) return 'Account ID là bắt buộc';
+      if (!database.trim()) return 'Database ID là bắt buộc';
+      if (!password.trim()) return 'API token là bắt buộc';
     } else if (!usesHostPort) {
       // SQLite (or any future file-backed driver) — the file path lives
       // in `database`. Without it, sqlx opens an unnamed temp database
       // that always "connects" — misleading and useless.
-      if (!database.trim()) return 'Database file path is required';
+      if (!database.trim()) return 'Đường dẫn tệp database là bắt buộc';
     } else {
-      if (!host.trim()) return 'Host is required';
-      if (!port) return 'Port is required';
+      if (!host.trim()) return 'Host là bắt buộc';
+      if (!port) return 'Cổng là bắt buộc';
     }
-    if (useSshTunnel && !selectedSshProfileId) return 'Pick an SSH profile or turn off the tunnel';
+    if (useSshTunnel && !selectedSshProfileId) return 'Chọn một SSH profile hoặc tắt SSH tunnel';
     return null;
   }
 
@@ -202,7 +202,7 @@
       // Two-step when tunneling: prove the bastion works first so the
       // user sees a clear "tunnel failed" vs "DB failed" error.
       if (useSshTunnel && selectedSshProfileId && usesHostPort) {
-        testStatus = 'Testing tunnel…';
+        testStatus = 'Đang kiểm tra tunnel…';
         try {
           await invoke('ssh_tunnel_test', {
             profileId: selectedSshProfileId,
@@ -211,15 +211,15 @@
           });
         } catch (e: any) {
           if (!show) return;
-          showToast(`Tunnel test failed: ${friendlyError(e)}`, 'error');
+          showToast(`Kiểm tra tunnel thất bại: ${friendlyError(e)}`, 'error');
           return;
         }
         if (!show) return;
-        testStatus = 'Testing database…';
+        testStatus = 'Đang kiểm tra database…';
       }
       const result = await sqlTestConnection(buildConfig());
       if (!show) return;
-      showToast(result || 'Connection successful', 'success');
+      showToast(result || 'Kết nối thành công', 'success');
       testOk = true;
       setTimeout(() => { testOk = false; }, 2200);
     } catch (err: any) {
@@ -267,7 +267,7 @@
         aria-selected={tab === 'advanced'}
         onclick={() => (tab = 'advanced')}
       >
-        Advanced
+        Nâng cao
         {#if advancedHasState}<span class="cd-tab-dot" aria-hidden="true"></span>{/if}
       </button>
     </div>
@@ -275,8 +275,8 @@
     {#if tab === 'general'}
       <!-- Connection name -->
       <div class="cd-block">
-        <span class="cd-label">Connection name</span>
-        <input class="cd-input" type="text" bind:value={name} placeholder="My database" />
+        <span class="cd-label">Tên kết nối</span>
+        <input class="cd-input" type="text" bind:value={name} placeholder="CSDL của tôi" />
       </div>
 
       <!-- Driver grid -->
@@ -340,25 +340,25 @@
       {#if isD1}
         <div class="cd-block">
           <span class="cd-label">Account ID</span>
-          <input class="cd-input mono" type="text" bind:value={host} placeholder="33-char Cloudflare account ID" />
+          <input class="cd-input mono" type="text" bind:value={host} placeholder="Cloudflare account ID 33 ký tự" />
         </div>
         <div class="cd-block">
           <span class="cd-label">Database ID</span>
-          <input class="cd-input mono" type="text" bind:value={database} placeholder="UUID from your D1 dashboard" />
+          <input class="cd-input mono" type="text" bind:value={database} placeholder="UUID từ dashboard D1 của bạn" />
         </div>
         <div class="cd-block">
           <span class="cd-label">API token</span>
-          <input class="cd-input" type="password" bind:value={password} placeholder="Token with D1:Edit permission" />
+          <input class="cd-input" type="password" bind:value={password} placeholder="Token có quyền D1:Edit" />
           <span class="cd-caption">
-            Create one at dash.cloudflare.com/profile/api-tokens — needs the <code>D1:Edit</code> permission scoped to your account.
+            Tạo token tại dash.cloudflare.com/profile/api-tokens — cần quyền <code>D1:Edit</code> giới hạn trong tài khoản của bạn.
           </span>
         </div>
       {:else if isFileDriver}
         <div class="cd-block">
-          <span class="cd-label">Database file</span>
+          <span class="cd-label">Tệp cơ sở dữ liệu</span>
           <div class="cd-file-row">
-            <input class="cd-input mono" type="text" bind:value={database} placeholder="/path/to/db.sqlite" />
-            <button type="button" class="cd-file-btn" onclick={browseForSqliteFile} title="Browse for a SQLite file" aria-label="Browse">
+            <input class="cd-input mono" type="text" bind:value={database} placeholder="/đường/dẫn/db.sqlite" />
+            <button type="button" class="cd-file-btn" onclick={browseForSqliteFile} title="Duyệt tệp SQLite" aria-label="Duyệt">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
                 <path d="M4 7a2 2 0 012-2h3l2 2h7a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2V7z" stroke="currentColor" stroke-width="1.6" />
               </svg>
@@ -372,21 +372,21 @@
             <input class="cd-input mono" type="text" bind:value={host} placeholder="localhost" />
           </div>
           <div class="cd-block narrow">
-            <span class="cd-label">Port</span>
+            <span class="cd-label">Cổng</span>
             <input class="cd-input mono" type="number" bind:value={port} />
           </div>
         </div>
         <div class="cd-block">
-          <span class="cd-label">Database</span>
+          <span class="cd-label">CSDL</span>
           <input class="cd-input mono" type="text" bind:value={database} placeholder="mydb" />
         </div>
         <div class="cd-row">
           <div class="cd-block grow">
-            <span class="cd-label">Username</span>
+            <span class="cd-label">Tên đăng nhập</span>
             <input class="cd-input mono" type="text" bind:value={username} placeholder="user" />
           </div>
           <div class="cd-block grow">
-            <span class="cd-label">Password</span>
+            <span class="cd-label">Mật khẩu</span>
             <input class="cd-input" type="password" bind:value={password} placeholder="••••••••" />
           </div>
         </div>
@@ -400,7 +400,7 @@
                 <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.6" />
                 <path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.6" />
               </svg>
-              SSL enabled
+              SSL đã bật
             </span>
           {/if}
           {#if useSshTunnel}
@@ -428,16 +428,16 @@
                 </svg>
               </div>
               <div class="cd-card-text">
-                <div class="cd-card-title">Use SSL / TLS</div>
+                <div class="cd-card-title">Dùng SSL / TLS</div>
                 <div class="cd-card-sub">
-                  {supportsSslSsh ? 'Encrypt traffic between client and server' : 'Not applicable for this driver'}
+                  {supportsSslSsh ? 'Mã hóa lưu lượng giữa client và server' : 'Không áp dụng cho driver này'}
                 </div>
               </div>
             </div>
             <button
               type="button"
               role="switch"
-              aria-label="Use SSL"
+              aria-label="Dùng SSL"
               aria-checked={ssl && supportsSslSsh}
               class="cd-toggle"
               class:on={ssl && supportsSslSsh}
@@ -460,16 +460,16 @@
                 </svg>
               </div>
               <div class="cd-card-text">
-                <div class="cd-card-title">Connect via SSH tunnel</div>
+                <div class="cd-card-title">Kết nối qua SSH tunnel</div>
                 <div class="cd-card-sub">
-                  {supportsSslSsh ? 'Route the connection through a bastion host' : 'Not applicable for this driver'}
+                  {supportsSslSsh ? 'Định tuyến kết nối qua bastion host' : 'Không áp dụng cho driver này'}
                 </div>
               </div>
             </div>
             <button
               type="button"
               role="switch"
-              aria-label="Use SSH tunnel"
+              aria-label="Dùng SSH tunnel"
               aria-checked={useSshTunnel && supportsSslSsh}
               class="cd-toggle"
               class:on={useSshTunnel && supportsSslSsh}

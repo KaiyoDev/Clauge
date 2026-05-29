@@ -15,9 +15,9 @@
 
     type TabId = "pretty" | "raw" | "preview" | "headers";
     const TABS: { id: TabId; label: string }[] = [
-        { id: "pretty", label: "Pretty" },
-        { id: "raw", label: "Raw" },
-        { id: "preview", label: "Preview" },
+        { id: "pretty", label: "Đẹp mắt" },
+        { id: "raw", label: "Thô" },
+        { id: "preview", label: "Xem trước" },
         { id: "headers", label: "Headers" },
     ];
 
@@ -219,7 +219,7 @@
     const sslReason = $derived(
         isSslError
             ? response!.body.replace(/^ssl-error:\s*/i, "") ||
-                  "Certificate verification failed"
+                  "Xác thực chứng chỉ thất bại"
             : "",
     );
 
@@ -244,19 +244,19 @@
         let label: string;
         if (activeTab === "headers") {
             text = response.headers.map(([k, v]) => `${k}: ${v}`).join("\n");
-            label = "Headers copied";
+            label = "Đã sao chép headers";
         } else if (activeTab === "pretty") {
             text = prettyBody;
-            label = "Response copied";
+            label = "Đã sao chép phản hồi";
         } else {
             text = response.body;
-            label = "Response copied";
+            label = "Đã sao chép phản hồi";
         }
         try {
             await writeText(text);
             showToast(label, "success");
         } catch {
-            showToast("Failed to copy", "error");
+            showToast("Sao chép thất bại", "error");
         }
     }
 
@@ -334,17 +334,17 @@
                 </svg>
             </div>
             <div class="empty-text">
-                Press <span class="kbd">&#8984;Enter</span> or click
-                <span class="kbd">Send</span>
-                to send request<br />
-                <span class="kbd">&#8984;L</span> to toggle AI Assistant
+                Nhấn <span class="kbd">&#8984;Enter</span> hoặc bấm
+                <span class="kbd">Gửi</span>
+                để gửi yêu cầu<br />
+                <span class="kbd">&#8984;L</span> để bật/tắt AI Assistant
             </div>
         </div>
     {:else if loading}
         <!-- Loading state -->
         <div class="empty">
             <div class="loading-text">
-                Sending request<span class="loading-dots"></span>
+                Đang gửi yêu cầu<span class="loading-dots"></span>
             </div>
         </div>
     {:else if response}
@@ -364,7 +364,7 @@
             <button
                 class="resp-copy"
                 onclick={copyResponse}
-                title="Copy response body"
+                title="Sao chép body phản hồi"
             >
                 <svg viewBox="0 0 24 24" width="13" height="13">
                     <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
@@ -400,21 +400,21 @@
                     bind:this={searchInputRef}
                     class="search-input"
                     type="text"
-                    placeholder="Search response..."
+                    placeholder="Tìm trong phản hồi..."
                     bind:value={searchQuery}
                     onkeydown={handleSearchKeydown}
                 />
                 {#if searchQuery}
                     <span class="search-count"
                         >{matchCount > 0
-                            ? `${currentMatchIndex + 1} of ${matchCount}`
-                            : "No matches"}</span
+                            ? `${currentMatchIndex + 1} / ${matchCount}`
+                            : "Không có kết quả"}</span
                     >
                 {/if}
                 <button
                     class="search-nav-btn"
                     onclick={prevMatch}
-                    title="Previous (Shift+Enter)"
+                    title="Trước (Shift+Enter)"
                     disabled={matchCount === 0}
                 >
                     <svg viewBox="0 0 24 24" width="12" height="12"
@@ -430,7 +430,7 @@
                 <button
                     class="search-nav-btn"
                     onclick={nextMatch}
-                    title="Next (Enter)"
+                    title="Tiếp (Enter)"
                     disabled={matchCount === 0}
                 >
                     <svg viewBox="0 0 24 24" width="12" height="12"
@@ -446,7 +446,7 @@
                 <button
                     class="search-nav-btn"
                     onclick={closeSearch}
-                    title="Close (Esc)"
+                    title="Đóng (Esc)"
                 >
                     <svg viewBox="0 0 24 24" width="12" height="12"
                         ><path
@@ -498,18 +498,18 @@
                                     rx="2"
                                 /><path d="M7 11V7a5 5 0 0110 0v4" /></svg
                             >
-                            <span>SSL certificate verification failed</span>
+                            <span>Xác thực chứng chỉ SSL thất bại</span>
                         </div>
                         <p class="ig-reason">{sslReason}</p>
                         <p class="ig-text">
-                            To call APIs with self-signed or untrusted
-                            certificates, disable SSL verification in Settings:
+                            Để gọi API với chứng chỉ tự ký hoặc không tin cậy,
+                            tắt xác thực SSL trong Cài đặt:
                         </p>
                         <ol class="ig-steps">
-                            <li>Open <strong>Settings</strong></li>
-                            <li>Select the <strong>REST</strong> tab</li>
+                            <li>Mở <strong>Cài đặt</strong></li>
+                            <li>Chọn tab <strong>REST</strong></li>
                             <li>
-                                Toggle off <strong>SSL Verification</strong>
+                                Tắt <strong>Xác thực SSL</strong>
                             </li>
                         </ol>
                         <div class="ig-warn">
@@ -530,8 +530,8 @@
                                     y2="17"
                                 /></svg
                             >
-                            Only disable SSL verification for trusted internal or
-                            test APIs.
+                            Chỉ tắt xác thực SSL với các API nội bộ hoặc test
+                            đáng tin cậy.
                         </div>
                     </div>
                 {:else if isBinary}
@@ -549,7 +549,7 @@
                                     d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"
                                 /><polyline points="13 2 13 9 20 9" /></svg
                             >
-                            <span>Binary content</span>
+                            <span>Nội dung nhị phân</span>
                         </div>
                         <p class="ig-text">
                             {contentType || "application/octet-stream"} &middot; {formatSize(
@@ -557,8 +557,8 @@
                             )}
                         </p>
                         <p class="ig-hint">
-                            Switch to <strong>Raw</strong> to view the response bytes
-                            as text.
+                            Chuyển sang <strong>Thô</strong> để xem các byte phản hồi
+                            dưới dạng văn bản.
                         </p>
                     </div>
                 {:else if searchQuery}
@@ -571,8 +571,8 @@
             <div class="viewer raw" bind:this={viewerRef}>
                 {#if isBinary}
                     <div class="raw-binary-note">
-                        Binary response — bytes rendered as UTF-8 (may appear
-                        garbled)
+                        Phản hồi nhị phân — các byte được hiển thị dưới dạng
+                        UTF-8 (có thể bị méo)
                     </div>
                 {/if}
                 {#if searchQuery}
@@ -583,7 +583,7 @@
             </div>
         {:else if activeTab === "preview"}
             <div class="viewer preview-msg">
-                <span>Preview not available for JSON responses</span>
+                <span>Không hỗ trợ xem trước cho phản hồi JSON</span>
             </div>
         {:else if activeTab === "headers"}
             <ResponseHeaders headers={response.headers} />

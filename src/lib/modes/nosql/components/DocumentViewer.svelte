@@ -299,9 +299,9 @@
   async function copyDocument(doc: any) {
     try {
       await writeText(JSON.stringify(doc, null, 2));
-      showToast('Document copied', 'success');
+      showToast('Đã sao chép tài liệu', 'success');
     } catch {
-      showToast('Failed to copy', 'error');
+      showToast('Sao chép thất bại', 'error');
     }
   }
 
@@ -449,7 +449,7 @@
       const { _id, ...rest } = updatedDoc;
       const update = JSON.stringify({ $set: rest });
       await nosqlUpdateDocument(connectionId, database, collection, filter, update);
-      showToast('Document updated', 'success');
+      showToast('Đã cập nhật tài liệu', 'success');
       cancelInlineEdit();
       loadDocuments();
     } catch (e: any) {
@@ -497,7 +497,7 @@
       for (const doc of docs) {
         await nosqlInsertDocument(connectionId, database, collection, JSON.stringify(doc));
       }
-      showToast(`${docs.length} document${docs.length > 1 ? 's' : ''} inserted`, 'success');
+      showToast(`Đã chèn ${docs.length} tài liệu`, 'success');
       showInsert = false;
       insertDoc = makeInsertTemplate();
       loadDocuments();
@@ -540,14 +540,14 @@
         docs = parseJsonDocs(text);
       }
 
-      if (docs.length === 0) { showToast('No documents found in file', 'error'); return; }
+      if (docs.length === 0) { showToast('Không tìm thấy tài liệu trong tệp', 'error'); return; }
 
       let inserted = 0;
       for (const doc of docs) {
         await nosqlInsertDocument(connectionId, database, collection, JSON.stringify(doc));
         inserted++;
       }
-      showToast(`Imported ${inserted} document${inserted > 1 ? 's' : ''}`, 'success');
+      showToast(`Đã nhập ${inserted} tài liệu`, 'success');
       loadDocuments();
     } catch (e: any) {
       showToast(friendlyError(e), 'error');
@@ -557,7 +557,7 @@
   async function handleUpdate() {
     try {
       const count = await nosqlUpdateDocument(connectionId, database, collection, updateFilter, updateDoc);
-      showToast(`${count} document(s) updated`, 'success');
+      showToast(`Đã cập nhật ${count} tài liệu`, 'success');
       showUpdateModal = false;
       loadDocuments();
     } catch (e: any) {
@@ -568,7 +568,7 @@
   async function handleDelete() {
     try {
       const count = await nosqlDeleteDocument(connectionId, database, collection, deleteFilter);
-      showToast(`${count} document(s) deleted`, 'success');
+      showToast(`Đã xóa ${count} tài liệu`, 'success');
       showDeleteModal = false;
       loadDocuments();
     } catch (e: any) {
@@ -648,7 +648,7 @@
     </button>
     <button class="dv-tab" class:on={activeTab === 'query'} onclick={() => activeTab = 'query'}>
       <svg viewBox="0 0 24 24" width="12" height="12"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      Query
+      Truy vấn
     </button>
     <button class="dv-tab" class:on={activeTab === 'aggregation'} onclick={() => activeTab = 'aggregation'}>
       <svg viewBox="0 0 24 24" width="12" height="12"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
@@ -656,13 +656,13 @@
     </button>
     <div class="dv-tab-spacer"></div>
     {#if activeTab === 'documents'}
-      <span class="dv-meta">{totalCount.toLocaleString()} docs</span>
+      <span class="dv-meta">{totalCount.toLocaleString()} tài liệu</span>
       <span class="dv-meta dv-meta-sep">·</span>
       <span class="dv-meta">{durationMs}ms</span>
       <div class="dv-add-wrap">
-        <button class="dv-toolbar-btn" onclick={(e) => { e.stopPropagation(); showAddMenu = !showAddMenu; }} title="Add Data">
+        <button class="dv-toolbar-btn" onclick={(e) => { e.stopPropagation(); showAddMenu = !showAddMenu; }} title="Thêm dữ liệu">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          Add Data
+          Thêm dữ liệu
           <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
         </button>
         {#if showAddMenu}
@@ -671,17 +671,17 @@
           <div class="dv-add-menu" onclick={() => showAddMenu = false}>
             <button class="dv-add-menu-item" onclick={() => { showAddMenu = false; insertDoc = makeInsertTemplate(); insertValid = true; insertError = ''; insertErrorLine = -1; showInsert = true; }}>
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M12 11v6M9 14h6"/></svg>
-              Insert Document
+              Chèn tài liệu
             </button>
             <button class="dv-add-menu-item" onclick={() => { showAddMenu = false; fileInput?.click(); }}>
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Import JSON or CSV File
+              Nhập tệp JSON hoặc CSV
             </button>
           </div>
         {/if}
         <input bind:this={fileInput} type="file" accept=".json,.csv" style="display:none" onchange={handleFileImport} />
       </div>
-      <button class="dv-toolbar-btn" onclick={() => loadDocuments()} title="Refresh">
+      <button class="dv-toolbar-btn" onclick={() => loadDocuments()} title="Làm mới">
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
       </button>
     {/if}
@@ -710,13 +710,13 @@
         }}
       ></textarea>
       <div class="dv-bar-actions">
-        <button class="dv-bar-btn dv-find-btn" onclick={executeFilter}>Find</button>
-        <button class="dv-bar-btn dv-reset-btn" onclick={clearFilter}>Reset</button>
+        <button class="dv-bar-btn dv-find-btn" onclick={executeFilter}>Tìm</button>
+        <button class="dv-bar-btn dv-reset-btn" onclick={clearFilter}>Đặt lại</button>
         <button class="dv-bar-btn dv-options-btn" class:active={showOptions} onclick={() => showOptions = !showOptions}>
-          Options
+          Tùy chọn
           <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d={showOptions ? 'M18 15l-6-6-6 6' : 'M6 9l6 6 6-6'}/></svg>
         </button>
-        <select class="dv-limit-sel" bind:value={limit} onchange={() => { skip = 0; loadDocuments(); }} title="Per page">
+        <select class="dv-limit-sel" bind:value={limit} onchange={() => { skip = 0; loadDocuments(); }} title="Mỗi trang">
           <option value={10}>10</option>
           <option value={25}>25</option>
           <option value={50}>50</option>
@@ -734,7 +734,7 @@
 
     {#if showOptions}
       <div class="dv-options-row">
-        <span class="dv-option-label">Sort</span>
+        <span class="dv-option-label">Sắp xếp</span>
         <input
           class="dv-option-input"
           type="text"
@@ -754,12 +754,12 @@
           bind:this={searchInputRef}
           class="dv-search-input"
           type="text"
-          placeholder="Search in documents..."
+          placeholder="Tìm trong tài liệu..."
           bind:value={searchQuery}
           onkeydown={handleSearchKeydown}
         />
         {#if searchQuery}
-          <span class="dv-search-count">{matchCount > 0 ? `${currentMatchIndex + 1} of ${matchCount}` : 'No matches'}</span>
+          <span class="dv-search-count">{matchCount > 0 ? `${currentMatchIndex + 1} / ${matchCount}` : 'Không có kết quả'}</span>
         {/if}
         <button class="dv-search-nav" onclick={() => { currentMatchIndex = (currentMatchIndex - 1 + matchCount) % matchCount; scrollToSearchMatch(); }} disabled={matchCount === 0}>
           <svg viewBox="0 0 24 24" width="11" height="11"><path d="M18 15l-6-6-6 6" stroke="currentColor" fill="none" stroke-width="2" stroke-linecap="round"/></svg>
@@ -779,12 +779,12 @@
       {#if loading}
         <div class="dv-empty-state">
           <svg viewBox="0 0 24 24" width="32" height="32"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-          <span>Loading<span class="dv-dots"></span></span>
+          <span>Đang tải<span class="dv-dots"></span></span>
         </div>
       {:else if documents.length === 0}
         <div class="dv-empty-state">
           <svg viewBox="0 0 24 24" width="32" height="32"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <span>No documents found</span>
+          <span>Không tìm thấy tài liệu nào</span>
         </div>
       {:else}
         {#each documents as doc, i (i)}
@@ -799,13 +799,13 @@
               <span class="dv-doc-idx">#{skip + i + 1}</span>
               <span class="dv-doc-id">{displayId(doc._id)}</span>
               <div class="dv-doc-actions">
-                <button class="dv-doc-btn" title="Copy" onclick={(e) => { e.stopPropagation(); copyDocument(doc); }}>
+                <button class="dv-doc-btn" title="Sao chép" onclick={(e) => { e.stopPropagation(); copyDocument(doc); }}>
                   <svg viewBox="0 0 24 24" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
                 </button>
-                <button class="dv-doc-btn" title="Edit" onclick={(e) => { e.stopPropagation(); editDocument(doc); }}>
+                <button class="dv-doc-btn" title="Chỉnh sửa" onclick={(e) => { e.stopPropagation(); editDocument(doc); }}>
                   <svg viewBox="0 0 24 24" width="12" height="12"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                 </button>
-                <button class="dv-doc-btn danger" title="Delete" onclick={(e) => { e.stopPropagation(); deleteDocument(doc); }}>
+                <button class="dv-doc-btn danger" title="Xóa" onclick={(e) => { e.stopPropagation(); deleteDocument(doc); }}>
                   <svg viewBox="0 0 24 24" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                 </button>
               </div>
@@ -830,12 +830,12 @@
                   {#if !editJsonValid}
                     <div class="dv-edit-error">
                       <svg viewBox="0 0 24 24" width="12" height="12"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                      {#if editErrorLine > 0}<strong>Line {editErrorLine}:</strong>&nbsp;{/if}{editErrorMsg}
+                      {#if editErrorLine > 0}<strong>Dòng {editErrorLine}:</strong>&nbsp;{/if}{editErrorMsg}
                     </div>
                   {/if}
                   <div class="dv-doc-edit-actions">
-                    <button class="dv-edit-cancel" onclick={cancelInlineEdit}>Cancel</button>
-                    <button class="dv-edit-save" disabled={!editJsonValid} onclick={() => saveInlineEdit(doc)}>Update</button>
+                    <button class="dv-edit-cancel" onclick={cancelInlineEdit}>Hủy</button>
+                    <button class="dv-edit-save" disabled={!editJsonValid} onclick={() => saveInlineEdit(doc)}>Cập nhật</button>
                   </div>
                 </div>
               {:else}
@@ -869,7 +869,7 @@
             </button>
           </div>
           <div class="dv-insert-toolbar">
-            <button class="dv-insert-tool-btn" onclick={formatInsertDoc} title="Format JSON">
+            <button class="dv-insert-tool-btn" onclick={formatInsertDoc} title="Định dạng JSON">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
               Format
             </button>
@@ -893,7 +893,7 @@
                   onkeydown={handleInsertKeydown}
                   onscroll={syncInsertScroll}
                   spellcheck="false"
-                  placeholder="Paste one or more documents here"
+                  placeholder="Dán một hoặc nhiều tài liệu vào đây"
                 ></textarea>
               </div>
             </div>
@@ -908,7 +908,7 @@
             <span class="dv-insert-hint">
               <kbd>&#8984;Enter</kbd> to insert
             </span>
-            <button class="dv-modal-cancel" onclick={() => showInsert = false}>Cancel</button>
+            <button class="dv-modal-cancel" onclick={() => showInsert = false}>Hủy</button>
             <button class="dv-modal-primary" disabled={!insertValid} onclick={handleInsert}>
               Insert{insertDocCount > 1 ? ` ${insertDocCount} Docs` : ''}
             </button>
@@ -928,7 +928,7 @@
             <button class="dv-modal-close" onclick={() => showUpdateModal = false}>&times;</button>
           </div>
           <div class="dv-modal-editor-wrap">
-            <span class="dv-modal-label">Filter</span>
+            <span class="dv-modal-label">Bộ lọc</span>
             <div class="dv-edit-editor dv-modal-editor-sm">
               <div class="dv-edit-gutter">
                 {#each updateFilter.split('\n') as _, ln}
@@ -945,7 +945,7 @@
             {/if}
           </div>
           <div class="dv-modal-editor-wrap">
-            <span class="dv-modal-label">Update</span>
+            <span class="dv-modal-label">Cập nhật</span>
             <div class="dv-edit-editor dv-modal-editor">
               <div class="dv-edit-gutter">
                 {#each updateDoc.split('\n') as _, ln}
@@ -962,8 +962,8 @@
             {/if}
           </div>
           <div class="dv-modal-actions">
-            <button class="dv-modal-cancel" onclick={() => showUpdateModal = false}>Cancel</button>
-            <button class="dv-modal-primary" disabled={!updateFilterValid || !updateDocValid} onclick={handleUpdate}>Update</button>
+            <button class="dv-modal-cancel" onclick={() => showUpdateModal = false}>Hủy</button>
+            <button class="dv-modal-primary" disabled={!updateFilterValid || !updateDocValid} onclick={handleUpdate}>Cập nhật</button>
           </div>
         </div>
       </div>
@@ -980,7 +980,7 @@
             <button class="dv-modal-close" onclick={() => showDeleteModal = false}>&times;</button>
           </div>
           <div class="dv-modal-editor-wrap">
-            <span class="dv-modal-label">Filter</span>
+            <span class="dv-modal-label">Bộ lọc</span>
             <div class="dv-edit-editor dv-modal-editor-sm">
               <div class="dv-edit-gutter">
                 {#each deleteFilter.split('\n') as _, ln}
@@ -997,8 +997,8 @@
             {/if}
           </div>
           <div class="dv-modal-actions">
-            <button class="dv-modal-cancel" onclick={() => showDeleteModal = false}>Cancel</button>
-            <button class="dv-modal-primary danger" disabled={!deleteFilterValid} onclick={handleDelete}>Delete</button>
+            <button class="dv-modal-cancel" onclick={() => showDeleteModal = false}>Hủy</button>
+            <button class="dv-modal-primary danger" disabled={!deleteFilterValid} onclick={handleDelete}>Xóa</button>
           </div>
         </div>
       </div>

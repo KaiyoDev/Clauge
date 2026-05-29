@@ -74,7 +74,7 @@
         }
       }
     } catch (e) {
-      errorToast('Failed to load note', e);
+      errorToast('Không tải được ghi chú', e);
     }
   }
 
@@ -108,7 +108,7 @@
     try {
       await workspaceNoteUpdate({
         id: note.id,
-        title: title.trim() || 'Untitled',
+        title: title.trim() || 'Chưa đặt tên',
         content: currentContent,
         tags,
         linkedSessionId: note.linkedSessionId,
@@ -121,10 +121,10 @@
       note = { ...refreshed, content: currentContent };
       const myTab = get(sharedTabs).find(t => t.mode === 'workspace' && t.key === `note:${refreshed.id}`);
       if (myTab && myTab.label !== refreshed.title) {
-        updateTab(myTab.id, { label: refreshed.title || 'Untitled' });
+        updateTab(myTab.id, { label: refreshed.title || 'Chưa đặt tên' });
       }
     } catch (e) {
-      errorToast('Save failed', e);
+      errorToast('Lưu thất bại', e);
     } finally {
       saving = false;
     }
@@ -144,12 +144,12 @@
     if (!note) return;
     const s = get(activeAgentSession);
     if (!s) {
-      showToast('No active agent session — open one in Agent mode first', 'error');
+      showToast('Chưa có phiên agent nào — hãy mở một phiên trong chế độ Agent trước', 'error');
       return;
     }
     note.linkedSessionId = s.id;
     await saveNow();
-    showToast(`Linked to "${s.title}"`, 'success');
+    showToast(`Đã liên kết với "${s.title}"`, 'success');
   }
 
   async function detachSession() {
@@ -189,7 +189,7 @@
    *  code, blockquote, links, images. */
   function buildHtmlDocument(noteTitle: string, markdown: string): string {
     const body = marked.parse(markdown ?? '', { async: false }) as string;
-    const safeTitle = (noteTitle || 'Untitled').replace(/[<>&]/g, (c) =>
+    const safeTitle = (noteTitle || 'Chưa đặt tên').replace(/[<>&]/g, (c) =>
       c === '<' ? '&lt;' : c === '>' ? '&gt;' : '&amp;');
     return `<!doctype html>
 <html lang="en">
@@ -230,15 +230,15 @@ ${body}
       const ext = kind === 'md' ? 'md' : 'html';
       const dest = await save({
         defaultPath: `${safeName}.${ext}`,
-        title: `Export ${note.title || 'note'}`,
+        title: `Xuất ${note.title || 'ghi chú'}`,
         filters: [{ name: kind === 'md' ? 'Markdown' : 'HTML', extensions: [ext] }],
       });
       if (typeof dest !== 'string' || !dest) return;
       const content = kind === 'md' ? (note.content ?? '') : buildHtmlDocument(note.title, note.content ?? '');
       await workspaceNoteExportToFile(dest, content);
-      showToast(`Exported to ${dest}`, 'success');
+      showToast(`Đã xuất ra ${dest}`, 'success');
     } catch (e: any) {
-      errorToast('Export failed', e);
+      errorToast('Xuất thất bại', e);
     }
   }
 </script>
@@ -246,33 +246,33 @@ ${body}
 <svelte:window onclick={() => (exportMenuOpen = false)} />
 
 {#if !note}
-  <div class="nv-loading">Loading…</div>
+  <div class="nv-loading">Đang tải…</div>
 {:else}
   {@const editor_info = describeActor(note.updatedBy)}
   <div class="nv">
     <div class="nv-meta">
       <span class="nv-crumb">{$activeWorkspace?.name ?? 'workspace'}</span>
       <span class="nv-sep">/</span>
-      <span class="nv-crumb-active">{note.title || 'untitled'}</span>
+      <span class="nv-crumb-active">{note.title || 'chưa đặt tên'}</span>
       <span style="flex:1"></span>
       {#if saving}
-        <span class="nv-saving">saving…</span>
+        <span class="nv-saving">đang lưu…</span>
       {:else if dirty}
-        <span class="nv-dirty">unsaved</span>
+        <span class="nv-dirty">chưa lưu</span>
       {:else}
-        <span class="nv-saved">saved</span>
+        <span class="nv-saved">đã lưu</span>
       {/if}
       <!-- svelte-ignore a11y_click_events_have_key_events -->
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div class="nv-export-wrap" onclick={(e) => e.stopPropagation()}>
         <button
           class="nv-export-btn"
-          title="Export note"
-          aria-label="Export note"
+          title="Xuất ghi chú"
+          aria-label="Xuất ghi chú"
           onclick={() => (exportMenuOpen = !exportMenuOpen)}
         >
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Export
+          Xuất
         </button>
         {#if exportMenuOpen}
           <div class="nv-export-menu" role="menu">
@@ -293,12 +293,12 @@ ${body}
       class="nv-title"
       bind:value={title}
       onblur={onTitleBlur}
-      placeholder="Untitled"
+      placeholder="Chưa đặt tên"
       spellcheck="false"
     />
 
     <div class="nv-props">
-      <div class="nv-prop-key">PROJECT</div>
+      <div class="nv-prop-key">DỰ ÁN</div>
       <div class="nv-prop-val">
         {#if $activeWorkspace?.projectName}
           <span class="nv-pill">
@@ -306,7 +306,7 @@ ${body}
             {$activeWorkspace.projectName}
           </span>
         {:else}
-          <span class="nv-prop-empty">none</span>
+          <span class="nv-prop-empty">không có</span>
         {/if}
       </div>
 
@@ -315,7 +315,7 @@ ${body}
         <TagInput bind:value={tags} onchange={onTagsChange} />
       </div>
 
-      <div class="nv-prop-key">LINKED SESSION</div>
+      <div class="nv-prop-key">PHIÊN LIÊN KẾT</div>
       <div class="nv-prop-val">
         {#if linkedSession}
           <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -325,32 +325,32 @@ ${body}
             {linkedSession.title}
             <span class="nv-pill-dim">· {linkedSession.purpose}</span>
           </span>
-          <button class="nv-mini-btn" onclick={detachSession} title="Unlink">×</button>
+          <button class="nv-mini-btn" onclick={detachSession} title="Bỏ liên kết">×</button>
         {:else if $activeAgentSession && (!$activeWorkspace?.projectPath || $activeAgentSession.projectPath !== $activeWorkspace.projectPath)}
           <!-- Active session is for a different project — manual opt-in only. -->
-          <button class="nv-mini-btn" onclick={attachToActiveSession} title="The active agent session is for a different project — link anyway?">
-            Link {$activeAgentSession.title} (different project)
+          <button class="nv-mini-btn" onclick={attachToActiveSession} title="Phiên agent đang hoạt động thuộc về một dự án khác — vẫn liên kết?">
+            Liên kết {$activeAgentSession.title} (dự án khác)
           </button>
         {:else}
-          <span class="nv-prop-empty">no session linked</span>
+          <span class="nv-prop-empty">chưa liên kết phiên nào</span>
         {/if}
       </div>
 
-      <div class="nv-prop-key">UPDATED</div>
+      <div class="nv-prop-key">CẬP NHẬT</div>
       <div class="nv-prop-val">
         <span class="nv-attr">
           {#if editor_info.kind === 'coworker'}
-            <span class="nv-attr-badge nv-attr-user" title="Edited by @{editor_info.label}">
+            <span class="nv-attr-badge nv-attr-user" title="Chỉnh sửa bởi @{editor_info.label}">
               <CoworkerAvatar seed={editor_info.coworkerSeed ?? editor_info.label} style={editor_info.coworkerStyle ?? 'personas'} size={14} />
               <span>@{editor_info.label}</span>
             </span>
           {:else if editor_info.kind === 'agent'}
-            <span class="nv-attr-badge nv-attr-agent" title="Edited by {editor_info.label}">
+            <span class="nv-attr-badge nv-attr-agent" title="Chỉnh sửa bởi {editor_info.label}">
               <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.6 4.8L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.2L12 3z"/></svg>
               {editor_info.label}
             </span>
           {:else if editor_info.kind === 'user'}
-            <span class="nv-attr-badge nv-attr-user" title="Edited by @{editor_info.label}">
+            <span class="nv-attr-badge nv-attr-user" title="Chỉnh sửa bởi @{editor_info.label}">
               {#if editor_info.avatarUrl}
                 <img class="nv-attr-avatar" src={editor_info.avatarUrl} alt="" width="14" height="14"/>
               {:else}
@@ -359,7 +359,7 @@ ${body}
               <span>@{editor_info.label}</span>
             </span>
           {:else}
-            <span class="nv-attr-badge nv-attr-anon" title="Edited by you">
+            <span class="nv-attr-badge nv-attr-anon" title="Chỉnh sửa bởi bạn">
               <svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 10-16 0"/><circle cx="12" cy="7" r="4"/></svg>
               {editor_info.label}
             </span>

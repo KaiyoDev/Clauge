@@ -25,11 +25,11 @@
   }
 </script>
 
-<Modal bind:show title="GitLab CLI Not Found" width="460px">
+<Modal bind:show title="Không tìm thấy GitLab CLI" width="460px">
   <div class="cn-body">
     <p class="cn-desc">
-      The <code class="cn-code">glab</code> CLI wasn't found on your <code class="cn-code">PATH</code>.
-      Clauge uses it to create issues, push branches, and open merge requests from cards.
+      Không tìm thấy <code class="cn-code">glab</code> CLI trong <code class="cn-code">PATH</code>.
+      Clauge dùng nó để tạo issue, đẩy nhánh và mở merge request từ thẻ.
     </p>
 
     {#if platform === 'windows'}
@@ -43,13 +43,13 @@
       {@render cmdBlock('Arch', 'sudo pacman -S glab')}
     {/if}
 
-    {@render cmdBlock('Then sign in', 'glab auth login')}
+    {@render cmdBlock('Sau đó đăng nhập', 'glab auth login')}
 
     <div class="cn-after">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
       </svg>
-      After installing + signing in, restart Clauge so it picks up your updated <code class="cn-code">PATH</code>.
+      Sau khi cài và đăng nhập, hãy khởi động lại Clauge để cập nhật <code class="cn-code">PATH</code>.
     </div>
 
     <div class="cn-footer">
@@ -58,9 +58,9 @@
           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
           <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
         </svg>
-        glab docs
+        Tài liệu glab
       </button>
-      <button class="cn-btn-close" onclick={() => (show = false)}>Close</button>
+      <button class="cn-btn-close" onclick={() => (show = false)}>Đóng</button>
     </div>
   </div>
 </Modal>
@@ -73,8 +73,8 @@
       <button
         class="cn-copy"
         onclick={() => copy(cmd)}
-        title="Copy"
-        aria-label="Copy command"
+        title="Sao chép"
+        aria-label="Sao chép lệnh"
       >
         {#if copiedCmd === cmd}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

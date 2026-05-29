@@ -111,10 +111,10 @@
 
     <!-- Tabs -->
     <div class="hv-tabs">
-      <button class="hv-tab" class:active={activeTab === 'response'} onclick={() => activeTab = 'response'}>Response Body</button>
-      <button class="hv-tab" class:active={activeTab === 'response-headers'} onclick={() => activeTab = 'response-headers'}>Response Headers</button>
-      <button class="hv-tab" class:active={activeTab === 'request-body'} onclick={() => activeTab = 'request-body'}>Request Body</button>
-      <button class="hv-tab" class:active={activeTab === 'request-headers'} onclick={() => activeTab = 'request-headers'}>Request Headers</button>
+      <button class="hv-tab" class:active={activeTab === 'response'} onclick={() => activeTab = 'response'}>Body phản hồi</button>
+      <button class="hv-tab" class:active={activeTab === 'response-headers'} onclick={() => activeTab = 'response-headers'}>Headers phản hồi</button>
+      <button class="hv-tab" class:active={activeTab === 'request-body'} onclick={() => activeTab = 'request-body'}>Body yêu cầu</button>
+      <button class="hv-tab" class:active={activeTab === 'request-headers'} onclick={() => activeTab = 'request-headers'}>Headers yêu cầu</button>
     </div>
 
     <!-- Content -->
@@ -131,7 +131,7 @@
                the actual content. -->
           <div class="hv-empty-tab">&lt;{bodyTypeLabel(entry.responseHeaders)} · {formatSize(entry.responseSizeBytes)}&gt;</div>
         {:else}
-          <div class="hv-empty-tab">No response body</div>
+          <div class="hv-empty-tab">Không có body phản hồi</div>
         {/if}
       {:else if activeTab === 'response-headers'}
         <div class="hv-headers">
@@ -142,7 +142,7 @@
             </div>
           {/each}
           {#if parseHeaders(entry.responseHeaders).length === 0}
-            <div class="hv-empty-tab">No response headers</div>
+            <div class="hv-empty-tab">Không có headers phản hồi</div>
           {/if}
         </div>
       {:else if activeTab === 'request-body'}
@@ -156,7 +156,7 @@
                wasn't sent in the first place. -->
           <div class="hv-empty-tab">&lt;{bodyTypeLabel(entry.requestHeaders)}&gt;</div>
         {:else}
-          <div class="hv-empty-tab">No request body</div>
+          <div class="hv-empty-tab">Không có body yêu cầu</div>
         {/if}
       {:else if activeTab === 'request-headers'}
         <div class="hv-headers">
@@ -167,7 +167,7 @@
             </div>
           {/each}
           {#if parseHeaders(entry.requestHeaders).length === 0}
-            <div class="hv-empty-tab">No request headers</div>
+            <div class="hv-empty-tab">Không có headers yêu cầu</div>
           {/if}
         </div>
       {/if}

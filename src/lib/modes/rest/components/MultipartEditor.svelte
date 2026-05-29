@@ -109,7 +109,7 @@
         <input
           class="mp-input mp-key"
           type="text"
-          placeholder="Key"
+          placeholder="Khóa"
           value={field.key}
           oninput={(e) => updateField(i, 'key', (e.target as HTMLInputElement).value)}
         />
@@ -118,29 +118,29 @@
           value={field.type}
           onchange={(e) => changeType(i, (e.target as HTMLSelectElement).value as 'text' | 'file')}
         >
-          <option value="text">Text</option>
-          <option value="file">File</option>
+          <option value="text">Văn bản</option>
+          <option value="file">Tệp</option>
         </select>
         {#if field.type === 'file'}
           <button class="mp-file-btn" onclick={() => pickFile(i)}>
-            {field.fileName || 'Choose File'}
+            {field.fileName || 'Chọn tệp'}
           </button>
         {:else}
           <div class="mp-val-wrap">
             <EnvInput
               value={field.value}
-              placeholder="Value"
+              placeholder="Giá trị"
               onchange={(v) => updateField(i, 'value', v)}
             />
           </div>
         {/if}
-        <button class="mp-del" onclick={() => removeRow(i)} title="Remove">
+        <button class="mp-del" onclick={() => removeRow(i)} title="Xóa">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
     {/each}
   </div>
-  <button class="mp-add" onclick={addRow}>+ Add field</button>
+  <button class="mp-add" onclick={addRow}>+ Thêm trường</button>
 </div>
 
 <style>

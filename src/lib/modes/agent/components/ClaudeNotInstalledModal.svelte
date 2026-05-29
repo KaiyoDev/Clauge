@@ -25,28 +25,28 @@
   }
 </script>
 
-<Modal bind:show title="Claude Code Not Found" width="440px">
+<Modal bind:show title="Không tìm thấy Claude Code" width="440px">
   <div class="cn-body">
     <p class="cn-desc">
-      Claude Code wasn't found on your <code class="cn-code">PATH</code>.
-      Install it to start agent sessions.
+      Không tìm thấy Claude Code trong <code class="cn-code">PATH</code>.
+      Hãy cài đặt để bắt đầu phiên agent.
     </p>
 
     {#if platform === 'windows'}
       {@render cmdBlock('PowerShell', 'irm https://claude.ai/install.ps1 | iex')}
       {@render cmdBlock('WinGet', 'winget install Anthropic.ClaudeCode')}
     {:else if platform === 'mac'}
-      {@render cmdBlock('Install script', 'curl -fsSL https://claude.ai/install.sh | bash')}
+      {@render cmdBlock('Script cài đặt', 'curl -fsSL https://claude.ai/install.sh | bash')}
       {@render cmdBlock('Homebrew', 'brew install --cask claude-code')}
     {:else}
-      {@render cmdBlock('Install script', 'curl -fsSL https://claude.ai/install.sh | bash')}
+      {@render cmdBlock('Script cài đặt', 'curl -fsSL https://claude.ai/install.sh | bash')}
     {/if}
 
     <div class="cn-after">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
       </svg>
-      After installing, restart Clauge so it picks up your updated <code class="cn-code">PATH</code>.
+      Sau khi cài đặt, hãy khởi động lại Clauge để cập nhật <code class="cn-code">PATH</code>.
     </div>
 
     <div class="cn-footer">
@@ -55,9 +55,9 @@
           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
           <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
         </svg>
-        Setup docs
+        Tài liệu cài đặt
       </button>
-      <button class="cn-btn-close" onclick={() => (show = false)}>Close</button>
+      <button class="cn-btn-close" onclick={() => (show = false)}>Đóng</button>
     </div>
   </div>
 </Modal>
@@ -70,8 +70,8 @@
       <button
         class="cn-copy"
         onclick={() => copy(cmd)}
-        title="Copy"
-        aria-label="Copy command"
+        title="Sao chép"
+        aria-label="Sao chép lệnh"
       >
         {#if copiedCmd === cmd}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">

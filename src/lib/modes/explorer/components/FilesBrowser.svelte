@@ -423,19 +423,19 @@
 <div class="fb">
   <!-- Path / actions toolbar -->
   <div class="fb-toolbar">
-    <button class="fb-btn fb-icon-btn" onclick={goUp} disabled={cwd === '/' || cwd === ''} title="Up">
+    <button class="fb-btn fb-icon-btn" onclick={goUp} disabled={cwd === '/' || cwd === ''} title="Lên một cấp">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
         <path d="M12 19V5"/><path d="M5 12l7-7 7 7"/>
       </svg>
     </button>
-    <button class="fb-btn fb-icon-btn" onclick={refresh} title="Refresh">
+    <button class="fb-btn fb-icon-btn" onclick={refresh} title="Làm mới">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 12a9 9 0 0115.5-6.36L21 8"/><path d="M21 3v5h-5"/>
         <path d="M21 12a9 9 0 01-15.5 6.36L3 16"/><path d="M3 21v-5h5"/>
       </svg>
     </button>
     <div class="fb-crumbs">
-      <button class="fb-crumb fb-crumb-root" onclick={() => go('/')} title="Root">
+      <button class="fb-crumb fb-crumb-root" onclick={() => go('/')} title="Gốc">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10"/>
         </svg>
@@ -446,12 +446,12 @@
       {/each}
     </div>
     <div class="fb-spacer"></div>
-    <button class="fb-btn fb-btn-text" onclick={handleMkdir} title="Create new folder">
+    <button class="fb-btn fb-btn-text" onclick={handleMkdir} title="Tạo thư mục mới">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
         <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
         <line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>
       </svg>
-      <span>New folder</span>
+      <span>Thư mục mới</span>
     </button>
   </div>
 
@@ -592,11 +592,11 @@
 
 <ConfirmDialog
   bind:show={showDeleteConfirm}
-  title="Delete"
+  title="Xóa"
   message={pendingDeletePaths.length === 1
-    ? `Delete "${pendingDeletePaths[0]}"?`
-    : `Delete ${pendingDeletePaths.length} items?`}
-  confirmText="Delete"
+    ? `Xóa "${pendingDeletePaths[0]}"?`
+    : `Xóa ${pendingDeletePaths.length} mục?`}
+  confirmText="Xóa"
   onconfirm={confirmDelete}
 />
 

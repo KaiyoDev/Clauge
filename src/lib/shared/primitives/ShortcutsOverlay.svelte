@@ -11,17 +11,17 @@
   const mod = platformMod();
 
   const shortcuts = [
-    [`${mod}+1…9`, 'Switch to Nth tab'],
-    [`${mod}+Shift+1…8`, 'Switch mode (Agent · Workspace · REST · SQL · NoSQL · SSH · Explorer · History)'],
-    [`${mod}+T`, 'New tab (current mode)'],
-    [`${mod}+W`, 'Close active tab'],
-    [`${mod}+Enter`, 'Send request / Run query'],
-    [`${mod}+S`, 'Save current request / query'],
-    [`${mod}+B`, 'Toggle nav panel'],
-    [`${mod}+L`, 'Toggle AI panel · in Agent: shell panel'],
-    [`${mod}+/`, 'Show shortcuts'],
-    ['?', 'Show shortcuts (when not in input)'],
-    ['Escape', 'Close modal / overlay'],
+    [`${mod}+1…9`, 'Chuyển sang tab thứ N'],
+    [`${mod}+Shift+1…8`, 'Chuyển chế độ (Agent · Workspace · REST · SQL · NoSQL · SSH · Explorer · Lịch sử)'],
+    [`${mod}+T`, 'Tab mới (chế độ hiện tại)'],
+    [`${mod}+W`, 'Đóng tab đang dùng'],
+    [`${mod}+Enter`, 'Gửi yêu cầu / Chạy truy vấn'],
+    [`${mod}+S`, 'Lưu yêu cầu / truy vấn hiện tại'],
+    [`${mod}+B`, 'Bật/tắt bảng điều hướng'],
+    [`${mod}+L`, 'Bật/tắt bảng AI · ở Agent: bảng shell'],
+    [`${mod}+/`, 'Hiện phím tắt'],
+    ['?', 'Hiện phím tắt (khi không ở ô nhập)'],
+    ['Escape', 'Đóng modal / lớp phủ'],
   ];
 
   function close() {
@@ -40,7 +40,7 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="shortcuts-overlay" onclick={handleOverlayClick}>
     <div class="shortcuts-card">
-      <div class="shortcuts-title">Keyboard Shortcuts</div>
+      <div class="shortcuts-title">Phím tắt</div>
       <div class="shortcuts-grid">
         {#each shortcuts as [key, desc]}
           <div class="shortcuts-key">
@@ -49,7 +49,7 @@
           <div class="shortcuts-desc">{desc}</div>
         {/each}
       </div>
-      <div class="shortcuts-dismiss">Press Escape or click to dismiss</div>
+      <div class="shortcuts-dismiss">Nhấn Escape hoặc click để đóng</div>
     </div>
   </div>
 {/if}

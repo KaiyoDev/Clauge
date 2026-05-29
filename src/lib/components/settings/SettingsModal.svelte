@@ -260,7 +260,7 @@
             const { openLogFolder } = await import("$lib/commands/logs");
             await openLogFolder();
         } catch {
-            showToast("Failed to open log folder", "error");
+            showToast("Không thể mở thư mục log", "error");
         }
     }
 
@@ -332,9 +332,9 @@
             await clearRestHistory();
             clearAllChatMessages();
             await refreshHistorySizes();
-            showToast("History cleared", "success");
+            showToast("Đã xóa lịch sử", "success");
         } catch {
-            showToast("Failed to clear history", "error");
+            showToast("Không thể xóa lịch sử", "error");
         }
     }
 
@@ -396,7 +396,7 @@
                 // Persist the desire — drives auto-start on next app boot.
                 await setSetting("workspace_mcp_enabled", "true");
                 showToast(
-                    `MCP server running on :${mcpStatus.port}`,
+                    `MCP server đang chạy trên :${mcpStatus.port}`,
                     "success",
                 );
             } else {
@@ -404,10 +404,10 @@
                 mcpStatusStore.set(mcpStatus);
                 await workspaceMcpUnregister();
                 await setSetting("workspace_mcp_enabled", "false");
-                showToast("MCP server stopped", "success");
+                showToast("MCP server đã dừng", "success");
             }
         } catch (e) {
-            errorToast('MCP toggle failed', e);
+            errorToast('Chuyển đổi MCP thất bại', e);
             await refreshMcpStatus();
         }
     }
@@ -423,21 +423,21 @@
             await workspaceMcpNewToken(mcpStatus.port ?? mcpPort);
             if (mcpStatus.running) {
                 showToast(
-                    "Token rotated. Restart the server (toggle off + on) for the new token to take effect.",
+                    "Đã xoay token. Khởi động lại server (tắt + bật) để token mới có hiệu lực.",
                     "success",
                 );
             } else {
-                showToast("Token rotated", "success");
+                showToast("Đã xoay token", "success");
             }
         } catch (e) {
-            errorToast('Rotate failed', e);
+            errorToast('Xoay token thất bại', e);
         }
     }
 
     async function handleCopyMcpToken() {
         try {
             await navigator.clipboard.writeText(mcpToken);
-            showToast("Token copied", "success");
+            showToast("Đã sao chép token", "success");
         } catch {
             /* ignore */
         }
@@ -668,17 +668,17 @@
     const ACCENT_COLORS = ACCENT_PALETTE;
 
     const THEME_DESCRIPTIONS: Record<string, string> = {
-        "dark-glass": "Translucent with native blur",
-        "dark-solid": "Opaque dark with purple tints",
-        midnight: "Pure black, zero distraction",
-        "rose-pine-dawn": "Warm cream light — sister to Moon",
+        "dark-glass": "Trong suốt với hiệu ứng làm mờ",
+        "dark-solid": "Tối đặc với sắc tím nhẹ",
+        midnight: "Đen tuyền, không phân tâm",
+        "rose-pine-dawn": "Kem ấm sáng — chị em với Moon",
         atelier:
-            "Blush + botanical wallpaper — pixel critters wander the footer",
-        hearth: "Warm charcoal with rising embers — animated firelight",
-        petal: "Plum twilight with falling cherry petals",
-        celeste: "Cosmic violet-black with twinkling stars",
-        nord: "Arctic blue-gray palette",
-        light: "Warm off-white, easy on the eyes",
+            "Hồng phấn + hình nền thực vật — sinh vật pixel lang thang dưới chân",
+        hearth: "Than ấm với than hồng bay lên — ánh lửa động",
+        petal: "Hoàng hôn mận với cánh hoa anh đào rơi",
+        celeste: "Tím vũ trụ với những vì sao lấp lánh",
+        nord: "Bảng màu xanh xám Bắc Cực",
+        light: "Trắng ngà ấm, dễ chịu cho mắt",
     };
 
     // Clear any previously saved zoom to prevent cursor issues
@@ -701,34 +701,34 @@
         {
             kind: "tab",
             key: "account",
-            label: "Account",
+            label: "Tài khoản",
             icon: '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>',
         },
         {
             kind: "tab",
             key: "general",
-            label: "General",
+            label: "Chung",
             icon: '<path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/>',
         },
         {
             kind: "tab",
             key: "appearance",
-            label: "Appearance",
+            label: "Giao diện",
             icon: '<path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>',
         },
         {
             kind: "tab",
             key: "shortcuts",
-            label: "Shortcuts",
+            label: "Phím tắt",
             icon: '<path d="M18 3a3 3 0 00-3 3v12a3 3 0 003 3 3 3 0 003-3 3 3 0 00-3-3H6a3 3 0 00-3 3 3 3 0 003 3 3 3 0 003-3V6a3 3 0 00-3-3 3 3 0 00-3 3 3 3 0 003 3h12a3 3 0 003-3 3 3 0 00-3-3z"/>',
         },
         {
             kind: "tab",
             key: "ai",
-            label: "AI Assistance",
+            label: "Trợ lý AI",
             icon: '<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
         },
-        { kind: "header", label: "Modes" },
+        { kind: "header", label: "Chế độ" },
         // Order + glyphs MUST match the main Sidebar (Agent, REST, ...).
         {
             kind: "tab",
@@ -773,7 +773,7 @@
         {
             kind: "tab",
             key: "about",
-            label: "About",
+            label: "Giới thiệu",
             icon: '<path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>',
         },
     ];
@@ -782,25 +782,25 @@
     // Fullscreen + Minimize differ by OS so they're branched.
     const m = mod();
     const SHORTCUTS: { desc: string; keys: string[] }[] = [
-        { desc: "Switch to Nth tab", keys: [m, "1…9"] },
+        { desc: "Chuyển sang tab thứ N", keys: [m, "1…9"] },
         {
-            desc: "Switch mode (Agent · Workspace · REST · SQL · NoSQL · SSH · Explorer · History)",
+            desc: "Chuyển chế độ (Agent · Workspace · REST · SQL · NoSQL · SSH · Explorer · History)",
             keys: [m, "Shift", "1…8"],
         },
-        { desc: "New tab (current mode)", keys: [m, "T"] },
-        { desc: "Close active tab", keys: [m, "W"] },
-        { desc: "Send request / Run query", keys: [m, "Enter"] },
-        { desc: "Save current request / query", keys: [m, "S"] },
-        { desc: "Toggle nav sidebar", keys: [m, "B"] },
-        { desc: "Toggle AI panel · in Agent: shell panel", keys: [m, "L"] },
-        { desc: "Show shortcuts overlay", keys: [m, "/"] },
-        { desc: "Show shortcuts overlay (not in input)", keys: ["?"] },
-        { desc: "Close modal / overlay", keys: ["Esc"] },
+        { desc: "Tab mới (chế độ hiện tại)", keys: [m, "T"] },
+        { desc: "Đóng tab đang hoạt động", keys: [m, "W"] },
+        { desc: "Gửi yêu cầu / Chạy truy vấn", keys: [m, "Enter"] },
+        { desc: "Lưu yêu cầu / truy vấn hiện tại", keys: [m, "S"] },
+        { desc: "Bật/tắt thanh điều hướng", keys: [m, "B"] },
+        { desc: "Bật/tắt panel AI · trong Agent: panel shell", keys: [m, "L"] },
+        { desc: "Hiển thị overlay phím tắt", keys: [m, "/"] },
+        { desc: "Hiển thị overlay phím tắt (ngoài input)", keys: ["?"] },
+        { desc: "Đóng modal / overlay", keys: ["Esc"] },
         {
-            desc: "Toggle fullscreen",
+            desc: "Bật/tắt toàn màn hình",
             keys: isMac() ? ["Cmd", "Ctrl", "F"] : ["F11"],
         },
-        ...(isMac() ? [{ desc: "Minimize window", keys: ["Cmd", "M"] }] : []),
+        ...(isMac() ? [{ desc: "Thu nhỏ cửa sổ", keys: ["Cmd", "M"] }] : []),
     ];
 
     async function handleSettingChange(key: string, value: string) {
@@ -961,7 +961,7 @@
     async function handleSaveAiKey() {
         const key = aiApiKey.trim();
         if (!key) {
-            showToast("Enter an API key first", "error");
+            showToast("Vui lòng nhập API Key trước", "error");
             return;
         }
         aiTestStatus = "testing";
@@ -976,12 +976,12 @@
             if (aiProvider === "claude") {
                 // Legacy key no longer used — per-provider keys only
             }
-            showToast("API key verified and saved", "success");
+            showToast("Đã xác minh và lưu API Key", "success");
         } catch (e: any) {
             aiTestStatus = "error";
             aiTestMessage =
-                typeof e === "string" ? e : e.message || "Test failed";
-            showToast("Invalid API key — not saved", "error");
+                typeof e === "string" ? e : e.message || "Kiểm tra thất bại";
+            showToast("API Key không hợp lệ — chưa lưu", "error");
         }
     }
 
@@ -1003,7 +1003,7 @@
         aiApiKey = "";
         aiTestStatus = "idle";
         aiTestMessage = "";
-        showToast("API key removed", "success");
+        showToast("Đã xóa API Key", "success");
     }
 
     async function handleResetUsage() {
@@ -1011,9 +1011,9 @@
             await resetAiUsage();
             aiUsageStats = [];
             showResetConfirm = false;
-            showToast("Usage stats reset", "success");
+            showToast("Đã đặt lại thống kê sử dụng", "success");
         } catch {
-            showToast("Failed to reset stats", "error");
+            showToast("Không thể đặt lại thống kê", "error");
         }
     }
 
@@ -1101,10 +1101,10 @@
     let agentUsageDays = $state(7);
 
     const REFRESH_OPTIONS = [
-        { value: 5, label: "5 minutes" },
-        { value: 15, label: "15 minutes" },
-        { value: 30, label: "30 minutes" },
-        { value: 60, label: "1 hour" },
+        { value: 5, label: "5 phút" },
+        { value: 15, label: "15 phút" },
+        { value: 30, label: "30 phút" },
+        { value: 60, label: "1 giờ" },
     ];
 
     function agentLiveColor(pct: number): string {
@@ -1130,7 +1130,7 @@
     async function handleSaveAgentKey() {
         const key = agentKeyInput.trim();
         if (!key) {
-            showToast("Enter a session key first", "error");
+            showToast("Vui lòng nhập session key trước", "error");
             return;
         }
         agentKeyTestStatus = "testing";
@@ -1138,16 +1138,16 @@
         try {
             await agentFetchUsageLimits(key);
             agentKeyTestStatus = "success";
-            agentKeyTestMessage = "Session key verified";
+            agentKeyTestMessage = "Đã xác minh session key";
             await handleSettingChange("agent_session_key", key);
-            showToast("Session key verified and saved", "success");
+            showToast("Đã xác minh và lưu session key", "success");
         } catch (e: any) {
             agentKeyTestStatus = "error";
             agentKeyTestMessage =
                 typeof e === "string"
                     ? e
-                    : e.message || "Invalid or expired session key";
-            showToast("Invalid session key — not saved", "error");
+                    : e.message || "Session key không hợp lệ hoặc đã hết hạn";
+            showToast("Session key không hợp lệ — chưa lưu", "error");
         }
     }
 
@@ -1156,7 +1156,7 @@
         agentKeyInput = "";
         agentKeyTestStatus = "idle";
         agentKeyTestMessage = "";
-        showToast("Session key removed", "success");
+        showToast("Đã xóa session key", "success");
     }
 
     async function handleSaveCodexToken() {
@@ -1167,16 +1167,16 @@
         try {
             await agentFetchCodexUsageLimits(token);
             codexTokenTestStatus = "success";
-            codexTokenTestMessage = "Codex token verified";
+            codexTokenTestMessage = "Đã xác minh Codex token";
             await handleSettingChange("agent_codex_access_token", token);
-            showToast("Codex token verified and saved", "success");
+            showToast("Đã xác minh và lưu Codex token", "success");
         } catch (e: any) {
             codexTokenTestStatus = "error";
             codexTokenTestMessage =
                 typeof e === "string"
                     ? e
-                    : e.message || "Invalid or expired Codex token";
-            showToast("Invalid Codex token — not saved", "error");
+                    : e.message || "Codex token không hợp lệ hoặc đã hết hạn";
+            showToast("Codex token không hợp lệ — chưa lưu", "error");
         }
     }
 
@@ -1185,7 +1185,7 @@
         codexTokenInput = "";
         codexTokenTestStatus = "idle";
         codexTokenTestMessage = "";
-        showToast("Codex access token removed", "success");
+        showToast("Đã xóa Codex access token", "success");
     }
 
     /** Auto-commit on blur / Enter for the Claude session-key field —
@@ -1293,9 +1293,9 @@
             installedPlugins = installedPlugins.map((p) =>
                 p.name === name ? { ...p, enabled } : p,
             );
-            showToast(`Plugin ${enabled ? "enabled" : "disabled"}`, "success");
+            showToast(`Plugin đã ${enabled ? "bật" : "tắt"}`, "success");
         } catch {
-            showToast("Failed to toggle plugin", "error");
+            showToast("Không thể chuyển trạng thái plugin", "error");
         }
     }
 
@@ -1306,9 +1306,9 @@
             marketplacePlugins = marketplacePlugins.map((p) =>
                 p.name === name ? { ...p, installed: false } : p,
             );
-            showToast("Plugin uninstalled", "success");
+            showToast("Đã gỡ cài đặt plugin", "success");
         } catch {
-            showToast("Failed to uninstall plugin", "error");
+            showToast("Không thể gỡ cài đặt plugin", "error");
         }
     }
 
@@ -1319,9 +1319,9 @@
                 p.name === name ? { ...p, installed: true } : p,
             );
             await loadAgentPlugins();
-            showToast("Plugin installed", "success");
+            showToast("Đã cài đặt plugin", "success");
         } catch {
-            showToast("Failed to install plugin", "error");
+            showToast("Không thể cài đặt plugin", "error");
         }
     }
 
@@ -1363,16 +1363,16 @@
         const name = editContextName.trim();
         const content = editContextContent.trim();
         if (!name || !content) {
-            showToast("Name and content are required", "error");
+            showToast("Tên và nội dung là bắt buộc", "error");
             return;
         }
         try {
             await agentSaveContext({ id: editingContext?.id, name, content });
             await loadAgentContexts();
             cancelEditContext();
-            showToast("Context saved", "success");
+            showToast("Đã lưu bối cảnh", "success");
         } catch {
-            showToast("Failed to save context", "error");
+            showToast("Không thể lưu bối cảnh", "error");
         }
     }
 
@@ -1382,9 +1382,9 @@
             agentContexts = agentContexts.filter((c) => c.id !== id);
             deleteConfirmId = null;
             if (editingContext?.id === id) cancelEditContext();
-            showToast("Context deleted", "success");
+            showToast("Đã xóa bối cảnh", "success");
         } catch {
-            showToast("Failed to delete context", "error");
+            showToast("Không thể xóa bối cảnh", "error");
         }
     }
 
@@ -1422,7 +1422,7 @@
 </script>
 
 {#if show}
-    <div class="stg-pane glass-surface" role="region" aria-label="Settings">
+    <div class="stg-pane glass-surface" role="region" aria-label="Cài đặt">
         <div class="stg-layout">
             <!-- Tab sidebar -->
             <div class="stg-tabs">
@@ -1487,15 +1487,15 @@
                                 <div class="stg-card-titles">
                                     <h3 class="stg-card-title">Proxy</h3>
                                     <p class="stg-card-sub">
-                                        Applies system-wide. Leave blank to
-                                        connect directly.
+                                        Áp dụng cho toàn hệ thống. Để trống để
+                                        kết nối trực tiếp.
                                     </p>
                                 </div>
                             </header>
                             <div class="stg-card-body">
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Proxy URL</label
+                                        >URL Proxy</label
                                     >
                                     <input
                                         class="stg-input stg-card-input-lg"
@@ -1511,7 +1511,7 @@
                                 </div>
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Proxy Authentication</label
+                                        >Xác thực Proxy</label
                                     >
                                     <label class="stg-toggle">
                                         <input
@@ -1531,13 +1531,13 @@
                                 {#if proxyAuth}
                                     <div class="stg-card-row">
                                         <label class="stg-card-row-label"
-                                            >Username</label
+                                            >Tên đăng nhập</label
                                         >
                                         <input
                                             class="stg-input"
                                             type="text"
                                             value={proxyUsername}
-                                            placeholder="username"
+                                            placeholder="tên đăng nhập"
                                             onchange={(e) =>
                                                 handleSettingChange(
                                                     "proxy_username",
@@ -1547,13 +1547,13 @@
                                     </div>
                                     <div class="stg-card-row">
                                         <label class="stg-card-row-label"
-                                            >Password</label
+                                            >Mật khẩu</label
                                         >
                                         <input
                                             class="stg-input"
                                             type="password"
                                             value={proxyPassword}
-                                            placeholder="password"
+                                            placeholder="mật khẩu"
                                             onchange={(e) =>
                                                 handleSettingChange(
                                                     "proxy_password",
@@ -1597,26 +1597,26 @@
                                     </svg>
                                 </span>
                                 <div class="stg-card-titles">
-                                    <h3 class="stg-card-title">Logs</h3>
+                                    <h3 class="stg-card-title">Log</h3>
                                     <p class="stg-card-sub">
-                                        Per-hour log files organized by day.
-                                        Logs older than 30 days are removed
-                                        automatically.
+                                        Tệp log theo từng giờ, sắp xếp theo
+                                        ngày. Log cũ hơn 30 ngày sẽ tự động
+                                        bị xóa.
                                     </p>
                                 </div>
                             </header>
                             <div class="stg-card-body">
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Log Folder</label
+                                        >Thư mục log</label
                                     >
                                     <div class="log-path-row">
                                         <span class="log-path">{logDir}</span>
                                         <button
                                             class="log-open-btn"
                                             onclick={handleOpenLogFolder}
-                                            title="Open in file manager"
-                                            aria-label="Open log folder"
+                                            title="Mở trong trình quản lý tệp"
+                                            aria-label="Mở thư mục log"
                                         >
                                             <svg
                                                 width="14"
@@ -1931,7 +1931,7 @@
                                             class="stg-card-mini-btn"
                                             onclick={handleRotateMcpToken}
                                             disabled={mcpStatus.running}
-                                            title="Generate new token"
+                                            title="Tạo token mới"
                                             >Rotate</button
                                         >
                                     </div>
@@ -2918,14 +2918,14 @@
                                                         </span>
                                                         <span
                                                             class="cfg-prov-key"
-                                                            title="Key ends in {tail}"
+                                                            title="Khóa kết thúc bằng {tail}"
                                                         >
                                                             ••••••••{tail}
                                                         </span>
                                                     </div>
                                                     <button
                                                         class="cfg-prov-del"
-                                                        title="Remove saved key for {p.providerLabel}"
+                                                        title="Xóa khóa đã lưu cho {p.providerLabel}"
                                                         onclick={(e) => {
                                                             e.stopPropagation();
                                                             handleSettingChange(
@@ -4161,7 +4161,7 @@
                                                 class="stg-input"
                                                 type="text"
                                                 style="width: 100%;"
-                                                placeholder="Search plugins..."
+                                                placeholder="Tìm plugin..."
                                                 bind:value={pluginSearchQuery}
                                             />
                                         </div>
@@ -4240,7 +4240,7 @@
                                                 class="stg-input"
                                                 type="text"
                                                 style="width: 100%;"
-                                                placeholder="Context name..."
+                                                placeholder="Tên bối cảnh..."
                                                 bind:value={editContextName}
                                             />
                                         </div>
@@ -4253,7 +4253,7 @@
                                             >
                                             <textarea
                                                 class="agent-ctx-textarea"
-                                                placeholder="Context content..."
+                                                placeholder="Nội dung bối cảnh..."
                                                 bind:value={editContextContent}
                                             ></textarea>
                                         </div>
@@ -5392,7 +5392,7 @@
                                         href="https://github.com/ansxuman/Clauge/issues/new/choose"
                                         target="_blank"
                                         rel="noopener"
-                                        title="Report an Issue"
+                                        title="Báo lỗi"
                                     >
                                         <svg viewBox="0 0 24 24"
                                             ><circle

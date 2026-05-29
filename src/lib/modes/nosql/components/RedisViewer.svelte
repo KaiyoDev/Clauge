@@ -107,7 +107,7 @@
   async function handleDeleteKey(key: string) {
     try {
       await redisDeleteKey(connectionId, key);
-      showToast(`Key "${key}" deleted`, 'success');
+      showToast(`Đã xóa khóa "${key}"`, 'success');
       keys = keys.filter((k) => k.key !== key);
       if (selectedKey?.key === key) selectedKey = null;
     } catch (e: any) {
@@ -119,7 +119,7 @@
     try {
       const ttl = newKeyTtl > 0 ? newKeyTtl : undefined;
       await redisSetKey(connectionId, newKeyName, newKeyValue, ttl);
-      showToast(`Key "${newKeyName}" set`, 'success');
+      showToast(`Đã đặt khóa "${newKeyName}"`, 'success');
       showSetKey = false;
       newKeyName = '';
       newKeyValue = '';
@@ -135,9 +135,9 @@
     try {
       const val = typeof selectedKey.value === 'string' ? selectedKey.value : JSON.stringify(selectedKey.value, null, 2);
       await writeText(val);
-      showToast('Value copied', 'success');
+      showToast('Đã sao chép giá trị', 'success');
     } catch {
-      showToast('Failed to copy', 'error');
+      showToast('Sao chép thất bại', 'error');
     }
   }
 
@@ -157,7 +157,7 @@
     if (verb === 'exit' || verb === 'quit') {
       consoleHistory = [...consoleHistory, {
         command: cmd,
-        result: '(this is a console pane, not a session — close the tab to exit)',
+        result: '(đây là pane console, không phải phiên — đóng tab để thoát)',
         isError: false,
       }];
       requestAnimationFrame(() => { if (consoleEl) consoleEl.scrollTop = consoleEl.scrollHeight; });
@@ -166,7 +166,7 @@
     if (verb === 'help') {
       consoleHistory = [...consoleHistory, {
         command: cmd,
-        result: 'Console builtins: clear, cls, exit, quit, help\nEverything else is sent to Redis. Try: PING, KEYS *, INFO server',
+        result: 'Lệnh có sẵn: clear, cls, exit, quit, help\nMọi lệnh khác sẽ gửi tới Redis. Thử: PING, KEYS *, INFO server',
         isError: false,
       }];
       requestAnimationFrame(() => { if (consoleEl) consoleEl.scrollTop = consoleEl.scrollHeight; });
@@ -210,7 +210,7 @@
     const raw = typeof e === 'string' ? e : (e?.message ?? String(e));
     const m = raw.match(/unknown command\s+['"]?([^'",]+)['"]?/i);
     if (m) {
-      return `(error) ERR unknown command '${m[1].toUpperCase()}'. Type 'help' for console builtins.`;
+      return `(error) ERR unknown command '${m[1].toUpperCase()}'. Gõ 'help' để xem lệnh có sẵn.`;
     }
     // "An error was signalled by the server - ResponseError: <real message>"
     const respErr = raw.match(/ResponseError:\s*(.+?)(?:,\s*with args.*)?$/i);
@@ -244,8 +244,8 @@
   }
 
   function formatTtl(ttl: number): string {
-    if (ttl === -1) return 'No expiry';
-    if (ttl === -2) return 'Expired';
+    if (ttl === -1) return 'Không hết hạn';
+    if (ttl === -2) return 'Đã hết hạn';
     if (ttl < 60) return `${ttl}s`;
     if (ttl < 3600) return `${Math.floor(ttl / 60)}m ${ttl % 60}s`;
     return `${Math.floor(ttl / 3600)}h ${Math.floor((ttl % 3600) / 60)}m`;
@@ -277,7 +277,7 @@
         class="rv-search-input"
         type="text"
         bind:value={searchPattern}
-        placeholder="Pattern (e.g. user:*)"
+        placeholder="Pattern (vd. user:*)"
         spellcheck="false"
         onkeydown={(e) => { if (e.key === 'Enter') loadKeys(); }}
       />

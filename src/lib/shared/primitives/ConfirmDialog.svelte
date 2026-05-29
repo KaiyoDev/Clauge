@@ -25,7 +25,7 @@
     show = $bindable(),
     title,
     message,
-    confirmText = 'Delete',
+    confirmText = 'Xóa',
     confirmColor = 'var(--err)',
     discardText,
     extra,
@@ -99,7 +99,7 @@
         {/if}
       </div>
       <div class="q-confirm-actions">
-        <button class="q-confirm-cancel" onclick={cancel}>Cancel</button>
+        <button class="q-confirm-cancel" onclick={cancel}>Hủy</button>
         {#if discardText}
           <button class="q-confirm-cancel" onclick={discard}>{discardText}</button>
         {/if}

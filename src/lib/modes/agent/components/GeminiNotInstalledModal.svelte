@@ -30,11 +30,11 @@
   }
 </script>
 
-<Modal bind:show title="Gemini CLI Not Found" width="440px">
+<Modal bind:show title="Không tìm thấy Gemini CLI" width="440px">
   <div class="cn-body">
     <p class="cn-desc">
-      Gemini CLI wasn't found on your <code class="cn-code">PATH</code>.
-      Install it to start Gemini sessions.
+      Không tìm thấy Gemini CLI trong <code class="cn-code">PATH</code>.
+      Hãy cài đặt để bắt đầu phiên Gemini.
     </p>
 
     {#if platform === 'mac'}
@@ -50,7 +50,7 @@
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
       </svg>
-      After installing, run <code class="cn-code">gemini</code> once to sign in with your Google account and trust this workspace, then restart Clauge so it picks up your updated <code class="cn-code">PATH</code>.
+      Sau khi cài đặt, hãy chạy <code class="cn-code">gemini</code> một lần để đăng nhập tài khoản Google và tin tưởng workspace, rồi khởi động lại Clauge để cập nhật <code class="cn-code">PATH</code>.
     </div>
 
     <div class="cn-footer">
@@ -59,9 +59,9 @@
           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
           <polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
         </svg>
-        Gemini docs
+        Tài liệu Gemini
       </button>
-      <button class="cn-btn-close" onclick={() => (show = false)}>Close</button>
+      <button class="cn-btn-close" onclick={() => (show = false)}>Đóng</button>
     </div>
   </div>
 </Modal>
@@ -71,7 +71,7 @@
     <span class="cn-label">{label}</span>
     <div class="cn-cmd-block">
       <code>{cmd}</code>
-      <button class="cn-copy" onclick={() => copy(cmd)} title="Copy" aria-label="Copy command">
+      <button class="cn-copy" onclick={() => copy(cmd)} title="Sao chép" aria-label="Sao chép lệnh">
         {#if copiedCmd === cmd}
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         {:else}

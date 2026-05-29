@@ -5,7 +5,7 @@
 </script>
 
 {#if isPro}
-  <span class="pill pill-pro" title="Clauge Pro active">
+  <span class="pill pill-pro" title="Clauge Pro đang hoạt động">
     <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6L12 2z"/>
     </svg>
@@ -15,11 +15,11 @@
   <button
     class="pill pill-free"
     onclick={(e) => { e.stopPropagation(); upgradeModalOpen.set(true); }}
-    title="Upgrade to Clauge Pro"
+    title="Nâng cấp lên Clauge Pro"
   >
     <span class="lbl-free">FREE</span>
     <span class="sep">·</span>
-    <span class="lbl-cta">Get Pro</span>
+    <span class="lbl-cta">Nâng cấp Pro</span>
     <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
       <path d="M5 12h14"/><path d="M12 5l7 7-7 7"/>
     </svg>

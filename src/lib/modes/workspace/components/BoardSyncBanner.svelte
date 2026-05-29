@@ -97,23 +97,23 @@
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/></svg>
         </span>
         <span class="sb-text">
-          <strong>{state.tool}</strong> isn't installed. {#if state.tool === 'gh'}Install GitHub CLI{:else}Install GitLab CLI{/if} to sync issues.
+          <strong>{state.tool}</strong> chưa được cài. {#if state.tool === 'gh'}Cài GitHub CLI{:else}Cài GitLab CLI{/if} để đồng bộ issue.
         </span>
-        <a class="sb-btn primary" href={state.installUrl} target="_blank" rel="noopener">Install {state.tool}</a>
-        <button class="sb-btn ghost" onclick={() => ondismiss?.()}>Skip</button>
+        <a class="sb-btn primary" href={state.installUrl} target="_blank" rel="noopener">Cài {state.tool}</a>
+        <button class="sb-btn ghost" onclick={() => ondismiss?.()}>Bỏ qua</button>
 
       {:else if state.kind === 'notAuthenticated'}
         <span class="sb-icon sb-icon-warn">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
         </span>
         <span class="sb-text">
-          <strong>{state.tool}</strong> isn't signed in. Run this in a terminal, then retry:
-          <button class="sb-cmd" onclick={() => copyToClipboard(state.loginCommand)} title="Copy">
+          <strong>{state.tool}</strong> chưa đăng nhập. Chạy lệnh này trong terminal rồi thử lại:
+          <button class="sb-cmd" onclick={() => copyToClipboard(state.loginCommand)} title="Sao chép">
             <span class="sb-mono">{state.loginCommand}</span>
             <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
           </button>
         </span>
-        <button class="sb-btn primary" onclick={() => onsync?.()} disabled={busy}>Retry</button>
+        <button class="sb-btn primary" onclick={() => onsync?.()} disabled={busy}>Thử lại</button>
 
       {:else if state.kind === 'noAccess'}
         <!-- Most common multi-account confusion: gh is signed in to a
@@ -123,37 +123,37 @@
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
         </span>
         <span class="sb-text">
-          <strong>{state.tool}</strong> is signed in to an account that can't access <span class="sb-mono">{state.repo}</span>. Switch accounts:
-          <button class="sb-cmd" onclick={() => copyToClipboard(state.tool === 'gh' ? 'gh auth switch' : 'glab auth status')} title="Copy">
+          <strong>{state.tool}</strong> đang đăng nhập vào tài khoản không thể truy cập <span class="sb-mono">{state.repo}</span>. Đổi tài khoản:
+          <button class="sb-cmd" onclick={() => copyToClipboard(state.tool === 'gh' ? 'gh auth switch' : 'glab auth status')} title="Sao chép">
             <span class="sb-mono">{state.tool === 'gh' ? 'gh auth switch' : 'glab auth status'}</span>
             <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
           </button>
-          or sign in with the right one:
-          <button class="sb-cmd" onclick={() => copyToClipboard(state.loginCommand)} title="Copy">
+          hoặc đăng nhập tài khoản đúng:
+          <button class="sb-cmd" onclick={() => copyToClipboard(state.loginCommand)} title="Sao chép">
             <span class="sb-mono">{state.loginCommand}</span>
             <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
           </button>
         </span>
-        <button class="sb-btn primary" onclick={() => onsync?.()} disabled={busy}>Retry</button>
+        <button class="sb-btn primary" onclick={() => onsync?.()} disabled={busy}>Thử lại</button>
 
       {:else if state.kind === 'networkError'}
         <span class="sb-icon sb-icon-warn">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0114.08 0M1.42 9a16 16 0 0121.16 0M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
         </span>
-        <span class="sb-text" title={state.message}>Network error: {state.message}. Retry in a moment.</span>
-        <button class="sb-btn primary" onclick={() => onsync?.()} disabled={busy}>Retry</button>
+        <span class="sb-text" title={state.message}>Lỗi mạng: {state.message}. Thử lại sau.</span>
+        <button class="sb-btn primary" onclick={() => onsync?.()} disabled={busy}>Thử lại</button>
 
       {:else if state.kind === 'apiError'}
         <span class="sb-icon sb-icon-warn">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         </span>
-        <span class="sb-text" title={state.message}>Sync failed: {state.message.slice(0, 120)}{state.message.length > 120 ? '…' : ''}</span>
-        <button class="sb-btn primary" onclick={() => onsync?.()} disabled={busy}>Retry</button>
+        <span class="sb-text" title={state.message}>Đồng bộ thất bại: {state.message.slice(0, 120)}{state.message.length > 120 ? '…' : ''}</span>
+        <button class="sb-btn primary" onclick={() => onsync?.()} disabled={busy}>Thử lại</button>
       {/if}
     </div>
 
     {#if state && state.kind !== 'success' && state.kind !== 'apiError'}
-      <button class="sb-x" onclick={() => ondismiss?.()} title="Dismiss">×</button>
+      <button class="sb-x" onclick={() => ondismiss?.()} title="Đóng">×</button>
     {/if}
   </div>
 {/if}

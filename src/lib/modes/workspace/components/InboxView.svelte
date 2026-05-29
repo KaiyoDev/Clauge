@@ -64,23 +64,23 @@
       <span class="ib-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
       </span>
-      <h1 class="ib-title">Inbox</h1>
-      <span class="ib-count">{items.length} item{items.length === 1 ? '' : 's'}</span>
-      <button class="ib-refresh" onclick={refresh} disabled={loading} title="Refresh">
+      <h1 class="ib-title">Hộp thư</h1>
+      <span class="ib-count">{items.length} mục</span>
+      <button class="ib-refresh" onclick={refresh} disabled={loading} title="Làm mới">
         <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class:spinning={loading}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
       </button>
     </div>
-    <p class="ib-sub">Items recently created or updated by an agent. Click to open.</p>
+    <p class="ib-sub">Các mục được agent tạo hoặc cập nhật gần đây. Nhấn để mở.</p>
   </header>
 
   <div class="ib-body">
     {#if loading && items.length === 0}
-      <div class="ib-empty">Loading…</div>
+      <div class="ib-empty">Đang tải…</div>
     {:else if items.length === 0}
       <div class="ib-empty-state">
         <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="var(--t4)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
-        <h3>Nothing new</h3>
-        <p>When an agent edits a note or card, it'll show up here.</p>
+        <h3>Không có gì mới</h3>
+        <p>Khi agent chỉnh sửa ghi chú hoặc thẻ, chúng sẽ xuất hiện ở đây.</p>
       </div>
     {:else}
       <div class="ib-list">

@@ -69,7 +69,7 @@
     clearTimeout(cap.timeoutId);
     entry.capture = null;
     const cleaned = stripAnsi(cap.buffer).trim();
-    const note = reason === 'timeout' ? '\n[NOTE] Capture timed out after 15s; output may be incomplete.' : '';
+    const note = reason === 'timeout' ? '\n[NOTE] Bắt output bị timeout sau 15s; output có thể chưa đầy đủ.' : '';
     resolveSshCapture(cap.requestId, cleaned + note);
   }
 
@@ -363,7 +363,7 @@
         }
         markExited(entry.tabKey);
         try {
-          entry.term.write('\r\n\x1b[33m[connection closed]\x1b[0m\r\n');
+          entry.term.write('\r\n\x1b[33m[đã đóng kết nối]\x1b[0m\r\n');
         } catch { /* ignore */ }
         return;
       }
@@ -459,7 +459,7 @@
       const tab = allTabs.find((t) => t.mode === 'ssh' && t.key === entry.tabKey);
       if (tab) closeTab(tab.id);
       activeSshProfile.set(null);
-      showToast(isTimeout ? `Connection to ${profile.host} timed out` : `Failed to connect: ${msg}`, 'error');
+      showToast(isTimeout ? `Kết nối tới ${profile.host} bị timeout` : `Kết nối thất bại: ${msg}`, 'error');
     }
   }
 
@@ -560,7 +560,7 @@
     if (tab) closeTab(tab.id);
     currentTabKey = null;
     activeSshProfile.set(null);
-    showToast('Connection cancelled', 'info');
+    showToast('Đã hủy kết nối', 'info');
   }
 
   async function reconnectActive() {
@@ -662,7 +662,7 @@
     const cmd = (e as CustomEvent<string>).detail;
     if (!cmd || typeof cmd !== 'string') return;
     if (!activeEntry?.terminalId) {
-      showToast('No active SSH terminal', 'info');
+      showToast('Không có terminal SSH đang hoạt động', 'info');
       return;
     }
     // Insert command at cursor without trailing newline. User presses Enter
@@ -670,7 +670,7 @@
     // calling execute_shell (e.g. for interactive commands the system prompt
     // says shouldn't be auto-run).
     sshWriteToTerminal(activeEntry.terminalId, cmd).catch(() => {
-      showToast('Failed to write to terminal', 'error');
+      showToast('Không ghi được vào terminal', 'error');
     });
     try {
       activeEntry.term.focus();
@@ -734,7 +734,7 @@
       }
     }
     if (!target || !target.terminalId) {
-      resolveSshCapture(requestId, '[ERROR] No live SSH terminal for the requested profile.');
+      resolveSshCapture(requestId, '[ERROR] Không có terminal SSH nào đang chạy cho profile này.');
       return;
     }
     // Already capturing for another tool call — reject the older one.
@@ -754,7 +754,7 @@
     // Write the command followed by Enter.
     sshWriteToTerminal(target.terminalId, command + '\r').catch(() => {
       finishCapture(target!, 'cleanup');
-      resolveSshCapture(requestId, '[ERROR] Failed to write command to SSH terminal.');
+      resolveSshCapture(requestId, '[ERROR] Không ghi được lệnh vào terminal SSH.');
     });
   }
 
@@ -794,7 +794,7 @@
     window.removeEventListener(SSH_EVENT.DUPLICATE_SESSION, handleDuplicateSession);
     window.removeEventListener(SSH_EVENT.INSERT_COMMAND, handleInsertCommand);
     window.removeEventListener(SSH_EVENT.EXECUTE_CAPTURE_REQUEST, handleExecuteCaptureRequest);
-    rejectAllSshCaptures('SSH panel unmounted');
+    rejectAllSshCaptures('Panel SSH đã unmount');
   });
 
   // Reconnect banner state for the currently active SSH tab.
@@ -817,10 +817,10 @@
           <line x1="6" y1="17" x2="6.01" y2="17"/>
         </svg>
         <div class="loading-text">
-          <span class="loading-title">Connecting to {$activeSshProfile.host}</span>
+          <span class="loading-title">Đang kết nối tới {$activeSshProfile.host}</span>
           <span class="loading-sub">{$activeSshProfile.username}@{$activeSshProfile.host}:{$activeSshProfile.port}<span class="loading-dots"></span></span>
         </div>
-        <button class="ssh-cancel-btn" onclick={cancelConnect}>Cancel</button>
+        <button class="ssh-cancel-btn" onclick={cancelConnect}>Hủy</button>
       </div>
     {/if}
 
@@ -831,8 +831,8 @@
           <line x1="15" y1="9" x2="9" y2="15"/>
           <line x1="9" y1="9" x2="15" y2="15"/>
         </svg>
-        <span class="ssh-banner-text">Connection closed</span>
-        <button class="ssh-banner-btn" onclick={reconnectActive}>Reconnect</button>
+        <span class="ssh-banner-text">Đã đóng kết nối</span>
+        <button class="ssh-banner-btn" onclick={reconnectActive}>Kết nối lại</button>
       </div>
     {/if}
 
@@ -847,39 +847,39 @@
           onblur={() => { try { activeEntry?.searchAddon.clearActiveDecoration(); } catch { /* ignore */ } }}
           class="ssh-find-input"
           class:no-match={findNoMatch}
-          placeholder="Find in terminal…"
+          placeholder="Tìm trong terminal…"
           spellcheck={false}
           autocomplete="off"
         />
 
         <div class="ssh-find-sep"></div>
 
-        <button class="ssh-find-toggle" class:active={findCaseSensitive} onclick={toggleCase} title="Case sensitive (Aa)">Aa</button>
-        <button class="ssh-find-toggle" class:active={findRegex}         onclick={toggleRegex} title="Use regular expression (.*)">.*</button>
-        <button class="ssh-find-toggle" class:active={findWholeWord}     onclick={toggleWord}  title="Match whole word">W</button>
+        <button class="ssh-find-toggle" class:active={findCaseSensitive} onclick={toggleCase} title="Phân biệt hoa thường (Aa)">Aa</button>
+        <button class="ssh-find-toggle" class:active={findRegex}         onclick={toggleRegex} title="Dùng biểu thức chính quy (.*)">.*</button>
+        <button class="ssh-find-toggle" class:active={findWholeWord}     onclick={toggleWord}  title="Khớp nguyên từ">W</button>
 
         <div class="ssh-find-sep"></div>
 
         {#if findQuery}
           <span class="ssh-find-count" class:no-results={findNoMatch}>
             {#if findNoMatch}
-              No results
+              Không có kết quả
             {:else if findResultCount > 0}
               {findResultIndex === -1 ? `${findResultCount}+` : `${findResultIndex + 1} / ${findResultCount}`}
             {/if}
           </span>
         {/if}
 
-        <button class="ssh-find-btn" onclick={doFindPrev} title="Previous (Shift+Enter)">
+        <button class="ssh-find-btn" onclick={doFindPrev} title="Trước (Shift+Enter)">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
         </button>
-        <button class="ssh-find-btn" onclick={doFindNext} title="Next (Enter)">
+        <button class="ssh-find-btn" onclick={doFindNext} title="Sau (Enter)">
           <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
 
         <div class="ssh-find-sep"></div>
 
-        <button class="ssh-find-close" onclick={closeFind} title="Close (Esc)">
+        <button class="ssh-find-close" onclick={closeFind} title="Đóng (Esc)">
           <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
@@ -895,8 +895,8 @@
       <line x1="6" y1="7" x2="6.01" y2="7"/>
       <line x1="6" y1="17" x2="6.01" y2="17"/>
     </svg>
-    <p class="empty-title">No active SSH session</p>
-    <p class="empty-sub">Pick a profile from the sidebar or create a new one</p>
+    <p class="empty-title">Chưa có phiên SSH nào đang hoạt động</p>
+    <p class="empty-sub">Chọn một profile từ sidebar hoặc tạo mới</p>
   </div>
 {/if}
 

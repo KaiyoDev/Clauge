@@ -127,15 +127,15 @@
       const result = await checkAndDownloadUpdate();
       if (result) {
         if (result.infoOnly) {
-          showToast(`v${result.version} is available to download`, 'success');
+          showToast(`Đã có phiên bản v${result.version} để tải`, 'success');
         } else {
-          showToast(`Update v${result.version} downloaded — ready to install`, 'success');
+          showToast(`Đã tải bản cập nhật v${result.version} — sẵn sàng cài đặt`, 'success');
         }
       } else {
-        showToast("You're on the latest version", 'success');
+        showToast("Bạn đang dùng phiên bản mới nhất", 'success');
       }
     } catch {
-      showToast('Failed to check for updates', 'error');
+      showToast('Không thể kiểm tra cập nhật', 'error');
     } finally {
       checkingForUpdates = false;
     }
@@ -146,9 +146,9 @@
     try {
       const d = new Date(iso);
       const diff = Date.now() - d.getTime();
-      if (diff < 60000) return 'just now';
-      if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
-      if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
+      if (diff < 60000) return 'vừa xong';
+      if (diff < 3600000) return `${Math.floor(diff / 60000)} phút trước`;
+      if (diff < 86400000) return `${Math.floor(diff / 3600000)} giờ trước`;
       return d.toLocaleDateString();
     } catch { return ''; }
   }
@@ -160,9 +160,9 @@
       const pushed = await cloudSyncPushNow();
       if (pushed.length) {
         markSynced();
-        showToast('Synced', 'success');
+        showToast('Đã đồng bộ', 'success');
       } else {
-        showToast('Already up to date', 'info');
+        showToast('Đã đồng bộ rồi', 'info');
       }
     } catch (e) {
       showToast(friendlyError(e), 'error');
@@ -189,7 +189,7 @@
       markSynced();
       const { announceRestoreCompletion } = await import('$lib/stores/missingCredentials');
       const shown = await announceRestoreCompletion();
-      if (!shown) showToast('Restored from cloud', 'success');
+      if (!shown) showToast('Đã khôi phục từ đám mây', 'success');
     } catch (e: any) {
       showToast(friendlyError(e), 'error');
     } finally {
@@ -207,7 +207,7 @@
     try {
       await cloudLogout();
       setDisconnected();
-      showToast('Signed out', 'info');
+      showToast('Đã đăng xuất', 'info');
     } catch (e) {
       showToast(friendlyError(e), 'error');
     }
@@ -255,7 +255,7 @@
     <!-- Sparkle — universal AI/agent icon (Claude, Cursor, Notion AI) -->
     <svg viewBox="0 0 24 24"><path d="M12 3l1.6 4.8L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.2L12 3z"/><path d="M18.5 14l.9 2.6 2.6.9-2.6.9-.9 2.6-.9-2.6-2.6-.9 2.6-.9.9-2.6z"/></svg>
   </SidebarButton>
-  <SidebarButton label="Workspace" tip="Workspaces (Notes & Boards)" active={$mode === 'workspace'} id="sbi-workspace" onclick={() => setMode('workspace')}>
+  <SidebarButton label="Workspace" tip="Workspace (Ghi chú & Bảng)" active={$mode === 'workspace'} id="sbi-workspace" onclick={() => setMode('workspace')}>
     <!-- 2×2 grid — workspace = a dashboard of mixed items. Distinct
          from Explorer's folder, REST's globe, etc. -->
     <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
@@ -276,7 +276,7 @@
     <!-- Terminal prompt >_  — universal "shell" icon -->
     <svg viewBox="0 0 24 24"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
   </SidebarButton>
-  <SidebarButton label="Explorer" tip="Explorer (Files)" active={$mode === 'explorer'} dotColor="var(--explorer)" id="sbi-explorer" onclick={() => setMode('explorer')}>
+  <SidebarButton label="Explorer" tip="Explorer (Tệp tin)" active={$mode === 'explorer'} dotColor="var(--explorer)" id="sbi-explorer" onclick={() => setMode('explorer')}>
     <!-- Folder + cloud — "files / storage" -->
     <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
   </SidebarButton>
@@ -284,7 +284,7 @@
   <div class="sb-sep"></div>
 
   <!-- History -->
-  <SidebarButton label="History" tip="History" active={$mode === 'history'} id="sbi-history" onclick={toggleHistory}>
+  <SidebarButton label="Lịch sử" tip="Lịch sử" active={$mode === 'history'} id="sbi-history" onclick={toggleHistory}>
     <!-- Clock with rewind arrow — distinct from a generic clock -->
     <svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 109-9 9.5 9.5 0 00-6.4 2.5L3 8"/><polyline points="3 3 3 8 8 8"/><polyline points="12 8 12 13 15 15"/></svg>
   </SidebarButton>
@@ -304,7 +304,7 @@
           {#if $cloudConnected}
             <div class="pm-sync-status">
               <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/><path d="M7.5 12l3 3 6-6"/></svg>
-              <span class="pm-sync-label">All Data Synced</span>
+              <span class="pm-sync-label">Đã đồng bộ tất cả dữ liệu</span>
             </div>
             {#if $cloudConflicts.length > 0}
               <!-- Conflict-mode replacement for the Sync Now row. Same
@@ -312,50 +312,50 @@
                    user reaches resolution from the same place. -->
               <button class="pm-item pm-action-required" onclick={openConflictResolver}>
                 <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9"  x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                Action Required ({$cloudConflicts.length})
+                Cần xử lý ({$cloudConflicts.length})
               </button>
             {:else}
               <button class="pm-item" onclick={() => { handleSyncNow(); }}>
                 <svg class:pm-spinning={$syncing} viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-                {$syncing ? 'Syncing...' : 'Sync Now'}
+                {$syncing ? 'Đang đồng bộ...' : 'Đồng bộ ngay'}
               </button>
             {/if}
             <button class="pm-item" onclick={() => handleProfileAction('sync')}>
               <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 11-12 0 6 6 0 0112 0z"/><path d="M3 21v-2a4 4 0 014-4h10a4 4 0 014 4v2"/></svg>
-              Account
+              Tài khoản
             </button>
           {:else}
             <button class="pm-item" onclick={() => handleProfileAction('sync')}>
               <svg class="gh-icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 11-12 0 6 6 0 0112 0z"/><path d="M3 21v-2a4 4 0 014-4h10a4 4 0 014 4v2"/></svg>
-              Sign in to sync
+              Đăng nhập để đồng bộ
             </button>
           {/if}
           <div class="pm-sep"></div>
 
           <button class="pm-item" onclick={() => handleProfileAction('settings')}>
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12.22 2h-.44a2 2 0 00-2 2v.18a2 2 0 01-1 1.73l-.43.25a2 2 0 01-2 0l-.15-.08a2 2 0 00-2.73.73l-.22.38a2 2 0 00.73 2.73l.15.1a2 2 0 011 1.72v.51a2 2 0 01-1 1.74l-.15.09a2 2 0 00-.73 2.73l.22.38a2 2 0 002.73.73l.15-.08a2 2 0 012 0l.43.25a2 2 0 011 1.73V20a2 2 0 002 2h.44a2 2 0 002-2v-.18a2 2 0 011-1.73l.43-.25a2 2 0 012 0l.15.08a2 2 0 002.73-.73l.22-.39a2 2 0 00-.73-2.73l-.15-.08a2 2 0 01-1-1.74v-.5a2 2 0 011-1.74l.15-.09a2 2 0 00.73-2.73l-.22-.38a2 2 0 00-2.73-.73l-.15.08a2 2 0 01-2 0l-.43-.25a2 2 0 01-1-1.73V4a2 2 0 00-2-2z"/></svg>
-            Settings
+            Cài đặt
           </button>
           <button class="pm-item" onclick={() => handleProfileAction('check-updates')}>
             <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            {checkingForUpdates ? 'Checking...' : 'Check for Updates'}
+            {checkingForUpdates ? 'Đang kiểm tra...' : 'Kiểm tra cập nhật'}
           </button>
           <div class="pm-sep"></div>
           <button class="pm-item" onclick={() => handleProfileAction('whats-new')}>
             <svg viewBox="0 0 24 24"><path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26z"/></svg>
-            What's New
+            Có gì mới
             <svg class="pm-external" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </button>
           <button class="pm-item" onclick={() => handleProfileAction('report')}>
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-            Report an Issue
+            Báo lỗi
             <svg class="pm-external" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </button>
           {#if $cloudConnected}
             <div class="pm-sep"></div>
             <button class="pm-item pm-logout" onclick={handleLogout}>
               <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-              Sign out
+              Đăng xuất
             </button>
           {/if}
         </div>
@@ -379,11 +379,11 @@
       <div class="sync-confirm-icon">
         <svg viewBox="0 0 24 24" width="28" height="28"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       </div>
-      <div class="sync-confirm-title">Cloud backup found</div>
-      <div class="sync-confirm-desc">Your account has data saved in the cloud. Restoring replaces this device's REST collections, SQL/NoSQL connections, agents, SSH profiles, explorer paths, and workspace coworkers with the cloud copy.</div>
+      <div class="sync-confirm-title">Tìm thấy bản sao lưu trên đám mây</div>
+      <div class="sync-confirm-desc">Tài khoản của bạn có dữ liệu được lưu trên đám mây. Việc khôi phục sẽ thay thế các collection REST, kết nối SQL/NoSQL, agent, profile SSH, đường dẫn explorer và coworker workspace trên thiết bị này bằng bản sao đám mây.</div>
       <div class="sync-confirm-actions">
-        <button class="sync-confirm-btn" onclick={handleFirstConnectSkip}>Skip</button>
-        <button class="sync-confirm-btn primary" onclick={handleFirstConnectRestore}>Restore</button>
+        <button class="sync-confirm-btn" onclick={handleFirstConnectSkip}>Bỏ qua</button>
+        <button class="sync-confirm-btn primary" onclick={handleFirstConnectRestore}>Khôi phục</button>
       </div>
     </div>
   </div>

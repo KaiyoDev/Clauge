@@ -50,47 +50,47 @@
       await setSetting('agent_session_key', key);
       agentSessionKey.set(key);
       agentUsageLimits.set(limits);
-      agentUsageAuthStatus.set({ state: 'valid', message: 'Session key verified' });
-      showToast('Session key verified and saved', 'success');
+      agentUsageAuthStatus.set({ state: 'valid', message: 'Đã xác minh khóa phiên' });
+      showToast('Đã xác minh và lưu khóa phiên', 'success');
     } catch (e: any) {
       agentUsageAuthStatus.set({
         state: 'invalid',
-        message: typeof e === 'string' ? e : e?.message || 'Claude session key is expired or invalid',
+        message: typeof e === 'string' ? e : e?.message || 'Khóa phiên Claude đã hết hạn hoặc không hợp lệ',
       });
-      showToast('Invalid session key — not saved', 'error');
+      showToast('Khóa phiên không hợp lệ — chưa lưu', 'error');
     } finally {
       keySaving = false;
     }
   }
 </script>
 
-<Modal bind:show title="Usage Dashboard" width="920px">
+<Modal bind:show title="Bảng theo dõi sử dụng" width="920px">
   <div class="ud">
     <div class="ud-days">
       {#each [7, 14, 30, 90] as d}
-        <button class="ud-day-btn" class:active={days === d} onclick={() => selectDays(d)}>{d}d</button>
+        <button class="ud-day-btn" class:active={days === d} onclick={() => selectDays(d)}>{d} ngày</button>
       {/each}
     </div>
 
     {#if loading}
-      <div class="ud-loading"><div class="ud-spinner"></div>Loading analytics...</div>
+      <div class="ud-loading"><div class="ud-spinner"></div>Đang tải dữ liệu...</div>
     {:else if data}
       <!-- Summary cards -->
       <div class="ud-cards">
-        <div class="ud-card"><span class="ud-val">{formatCost(data.totalCost)}</span><span class="ud-lbl">Total Cost</span></div>
-        <div class="ud-card"><span class="ud-val">{data.totalApiCalls.toLocaleString()}</span><span class="ud-lbl">API Calls</span></div>
-        <div class="ud-card"><span class="ud-val">{data.totalSessions}</span><span class="ud-lbl">Sessions</span></div>
+        <div class="ud-card"><span class="ud-val">{formatCost(data.totalCost)}</span><span class="ud-lbl">Tổng chi phí</span></div>
+        <div class="ud-card"><span class="ud-val">{data.totalApiCalls.toLocaleString()}</span><span class="ud-lbl">Lượt gọi API</span></div>
+        <div class="ud-card"><span class="ud-val">{data.totalSessions}</span><span class="ud-lbl">Phiên</span></div>
         <div class="ud-card"><span class="ud-val">{data.cacheHitPercent.toFixed(1)}%</span><span class="ud-lbl">Cache Hit</span></div>
       </div>
 
       <!-- Daily chart -->
       {#if data.daily.length > 0}
         <div class="ud-section">
-          <div class="ud-section-title">Daily Cost</div>
+          <div class="ud-section-title">Chi phí hằng ngày</div>
           <div class="ud-chart">
             {#each data.daily.slice(-21) as day}
               {@const maxCost = Math.max(...data.daily.slice(-21).map(d => d.cost), 0.01)}
-              <div class="ud-bar-wrap" title="{day.date}: {formatCost(day.cost)} / {day.calls} calls">
+              <div class="ud-bar-wrap" title="{day.date}: {formatCost(day.cost)} / {day.calls} lượt">
                 <div class="ud-bar" style="height:{Math.max(3, (day.cost / maxCost) * 100)}%"></div>
                 <span class="ud-bar-lbl">{day.date.slice(8)}</span>
               </div>
@@ -102,13 +102,13 @@
       <!-- By Model + By Project -->
       <div class="ud-grid">
         <div class="ud-section">
-          <div class="ud-section-title">By Model</div>
+          <div class="ud-section-title">Theo Model</div>
           <div class="ud-scroll">
             {#each data.byModel as m}
               <div class="ud-row">
                 <div class="ud-row-info">
                   <span class="ud-row-name">{m.model}</span>
-                  <span class="ud-row-meta">{m.calls} calls &middot; {formatTokens(m.inputTokens + m.outputTokens)} tok</span>
+                  <span class="ud-row-meta">{m.calls} lượt &middot; {formatTokens(m.inputTokens + m.outputTokens)} tok</span>
                 </div>
                 <span class="ud-row-cost">{formatCost(m.cost)}</span>
               </div>
@@ -116,13 +116,13 @@
           </div>
         </div>
         <div class="ud-section">
-          <div class="ud-section-title">By Project</div>
+          <div class="ud-section-title">Theo Dự án</div>
           <div class="ud-scroll">
             {#each data.byProject as p}
               <div class="ud-row">
                 <div class="ud-row-info">
                   <span class="ud-row-name" title={p.project}>{decodeName(p.project)}</span>
-                  <span class="ud-row-meta">{p.sessions} sess &middot; {p.calls} calls</span>
+                  <span class="ud-row-meta">{p.sessions} phiên &middot; {p.calls} lượt</span>
                 </div>
                 <span class="ud-row-cost">{formatCost(p.cost)}</span>
               </div>
@@ -134,7 +134,7 @@
       <!-- Top Sessions + Tool Usage -->
       <div class="ud-grid">
         <div class="ud-section">
-          <div class="ud-section-title">Top Sessions</div>
+          <div class="ud-section-title">Phiên hàng đầu</div>
           <div class="ud-scroll">
             {#each data.topSessions.slice(0, 5) as s}
               <div class="ud-row">
@@ -148,7 +148,7 @@
           </div>
         </div>
         <div class="ud-section">
-          <div class="ud-section-title">Tool Usage</div>
+          <div class="ud-section-title">Sử dụng công cụ</div>
           <div class="ud-scroll">
             {#each data.tools.slice(0, 10) as t}
               <div class="ud-tool-row">
@@ -163,15 +163,15 @@
 
       <!-- Session Key -->
       <div class="ud-section ud-key-section">
-        <div class="ud-section-title">Session Key</div>
+        <div class="ud-section-title">Khóa phiên</div>
         <div class="ud-key-row">
           <input type="password" class="ud-key-input" bind:value={sessionKey} placeholder="sk-ant-sid01-..." />
-          <button class="ud-key-btn" onclick={saveKey} disabled={keySaving}>{keySaving ? 'Verifying...' : 'Save'}</button>
+          <button class="ud-key-btn" onclick={saveKey} disabled={keySaving}>{keySaving ? 'Đang xác minh...' : 'Lưu'}</button>
         </div>
         <span class="ud-key-hint">claude.ai &rarr; DevTools &rarr; Cookies &rarr; sessionKey</span>
       </div>
     {:else}
-      <div class="ud-loading">No usage data found</div>
+      <div class="ud-loading">Không tìm thấy dữ liệu sử dụng</div>
     {/if}
   </div>
 </Modal>

@@ -20,8 +20,8 @@
   function joinModes(modes: RestoreMode[]): string {
     const labels = modes.map((m) => LABEL[m]);
     if (labels.length <= 1) return labels[0] ?? '';
-    if (labels.length === 2) return `${labels[0]} and ${labels[1]}`;
-    return `${labels.slice(0, -1).join(', ')}, and ${labels[labels.length - 1]}`;
+    if (labels.length === 2) return `${labels[0]} và ${labels[1]}`;
+    return `${labels.slice(0, -1).join(', ')} và ${labels[labels.length - 1]}`;
   }
 </script>
 
@@ -33,9 +33,9 @@
         <polyline points="21 3 21 9 15 9" />
       </svg>
       <span class="rn-text">
-        Restored from cloud. Passwords and keys stay per-device, so re-enter them in {joinModes($restoreNotice.modes)} when you reconnect.
+        Đã khôi phục từ đám mây. Mật khẩu và khóa được lưu riêng theo từng thiết bị, vui lòng nhập lại trong {joinModes($restoreNotice.modes)} khi kết nối lại.
       </span>
-      <button class="rn-close" onclick={dismissRestoreNotice} aria-label="Dismiss">
+      <button class="rn-close" onclick={dismissRestoreNotice} aria-label="Đóng">
         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
           <path d="M18 6L6 18M6 6l12 12" />
         </svg>

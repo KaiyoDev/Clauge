@@ -663,7 +663,7 @@
       const shellTermId = await agentSpawnShell(projectPath, channel);
       agentShellIds.update(m => { m.set(session.id, shellTermId); return new Map(m); });
     } catch (e) {
-      sEntry.term.write(`\r\nFailed to spawn shell: ${e}\r\n`);
+      sEntry.term.write(`\r\nKhông spawn được shell: ${e}\r\n`);
     }
   }
 
@@ -1188,7 +1188,7 @@
       if (get(agentShellOpen)) spawnShellForSession(session);
       refreshAgentGitStatus();
     } catch (e) {
-      entry.term.write(`\r\nFailed to spawn terminal: ${e}\r\n`);
+      entry.term.write(`\r\nKhông spawn được terminal: ${e}\r\n`);
       // Release the per-cwd lock on failure so siblings aren't blocked
       // by a spawn that died before its capture-poll could fire.
       if (captureDone && _pendingCaptureByPath.get(spawnPath) === captureDone) {
@@ -1488,7 +1488,7 @@
       try {
         await agentRemoveWorktree(session.projectPath, session.worktreePath);
       } catch (e) {
-        showToast(`Worktree cleanup failed: ${friendlyError(e)}. The directory may remain at ${session.worktreePath}.`, 'error');
+        showToast(`Dọn dẹp worktree thất bại: ${friendlyError(e)}. Thư mục có thể vẫn còn tại ${session.worktreePath}.`, 'error');
       }
     }
 
@@ -1497,7 +1497,7 @@
     try {
       await agentDeleteSession(session.id);
     } catch (e) {
-      errorToast('Failed to delete session', e);
+      errorToast('Xóa phiên thất bại', e);
       return;
     }
 
@@ -1606,16 +1606,16 @@
         <div class="agent-loading">
           <img src={_src} alt="" class="loading-mascot" />
           <div class="loading-text">
-            <span class="loading-title">Starting {_name}</span>
-            <span class="loading-sub">Setting up terminal session<span class="loading-dots"></span></span>
+            <span class="loading-title">Đang khởi động {_name}</span>
+            <span class="loading-sub">Đang thiết lập phiên terminal<span class="loading-dots"></span></span>
           </div>
         </div>
       {/if}
       {#if _isExited && !spawning}
         <div class="agent-ended-banner">
           <span class="ended-dot"></span>
-          <span class="ended-text">Session ended</span>
-          <button class="ended-btn" type="button" onclick={startNewForActiveSession}>Start new</button>
+          <span class="ended-text">Phiên đã kết thúc</span>
+          <button class="ended-btn" type="button" onclick={startNewForActiveSession}>Bắt đầu phiên mới</button>
         </div>
       {/if}
       {#if termFindOpen}
@@ -1629,30 +1629,30 @@
             onblur={() => { try { activeTermEntry?.searchAddon.clearActiveDecoration(); } catch { /* ignore */ } }}
             class="agent-find-input"
             class:no-match={termFindNoMatch}
-            placeholder="Find in terminal…"
+            placeholder="Tìm trong terminal…"
             spellcheck={false}
             autocomplete="off"
           />
           <div class="agent-find-sep"></div>
-          <button class="agent-find-toggle" class:active={termFindCaseSensitive} onclick={toggleTermCase} title="Case sensitive (Aa)">Aa</button>
-          <button class="agent-find-toggle" class:active={termFindRegex}         onclick={toggleTermRegex} title="Use regular expression (.*)">.*</button>
-          <button class="agent-find-toggle" class:active={termFindWholeWord}     onclick={toggleTermWord}  title="Match whole word">W</button>
+          <button class="agent-find-toggle" class:active={termFindCaseSensitive} onclick={toggleTermCase} title="Phân biệt hoa thường (Aa)">Aa</button>
+          <button class="agent-find-toggle" class:active={termFindRegex}         onclick={toggleTermRegex} title="Dùng biểu thức chính quy (.*)">.*</button>
+          <button class="agent-find-toggle" class:active={termFindWholeWord}     onclick={toggleTermWord}  title="Khớp toàn bộ từ">W</button>
           <div class="agent-find-sep"></div>
           {#if termFindQuery}
             <span class="agent-find-count" class:no-results={termFindNoMatch}>
-              {#if termFindNoMatch}No results
+              {#if termFindNoMatch}Không có kết quả
               {:else if termFindResultCount > 0}{termFindResultIndex === -1 ? `${termFindResultCount}+` : `${termFindResultIndex + 1} / ${termFindResultCount}`}
               {/if}
             </span>
           {/if}
-          <button class="agent-find-btn" onclick={doTermFindPrev} title="Previous (Shift+Enter)">
+          <button class="agent-find-btn" onclick={doTermFindPrev} title="Trước (Shift+Enter)">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
           </button>
-          <button class="agent-find-btn" onclick={doTermFindNext} title="Next (Enter)">
+          <button class="agent-find-btn" onclick={doTermFindNext} title="Tiếp (Enter)">
             <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
           <div class="agent-find-sep"></div>
-          <button class="agent-find-close" onclick={closeTermFind} title="Close (Esc)">
+          <button class="agent-find-close" onclick={closeTermFind} title="Đóng (Esc)">
             <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
         </div>
@@ -1668,8 +1668,8 @@
           <div class="agent-loading shell-loading">
             <img src="/code-in-action.svg" alt="" class="loading-mascot" />
             <div class="loading-text">
-              <span class="loading-title">Starting Shell</span>
-              <span class="loading-sub">Loading terminal session<span class="loading-dots"></span></span>
+              <span class="loading-title">Đang khởi động Shell</span>
+              <span class="loading-sub">Đang tải phiên terminal<span class="loading-dots"></span></span>
             </div>
           </div>
         {/if}
@@ -1684,30 +1684,30 @@
               onblur={() => { try { activeShellEntry?.searchAddon.clearActiveDecoration(); } catch { /* ignore */ } }}
               class="agent-find-input"
               class:no-match={shellFindNoMatch}
-              placeholder="Find in terminal…"
+              placeholder="Tìm trong terminal…"
               spellcheck={false}
               autocomplete="off"
             />
             <div class="agent-find-sep"></div>
-            <button class="agent-find-toggle" class:active={shellFindCaseSensitive} onclick={toggleShellCase} title="Case sensitive (Aa)">Aa</button>
-            <button class="agent-find-toggle" class:active={shellFindRegex}         onclick={toggleShellRegex} title="Use regular expression (.*)">.*</button>
-            <button class="agent-find-toggle" class:active={shellFindWholeWord}     onclick={toggleShellWord}  title="Match whole word">W</button>
+            <button class="agent-find-toggle" class:active={shellFindCaseSensitive} onclick={toggleShellCase} title="Phân biệt hoa thường (Aa)">Aa</button>
+            <button class="agent-find-toggle" class:active={shellFindRegex}         onclick={toggleShellRegex} title="Dùng biểu thức chính quy (.*)">.*</button>
+            <button class="agent-find-toggle" class:active={shellFindWholeWord}     onclick={toggleShellWord}  title="Khớp toàn bộ từ">W</button>
             <div class="agent-find-sep"></div>
             {#if shellFindQuery}
               <span class="agent-find-count" class:no-results={shellFindNoMatch}>
-                {#if shellFindNoMatch}No results
+                {#if shellFindNoMatch}Không có kết quả
                 {:else if shellFindResultCount > 0}{shellFindResultIndex === -1 ? `${shellFindResultCount}+` : `${shellFindResultIndex + 1} / ${shellFindResultCount}`}
                 {/if}
               </span>
             {/if}
-            <button class="agent-find-btn" onclick={doShellFindPrev} title="Previous (Shift+Enter)">
+            <button class="agent-find-btn" onclick={doShellFindPrev} title="Trước (Shift+Enter)">
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
             </button>
-            <button class="agent-find-btn" onclick={doShellFindNext} title="Next (Enter)">
+            <button class="agent-find-btn" onclick={doShellFindNext} title="Tiếp (Enter)">
               <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
             <div class="agent-find-sep"></div>
-            <button class="agent-find-close" onclick={closeShellFind} title="Close (Esc)">
+            <button class="agent-find-close" onclick={closeShellFind} title="Đóng (Esc)">
               <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
@@ -1722,8 +1722,8 @@
       <polyline points="4 17 10 11 4 5"></polyline>
       <line x1="12" y1="19" x2="20" y2="19"></line>
     </svg>
-    <p class="empty-title">No active session</p>
-    <p class="empty-sub">Create a new session or select one from the sidebar</p>
+    <p class="empty-title">Chưa có phiên hoạt động</p>
+    <p class="empty-sub">Tạo phiên mới hoặc chọn một phiên từ thanh bên</p>
   </div>
 {/if}
 

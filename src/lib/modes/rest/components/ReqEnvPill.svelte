@@ -59,7 +59,7 @@
 <svelte:window onclick={handleClickOutside} />
 
 <div class="req-env-wrap">
-  <button bind:this={pillEl} class="req-env-pill" onclick={toggleDropdown} title="Environment for this request">
+  <button bind:this={pillEl} class="req-env-pill" onclick={toggleDropdown} title="Môi trường cho yêu cầu này">
     {#if isUsingGlobal}
       <span class="req-env-global">Global &middot;</span>
     {/if}

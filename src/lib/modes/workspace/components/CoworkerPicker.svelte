@@ -83,7 +83,7 @@
     onclick={toggle}
     {disabled}
     type="button"
-    title={selected ? `Currently chatting with @${selected.name}` : 'Pick a coworker to chat with'}
+    title={selected ? `Đang trò chuyện với @${selected.name}` : 'Chọn đồng nghiệp để trò chuyện'}
   >
     {#if selected}
       <CoworkerAvatar seed={selected.avatarSeed} style={selected.avatarStyle} size={compact ? 18 : 22} />
@@ -93,7 +93,7 @@
       {/if}
     {:else}
       <span class="cp-trigger-empty-icon">@</span>
-      <span class="cp-trigger-empty-label">Pick a coworker</span>
+      <span class="cp-trigger-empty-label">Chọn đồng nghiệp</span>
     {/if}
     <svg class="cp-trigger-chev" viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
   </button>
@@ -102,8 +102,8 @@
     <div id="coworker-picker-popover" class="cp-pop">
       {#if $coworkers.length === 0}
         <div class="cp-empty">
-          No coworkers yet.
-          <button class="cp-empty-btn" onclick={openNew}>+ Create one</button>
+          Chưa có đồng nghiệp nào.
+          <button class="cp-empty-btn" onclick={openNew}>+ Tạo mới</button>
         </div>
       {:else}
         <!-- Search input — auto-focused when popover opens. With 10+
@@ -115,13 +115,13 @@
             class="cp-search"
             type="text"
             bind:value={searchQuery}
-            placeholder="Search coworkers…"
+            placeholder="Tìm đồng nghiệp…"
             spellcheck="false"
           />
         </div>
         <div class="cp-list">
           {#if filtered.length === 0}
-            <div class="cp-no-match">No matches for "{searchQuery}"</div>
+            <div class="cp-no-match">Không có kết quả cho "{searchQuery}"</div>
           {/if}
           {#each filtered as cw (cw.id)}
             <button

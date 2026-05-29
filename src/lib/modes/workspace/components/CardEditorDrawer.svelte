@@ -251,15 +251,15 @@
   const lifecycleSegments = $derived.by<LifecycleSeg[]>(() => {
     const out: LifecycleSeg[] = [];
     const created = formatLifecycleDate(card.createdAt);
-    if (created) out.push({ label: `Created ${created}`, title: `Created ${card.createdAt}` });
+    if (created) out.push({ label: `Tạo lúc ${created}`, title: `Tạo lúc ${card.createdAt}` });
     if (card.externalId && card.externalUrl) {
-      out.push({ label: `Issue ${card.externalId}`, href: card.externalUrl, title: 'Open issue on host' });
+      out.push({ label: `Issue ${card.externalId}`, href: card.externalUrl, title: 'Mở issue trên host' });
     }
     const branch = claim.session?.worktreeBranch;
-    if (branch) out.push({ label: `Branch ${branch}`, title: `Worktree branch · ${branch}` });
+    if (branch) out.push({ label: `Nhánh ${branch}`, title: `Nhánh worktree · ${branch}` });
     if (card.prUrl) {
       const num = extractPrNumber(card.prUrl);
-      out.push({ label: num ? `PR ${num}` : 'PR open', href: card.prUrl, title: 'Open PR on host' });
+      out.push({ label: num ? `PR ${num}` : 'PR đang mở', href: card.prUrl, title: 'Mở PR trên host' });
     }
     return out;
   });
@@ -407,7 +407,7 @@
     try {
       await workspaceCardUpdate({
         id: card.id,
-        title: title.trim() || 'Untitled',
+        title: title.trim() || 'Không tên',
         description,
         priority: priority || null,
         tags,
@@ -415,7 +415,7 @@
         actor: currentUserActor(),
       });
       onsave?.();
-    } catch (e) { errorToast('Save failed', e); }
+    } catch (e) { errorToast('Lưu thất bại', e); }
   }
   function onPriorityChange() { if (card) persistCard(); }
   function onTagsChange()     { if (card) persistCard(); }
@@ -475,7 +475,7 @@
           comments = comments.filter((c) => c.id !== optimisticId);
           chatDraft = body;
         }
-        errorToast('Comment failed', e);
+        errorToast('Bình luận thất bại', e);
       } finally {
         if (card) {
           chatting = false;
@@ -520,7 +520,7 @@
           comments = comments.map((c) => (c.id === thinkingId ? res.replyComment! : c));
         } else if (res.agentError) {
           comments = comments.map((c) => (c.id === thinkingId
-            ? { ...c, body: res.agentError ?? 'Agent failed', pending: 'error' as const }
+            ? { ...c, body: res.agentError ?? 'Agent thất bại', pending: 'error' as const }
             : c));
         } else {
           comments = comments.filter((c) => c.id !== thinkingId);
@@ -533,7 +533,7 @@
         comments = comments.filter((c) => c.id !== optimisticId && c.id !== thinkingId);
         chatDraft = body;
       }
-      errorToast('Send message', e);
+      errorToast('Gửi tin nhắn', e);
     } finally {
       // Critical: use the snapshotted cardId, not card.id — `card`
       // may be null by now if the user closed the drawer. If the
@@ -587,10 +587,10 @@
   async function doRelease() {
     try {
       await workspaceCardRelease(card.id, currentUserActor(), releaseDeleteWorktree);
-      showToast('Work-stream released', 'success');
+      showToast('Đã kết thúc work-stream', 'success');
       claim = await workspaceCardGetClaim(card.id);
       releaseDeleteWorktree = false;
-    } catch (e) { errorToast('Release failed', e); }
+    } catch (e) { errorToast('Bỏ nhận thất bại', e); }
   }
 
   let showGhNotInstalled = $state(false);
@@ -601,14 +601,14 @@
     pushing = true;
     try {
       const r = await workspaceCardPushToRepo(card.id, currentUserActor());
-      showToast(`Created issue ${r.externalId}`, 'success');
+      showToast(`Đã tạo issue ${r.externalId}`, 'success');
       onsave?.();
     } catch (e) {
       const msg = `${e}`;
       const missing = detectMissingCli(msg);
       if (missing === 'gh') showGhNotInstalled = true;
       else if (missing === 'glab') showGlabNotInstalled = true;
-      else showToast(`Issue creation failed: ${msg}`, 'error');
+      else showToast(`Tạo issue thất bại: ${msg}`, 'error');
     }
     finally { pushing = false; }
   }
@@ -640,8 +640,8 @@
       );
       showToast(
         r.alreadyExisted
-          ? `Pushed update to PR on ${r.branch}`
-          : `PR opened on ${r.branch}`,
+          ? `Đã đẩy cập nhật vào PR trên ${r.branch}`
+          : `Đã mở PR trên ${r.branch}`,
         'success',
       );
       onsave?.();
@@ -674,7 +674,7 @@
     }
     const branch = claim.session?.worktreeBranch ?? '';
     prTitleDraft = card.title;
-    prBodyDraft = `Card branch \`${branch}\` — see card thread for context.`;
+    prBodyDraft = `Nhánh card \`${branch}\` — xem thread của card để biết bối cảnh.`;
     showPrPreview = true;
   }
 
@@ -709,7 +709,7 @@
          don't need millimetre precision to grab it. Cursor switches
          to ew-resize on hover. -->
     <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="cd-resize" onmousedown={startResize} title="Drag to resize"></div>
+    <div class="cd-resize" onmousedown={startResize} title="Kéo để đổi kích thước"></div>
     <!-- ─────────── Header ─────────── -->
     <div class="cd-head">
       <input
@@ -717,16 +717,16 @@
         bind:value={title}
         oninput={scheduleTitleSave}
         onblur={flushTitleSave}
-        placeholder="Untitled"
+        placeholder="Không tên"
         spellcheck="false"
       />
-      <button class="cd-close" onclick={onclose} title="Close">×</button>
+      <button class="cd-close" onclick={onclose} title="Đóng">×</button>
     </div>
 
     <!-- ─────────── Meta row ─────────── -->
     <div class="cd-meta">
       <label class="cd-meta-cell">
-        <span class="cd-meta-key">Priority</span>
+        <span class="cd-meta-key">Mức ưu tiên</span>
         <select class="cd-input" bind:value={priority} onchange={onPriorityChange}>
           <option value={null}>—</option>
           <option value="P0">P0</option>
@@ -736,14 +736,14 @@
         </select>
       </label>
       <div class="cd-meta-cell cd-meta-cell-grow">
-        <span class="cd-meta-key">Tags</span>
+        <span class="cd-meta-key">Tag</span>
         <TagInput bind:value={tags} onchange={onTagsChange} />
       </div>
     </div>
 
     <!-- ─────────── Lifecycle ribbon ─────────── -->
     {#if lifecycleSegments.length > 0}
-      <div class="cd-lifecycle" role="status" aria-label="Card lifecycle">
+      <div class="cd-lifecycle" role="status" aria-label="Vòng đời card">
         {#each lifecycleSegments as seg, i (seg.label)}
           {#if i > 0}<span class="cd-lifecycle-sep" aria-hidden="true">·</span>{/if}
           {#if seg.href}
@@ -768,7 +768,7 @@
         {#if comments.length > 0}<span class="cd-tab-count">{comments.length}</span>{/if}
       </button>
       <button class="cd-tab" class:cd-tab-on={tab === 'edit'} onclick={() => (tab = 'edit')}>
-        Description
+        Mô tả
       </button>
     </div>
 
@@ -782,13 +782,13 @@
           oninput={(e) => { autoGrow(e.currentTarget); scheduleDescSave(); }}
           onfocus={(e) => autoGrow(e.currentTarget)}
           onblur={flushDescSave}
-          placeholder="Describe this card. Markdown supported. Auto-saves as you type."
+          placeholder="Mô tả card này. Hỗ trợ Markdown. Tự động lưu khi bạn gõ."
         ></textarea>
       {/if}
 
       {#if card.reviewChecklist}
         <div class="cd-checklist">
-          <div class="cd-checklist-key">Review checklist <span class="cd-dim">(set by {editor.label})</span></div>
+          <div class="cd-checklist-key">Checklist review <span class="cd-dim">(đặt bởi {editor.label})</span></div>
           <pre>{card.reviewChecklist}</pre>
         </div>
       {/if}
@@ -801,14 +801,14 @@
           <span class="cd-claim-ico" style="color: var(--err, #f87171);">⚠</span>
           <div class="cd-claim-body">
             <div class="cd-claim-title">
-              Active in terminal session <strong>{claim.session?.title ?? 'unknown'}</strong>
+              Đang hoạt động trong phiên terminal <strong>{claim.session?.title ?? 'không xác định'}</strong>
             </div>
             <div class="cd-claim-sub">
-              You can read + leave plain comments here, but to chat with a coworker you need to switch to that session — or End the work-stream below.
+              Bạn có thể đọc và để lại bình luận thường ở đây, nhưng để chat với đồng nghiệp bạn cần chuyển sang phiên đó — hoặc kết thúc work-stream bên dưới.
             </div>
           </div>
           <button class="cd-claim-btn cd-claim-btn-warn" onclick={() => (showReleaseConfirm = true)}>
-            End
+            Kết thúc
           </button>
         </div>
       {/if}
@@ -821,8 +821,8 @@
         <div class="cd-chat-warn">
           <span class="cd-chat-warn-ico">⚠</span>
           <div>
-            Bind a project to this workspace before tagging a coworker —
-            agents need a working directory. Plain comments still work without one.
+            Hãy gắn một dự án vào workspace này trước khi tag một đồng nghiệp —
+            agent cần một thư mục làm việc. Bình luận thường vẫn dùng được mà không cần.
           </div>
         </div>
       {/if}
@@ -836,8 +836,8 @@
           class="cd-chat-input"
           bind:value={chatDraft}
           placeholder={claimMode === 'manual-conflict'
-            ? 'Chat is locked — End the work-stream to comment or chat here.'
-            : 'Add a note, or type @ to mention a coworker and trigger them…'}
+            ? 'Chat đang bị khóa — Kết thúc work-stream để bình luận hoặc chat ở đây.'
+            : 'Thêm ghi chú, hoặc gõ @ để nhắc đến một đồng nghiệp và kích hoạt họ…'}
           disabled={!canType}
           oninput={onChatInput}
           onkeydown={onChatKey}
@@ -854,7 +854,7 @@
                when explicitly @-tagged. Removes ambiguity about why
                nothing happened after a non-tagged message. -->
           <span class="cd-chat-hint">
-            Coworkers respond only when <strong>@-tagged</strong> · <kbd>⌘↵</kbd> to send
+            Đồng nghiệp chỉ phản hồi khi được <strong>@-tag</strong> · <kbd>⌘↵</kbd> để gửi
           </span>
           <span class="cd-chat-foot-spacer"></span>
           <!-- Right cluster: active-coworker badge sits immediately
@@ -862,7 +862,7 @@
                "[live indicator] [send to that person]" as one unit. -->
           {#if claimMode === 'drawer-owned' && claim.coworker}
             {@const cw = claim.coworker}
-            <span class="cd-active-badge" title={drawerHasWorktree ? `Working on ${claim.session?.worktreeBranch}` : `${cw.name} is the active coworker`}>
+            <span class="cd-active-badge" title={drawerHasWorktree ? `Đang làm trên ${claim.session?.worktreeBranch}` : `${cw.name} là đồng nghiệp đang hoạt động`}>
               <span class="cd-active-dot" aria-hidden="true"></span>
               <CoworkerAvatar seed={cw.avatarSeed} style={cw.avatarStyle} size={14} />
               <span class="cd-active-name">@{cw.name}</span>
@@ -875,11 +875,11 @@
             disabled={!canChat}
           >
             {#if chatting}
-              {chattingTo ? `Sending to @${chattingTo.name}…` : 'Posting…'}
+              {chattingTo ? `Đang gửi đến @${chattingTo.name}…` : 'Đang đăng…'}
             {:else if taggedCoworker}
-              Send to @{taggedCoworker.name}
+              Gửi đến @{taggedCoworker.name}
             {:else}
-              Add comment
+              Thêm bình luận
             {/if}
           </button>
         </div>
@@ -893,9 +893,9 @@
           class="cd-foot-btn"
           onclick={() => (showPushConfirm = true)}
           disabled={!canPush || pushing}
-          title={canPush ? `Create a real ${repoLabel} issue from this card` : 'Set the workspace repo URL first'}
+          title={canPush ? `Tạo issue thật trên ${repoLabel} từ card này` : 'Đặt URL repo của workspace trước'}
         >
-          {pushing ? 'Creating…' : `Create issue on ${repoLabel}`}
+          {pushing ? 'Đang tạo…' : `Tạo issue trên ${repoLabel}`}
         </button>
       {:else if source.url}
         <a class="cd-foot-link" href={source.url} target="_blank" rel="noreferrer noopener">
@@ -910,8 +910,8 @@
              • busy        → spinner copy -->
       {#if canRaisePr || hasPrAlready}
         {#if hasPrAlready && card.prUrl}
-          <a class="cd-foot-link" href={card.prUrl} target="_blank" rel="noreferrer noopener" title="Open PR on the host">
-            View PR ↗
+          <a class="cd-foot-link" href={card.prUrl} target="_blank" rel="noreferrer noopener" title="Mở PR trên host">
+            Xem PR ↗
           </a>
         {/if}
         {#if canRaisePr}
@@ -920,15 +920,15 @@
             onclick={openPrPreviewOrPush}
             disabled={raisingPr}
             title={hasPrAlready
-              ? 'Push new commits to the existing PR (no new PR is opened)'
-              : 'Review and open a PR — pushes the branch and opens it on the host'}
+              ? 'Đẩy commit mới vào PR đang có (không mở PR mới)'
+              : 'Xem lại và mở PR — đẩy nhánh và mở trên host'}
           >
             {#if raisingPr}
-              {hasPrAlready ? 'Pushing…' : 'Opening…'}
+              {hasPrAlready ? 'Đang đẩy…' : 'Đang mở…'}
             {:else if hasPrAlready}
-              Push update to PR
+              Đẩy cập nhật vào PR
             {:else}
-              Open PR…
+              Mở PR…
             {/if}
           </button>
         {/if}
@@ -943,20 +943,20 @@
 
 <ConfirmDialog
   bind:show={showPushConfirm}
-  title="Create issue on {repoLabel}?"
-  message={`Creates a new issue on ${repoLabel} with this card's title and description. The issue will be public if the repo is public.`}
-  confirmText={`Create on ${repoLabel}`}
+  title="Tạo issue trên {repoLabel}?"
+  message={`Tạo issue mới trên ${repoLabel} với tiêu đề và mô tả của card này. Issue sẽ ở chế độ công khai nếu repo là công khai.`}
+  confirmText={`Tạo trên ${repoLabel}`}
   confirmColor="var(--acc)"
   onconfirm={doPush}
 />
 
 <ConfirmDialog
   bind:show={showSwitchConfirm}
-  title="Switch coworker?"
+  title="Chuyển đồng nghiệp?"
   message={switchToCoworker
-    ? `This card is currently with @${switchFromName}. Sending to @${switchToCoworker.name} will hand the card off — @${switchFromName}'s thread stays in the conversation, but @${switchToCoworker.name} becomes the active coworker.`
+    ? `Card này hiện đang với @${switchFromName}. Gửi đến @${switchToCoworker.name} sẽ bàn giao card — thread của @${switchFromName} vẫn ở trong cuộc trò chuyện, nhưng @${switchToCoworker.name} sẽ trở thành đồng nghiệp đang hoạt động.`
     : ''}
-  confirmText={switchToCoworker ? `Switch to @${switchToCoworker.name}` : 'Switch'}
+  confirmText={switchToCoworker ? `Chuyển sang @${switchToCoworker.name}` : 'Chuyển'}
   confirmColor="var(--acc)"
   onconfirm={confirmSwitchAndSend}
   oncancel={cancelSwitch}
@@ -964,55 +964,55 @@
 
 <ConfirmDialog
   bind:show={showReleaseConfirm}
-  title="End the work-stream?"
+  title="Kết thúc work-stream?"
   message={drawerHasWorktree
-    ? 'The card will be unclaimed. You can choose to keep the worktree (the branch stays around for reference) or delete it now.'
-    : 'The card will be unclaimed. Anyone can start a new chat on it after this.'}
-  confirmText={releaseDeleteWorktree ? 'End & delete worktree' : 'End work-stream'}
+    ? 'Thẻ sẽ được bỏ nhận. Bạn có thể giữ worktree (nhánh vẫn còn để tham khảo) hoặc xóa luôn.'
+    : 'Thẻ sẽ được bỏ nhận. Sau đó ai cũng có thể bắt đầu chat mới trên thẻ này.'}
+  confirmText={releaseDeleteWorktree ? 'Kết thúc & xóa worktree' : 'Kết thúc work-stream'}
   confirmColor="var(--err, #f87171)"
   onconfirm={doRelease}
-  discardText={drawerHasWorktree ? (releaseDeleteWorktree ? 'Keep worktree' : 'Delete worktree') : undefined}
+  discardText={drawerHasWorktree ? (releaseDeleteWorktree ? 'Giữ worktree' : 'Xóa worktree') : undefined}
   ondiscard={drawerHasWorktree ? () => { releaseDeleteWorktree = !releaseDeleteWorktree; showReleaseConfirm = true; } : undefined}
 />
 
 <GhNotInstalledModal bind:show={showGhNotInstalled} />
 <GlabNotInstalledModal bind:show={showGlabNotInstalled} />
 
-<Modal bind:show={showPrPreview} title="Open PR" width="520px">
+<Modal bind:show={showPrPreview} title="Mở PR" width="520px">
   <div class="cd-pr-preview">
     <div class="cd-pr-field">
-      <span class="cd-pr-label">Branch</span>
+      <span class="cd-pr-label">Nhánh</span>
       <code class="cd-pr-branch">{claim.session?.worktreeBranch ?? ''}</code>
     </div>
     <div class="cd-pr-field">
-      <span class="cd-pr-label">Title</span>
+      <span class="cd-pr-label">Tiêu đề</span>
       <input
         class="cd-pr-input"
         type="text"
         bind:value={prTitleDraft}
-        placeholder="PR title"
+        placeholder="Tiêu đề PR"
         spellcheck="false"
       />
     </div>
     <div class="cd-pr-field">
-      <span class="cd-pr-label">Body</span>
+      <span class="cd-pr-label">Nội dung</span>
       <textarea
         class="cd-pr-textarea"
         bind:value={prBodyDraft}
         rows="6"
-        placeholder="PR description (markdown supported)"
+        placeholder="Mô tả PR (hỗ trợ markdown)"
         spellcheck="false"
       ></textarea>
     </div>
     <div class="cd-pr-actions">
-      <button class="cd-pr-btn" type="button" onclick={() => (showPrPreview = false)}>Cancel</button>
+      <button class="cd-pr-btn" type="button" onclick={() => (showPrPreview = false)}>Hủy</button>
       <button
         class="cd-pr-btn primary"
         type="button"
         onclick={confirmPrFromPreview}
         disabled={!prTitleDraft.trim() || raisingPr}
       >
-        {raisingPr ? 'Opening…' : 'Open PR'}
+        {raisingPr ? 'Đang mở…' : 'Mở PR'}
       </button>
     </div>
   </div>

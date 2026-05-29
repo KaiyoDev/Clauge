@@ -309,76 +309,76 @@
     ssh: 'SSH',
     explorer: 'Explorer',
     workspace: 'Workspace',
-    history: 'History',
+    history: 'Lịch sử',
   };
 
   const modePlaceholders: Record<AppMode, string> = {
-    rest: 'e.g. POST create user with email and role',
-    sql: 'e.g. top 10 users by spend last 30 days',
-    nosql: 'e.g. find pro users inactive 7 days',
-    agent: 'Ask about your agent sessions',
-    ssh: 'e.g. show disk usage on this server',
-    explorer: 'e.g. list large files in /var/log',
-    workspace: 'Ask about your notes or boards',
-    history: 'Ask about your request history',
+    rest: 'vd. POST tạo user với email và role',
+    sql: 'vd. top 10 user chi nhiều nhất 30 ngày qua',
+    nosql: 'vd. tìm user pro không hoạt động 7 ngày',
+    agent: 'Hỏi về các phiên agent của bạn',
+    ssh: 'vd. xem dung lượng đĩa trên server này',
+    explorer: 'vd. liệt kê tệp lớn trong /var/log',
+    workspace: 'Hỏi về ghi chú hoặc bảng của bạn',
+    history: 'Hỏi về lịch sử yêu cầu của bạn',
   };
 
   const modeGuideText: Record<AppMode, string> = {
-    rest: 'Describe the API request you need — method, endpoint, headers, body — and I\'ll generate it for you.',
-    sql: 'Describe the data you need and I\'ll write the SQL query. Works with your connected databases.',
-    nosql: 'Describe what you\'re looking for and I\'ll generate the MongoDB query, filter, or aggregation pipeline.',
-    agent: 'Agent mode has its own built-in AI assistance via Claude Code sessions.',
-    ssh: 'Ask for shell commands to run on the connected server. Suggested commands appear as code blocks with an Insert button — destructive ones are blocked.',
-    explorer: 'Browse remote storage with natural language: list, search, read, upload, download, rename, delete. Mutations require your confirmation.',
-    workspace: 'Ask the assistant to find a note, summarize a board, or draft a page. The agent in Agent mode can also edit your workspaces directly.',
-    history: 'Ask about your request history and I\'ll help you find what you need.',
+    rest: 'Mô tả yêu cầu API bạn cần — method, endpoint, headers, body — và tôi sẽ tạo cho bạn.',
+    sql: 'Mô tả dữ liệu bạn cần và tôi sẽ viết truy vấn SQL. Hoạt động với các CSDL đã kết nối.',
+    nosql: 'Mô tả thứ bạn đang tìm và tôi sẽ tạo truy vấn MongoDB, bộ lọc hoặc aggregation pipeline.',
+    agent: 'Chế độ Agent có sẵn trợ lý AI tích hợp qua phiên Claude Code.',
+    ssh: 'Yêu cầu lệnh shell để chạy trên server đã kết nối. Lệnh đề xuất hiện dưới dạng code block kèm nút Chèn — lệnh nguy hiểm bị chặn.',
+    explorer: 'Duyệt storage từ xa bằng ngôn ngữ tự nhiên: liệt kê, tìm kiếm, đọc, tải lên, tải xuống, đổi tên, xóa. Thao tác thay đổi cần bạn xác nhận.',
+    workspace: 'Yêu cầu trợ lý tìm ghi chú, tóm tắt board hoặc soạn trang. Agent ở chế độ Agent có thể chỉnh sửa workspace trực tiếp.',
+    history: 'Hỏi về lịch sử yêu cầu của bạn và tôi sẽ giúp bạn tìm điều cần.',
   };
 
   const toolLabels: Record<string, string> = {
-    get_current_request: 'Reading current request...',
-    get_current_response: 'Reading response...',
-    list_collections: 'Browsing collections...',
-    get_request_details: 'Reading request details...',
-    list_environments: 'Checking environments...',
-    get_history: 'Checking history...',
-    apply_request: 'Preparing request...',
-    execute_request: 'Executing request...',
-    create_request: 'Creating request...',
-    execute_current_request: 'Executing current request...',
-    execute_collection: 'Running collection...',
-    generate_curl: 'Generating cURL...',
-    switch_environment: 'Switching environment...',
-    rename_request: 'Renaming request...',
-    delete_request: 'Deleting request...',
-    duplicate_request: 'Duplicating request...',
-    create_collection: 'Creating collection...',
+    get_current_request: 'Đang đọc yêu cầu hiện tại...',
+    get_current_response: 'Đang đọc phản hồi...',
+    list_collections: 'Đang duyệt collection...',
+    get_request_details: 'Đang đọc chi tiết yêu cầu...',
+    list_environments: 'Đang kiểm tra môi trường...',
+    get_history: 'Đang kiểm tra lịch sử...',
+    apply_request: 'Đang chuẩn bị yêu cầu...',
+    execute_request: 'Đang thực thi yêu cầu...',
+    create_request: 'Đang tạo yêu cầu...',
+    execute_current_request: 'Đang thực thi yêu cầu hiện tại...',
+    execute_collection: 'Đang chạy collection...',
+    generate_curl: 'Đang tạo cURL...',
+    switch_environment: 'Đang chuyển môi trường...',
+    rename_request: 'Đang đổi tên yêu cầu...',
+    delete_request: 'Đang xóa yêu cầu...',
+    duplicate_request: 'Đang nhân bản yêu cầu...',
+    create_collection: 'Đang tạo collection...',
     // SQL tools
-    list_connections: 'Listing connections...',
-    list_databases: 'Listing databases...',
-    list_tables: 'Listing tables...',
-    describe_table: 'Reading table schema...',
-    execute_query: 'Executing query...',
-    apply_query: 'Writing query to editor...',
-    list_schemas: 'Listing schemas...',
+    list_connections: 'Đang liệt kê kết nối...',
+    list_databases: 'Đang liệt kê CSDL...',
+    list_tables: 'Đang liệt kê bảng...',
+    describe_table: 'Đang đọc schema bảng...',
+    execute_query: 'Đang thực thi truy vấn...',
+    apply_query: 'Đang ghi truy vấn vào editor...',
+    list_schemas: 'Đang liệt kê schema...',
     // NoSQL tools
-    list_nosql_connections: 'Listing connections...',
-    list_nosql_databases: 'Listing databases...',
-    list_nosql_collections: 'Listing collections...',
-    find_documents: 'Finding documents...',
-    count_documents: 'Counting documents...',
-    aggregate: 'Running aggregation...',
-    apply_nosql_query: 'Writing query...',
-    redis_list_keys: 'Listing Redis keys...',
-    redis_execute: 'Executing Redis command...',
-    sample_documents: 'Sampling documents...',
-    insert_documents: 'Inserting documents...',
-    get_collection_stats: 'Getting collection stats...',
+    list_nosql_connections: 'Đang liệt kê kết nối...',
+    list_nosql_databases: 'Đang liệt kê CSDL...',
+    list_nosql_collections: 'Đang liệt kê collection...',
+    find_documents: 'Đang tìm tài liệu...',
+    count_documents: 'Đang đếm tài liệu...',
+    aggregate: 'Đang chạy aggregation...',
+    apply_nosql_query: 'Đang ghi truy vấn...',
+    redis_list_keys: 'Đang liệt kê khóa Redis...',
+    redis_execute: 'Đang thực thi lệnh Redis...',
+    sample_documents: 'Đang lấy mẫu tài liệu...',
+    insert_documents: 'Đang chèn tài liệu...',
+    get_collection_stats: 'Đang lấy thống kê collection...',
     // REST extras
-    set_env_variable: 'Setting environment variable...',
-    search_history: 'Searching history...',
+    set_env_variable: 'Đang đặt biến môi trường...',
+    search_history: 'Đang tìm trong lịch sử...',
     // SQL extras
-    get_schema: 'Loading database schema...',
-    explain_query: 'Running EXPLAIN...',
+    get_schema: 'Đang tải schema CSDL...',
+    explain_query: 'Đang chạy EXPLAIN...',
     // (query_result handled as action card)
   };
 
@@ -526,7 +526,7 @@
       }
       const tok = await cloudGetActiveToken();
       if (!tok) {
-        showToast('Sign in to Clauge to use managed AI', 'error');
+        showToast('Đăng nhập Clauge để dùng AI quản lý sẵn', 'error');
         return;
       }
       apiKey = tok[0];
@@ -832,7 +832,7 @@
     });
 
     action.applied = true;
-    showToast('Request applied to active tab', 'success');
+    showToast('Đã áp dụng yêu cầu vào tab đang mở', 'success');
   }
 
   function retryLastMessage() {
@@ -886,7 +886,7 @@
     <div class="ai-header">
       <div class="ai-header-left">
         <svg class="sparkle-icon" viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg>
-        <span class="ai-title">AI Assistant</span>
+        <span class="ai-title">Trợ lý AI</span>
         <span class="mode-badge" style="background: {modeColors[$mode]}20; color: {modeColors[$mode]}; border-color: {modeColors[$mode]}40">
           {modeLabels[$mode]}
         </span>
@@ -897,9 +897,9 @@
             class="header-icon-btn ssh-auto-run-btn"
             class:active={sshAutoRun}
             title={sshAutoRun
-              ? 'Auto-execute: ON — AI runs commands without asking. Click to disable.'
-              : 'Auto-execute: OFF — AI commands require your approval. Click to enable.'}
-            aria-label="Toggle AI auto-execute"
+              ? 'Tự động thực thi: BẬT — AI chạy lệnh không cần hỏi. Nhấn để tắt.'
+              : 'Tự động thực thi: TẮT — Lệnh AI cần bạn duyệt. Nhấn để bật.'}
+            aria-label="Bật/tắt AI tự động thực thi"
             onclick={toggleSshAutoRun}
           >
             <svg viewBox="0 0 24 24" width="13" height="13" fill={sshAutoRun ? 'currentColor' : 'none'} stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -909,7 +909,7 @@
           </button>
         {/if}
         {#if messages.length > 0}
-          <button class="header-icon-btn" title="Clear chat" onclick={clearChat}>
+          <button class="header-icon-btn" title="Xóa hội thoại" onclick={clearChat}>
             <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
           </button>
         {/if}
@@ -923,9 +923,9 @@
           <div class="welcome-icon">
             <svg viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg>
           </div>
-          <p class="welcome-text">Set up your API key to start using AI assistance</p>
-          <button class="ai-setup-btn" onclick={openAiSettings}>Configure in Settings</button>
-          <p class="welcome-hint">Toggle with <kbd>{m}+L</kbd></p>
+          <p class="welcome-text">Cài đặt API key để bắt đầu dùng trợ lý AI</p>
+          <button class="ai-setup-btn" onclick={openAiSettings}>Cấu hình trong Cài đặt</button>
+          <p class="welcome-hint">Bật/tắt bằng <kbd>{m}+L</kbd></p>
         </div>
       </div>
     {:else}
@@ -937,7 +937,7 @@
             <svg viewBox="0 0 24 24"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/></svg>
           </div>
           <p class="welcome-text">{modeGuideText[$mode]}</p>
-          <p class="welcome-hint">Toggle with <kbd>{m}+L</kbd></p>
+          <p class="welcome-hint">Bật/tắt bằng <kbd>{m}+L</kbd></p>
         </div>
       {/if}
 
@@ -984,10 +984,10 @@
                     >
                       {#if action.applied}
                         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                        Applied
+                        Đã áp dụng
                       {:else}
                         <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-                        Apply to Tab
+                        Áp dụng vào tab
                       {/if}
                     </button>
                   </div>
@@ -996,7 +996,7 @@
                   <div class="action-card">
                     <div class="action-card-header">
                       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--acc)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                      <span class="action-url">SQL Query</span>
+                      <span class="action-url">Truy vấn SQL</span>
                     </div>
                     {#if action.data.query}
                       <div class="action-body-preview">
@@ -1009,7 +1009,7 @@
                   <div class="action-card">
                     <div class="action-card-header">
                       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="var(--acc)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-                      <span class="action-url">NoSQL Query</span>
+                      <span class="action-url">Truy vấn NoSQL</span>
                     </div>
                     {#if action.data.query}
                       <div class="action-body-preview">
@@ -1027,11 +1027,11 @@
                       {#if action.data.body}
                         <button
                           class="copy-btn"
-                          title="Copy response"
+                          title="Sao chép phản hồi"
                           onclick={() => {
                             try { navigator.clipboard.writeText(JSON.stringify(JSON.parse(action.data.body), null, 2)); }
                             catch { navigator.clipboard.writeText(action.data.body); }
-                            showToast('Copied to clipboard', 'success');
+                            showToast('Đã sao chép vào clipboard', 'success');
                           }}
                         >
                           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
@@ -1093,7 +1093,7 @@
                 {:else if action.type === 'collection_executed'}
                   <div class="action-card collection-report">
                     <div class="report-header">
-                      <span class="report-title">Collection Report</span>
+                      <span class="report-title">Báo cáo Collection</span>
                       <span class="report-summary">
                         <span class="report-pass">{(action.data.results ?? []).filter((r: any) => r.status && r.status < 400).length} passed</span>
                         <span class="report-fail">{(action.data.results ?? []).length - (action.data.results ?? []).filter((r: any) => r.status && r.status < 400).length} failed</span>
@@ -1111,7 +1111,7 @@
                               <span class="report-status">{result.status}</span>
                               <span class="report-duration">{result.durationMs}ms</span>
                             {:else if result.error}
-                              <span class="report-error">Error</span>
+                              <span class="report-error">Lỗi</span>
                             {/if}
                           </div>
                         {/each}
@@ -1198,7 +1198,7 @@
         <button
           class="send-btn stop-btn"
           onclick={cancelStreaming}
-          title="Stop"
+          title="Dừng"
         >
           <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor" stroke="none"/></svg>
         </button>
@@ -1208,7 +1208,7 @@
           style="background: {modeColors[$mode]}"
           onclick={sendMessage}
           disabled={!inputText.trim()}
-          title={`Send (${m}+Enter)`}
+          title={`Gửi (${m}+Enter)`}
         >
           <svg viewBox="0 0 24 24"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/></svg>
         </button>
@@ -1248,12 +1248,12 @@
         <ul class="auto-run-list">
           <li>You'll still see every command in the terminal as it runs</li>
           <li>AI is told to refuse destructive ops, but mistakes can happen</li>
-          <li>Use only on servers you trust to recover from a bad command</li>
-          <li>You can turn this off any time from the same button</li>
+          <li>Chỉ dùng trên server bạn tin tưởng để có thể khôi phục nếu lệnh sai</li>
+          <li>Bạn có thể tắt bất cứ lúc nào từ cùng nút bấm này</li>
         </ul>
       </div>
       <footer class="auto-run-footer">
-        <button type="button" class="auto-run-btn auto-run-cancel" onclick={() => (sshAutoRunWarnShow = false)}>Cancel</button>
+        <button type="button" class="auto-run-btn auto-run-cancel" onclick={() => (sshAutoRunWarnShow = false)}>Hủy</button>
         <button type="button" class="auto-run-btn auto-run-enable" onclick={confirmEnableAutoRun}>Enable auto-execute</button>
       </footer>
     </div>

@@ -63,55 +63,55 @@
 
 <div class="auth-panel">
   <select value={localType} onchange={handleTypeChange}>
-    <option value="none">No Auth</option>
+    <option value="none">Không xác thực</option>
     <option value="bearer">Bearer Token</option>
     <option value="basic">Basic Auth</option>
     <option value="api-key">API Key</option>
   </select>
 
   {#if localType === 'none'}
-    <span class="auth-msg">No authentication configured for this request.</span>
+    <span class="auth-msg">Yêu cầu này chưa cấu hình xác thực.</span>
   {:else if localType === 'bearer'}
     <label>Token</label>
     <EnvInput
       value={data.token ?? ''}
-      placeholder="Enter token or &#123;&#123;variable&#125;&#125;"
+      placeholder="Nhập token hoặc &#123;&#123;biến&#125;&#125;"
       onchange={(v) => updateField('token', v)}
     />
   {:else if localType === 'basic'}
-    <label>Username</label>
+    <label>Tên đăng nhập</label>
     <EnvInput
       value={data.username ?? ''}
-      placeholder="Username or &#123;&#123;variable&#125;&#125;"
+      placeholder="Tên đăng nhập hoặc &#123;&#123;biến&#125;&#125;"
       onchange={(v) => updateField('username', v)}
     />
-    <label>Password</label>
+    <label>Mật khẩu</label>
     <EnvInput
       value={data.password ?? ''}
-      placeholder="Password or &#123;&#123;variable&#125;&#125;"
+      placeholder="Mật khẩu hoặc &#123;&#123;biến&#125;&#125;"
       type="password"
       onchange={(v) => updateField('password', v)}
     />
   {:else if localType === 'api-key'}
-    <label>Key name</label>
+    <label>Tên khóa</label>
     <EnvInput
       value={data.key ?? ''}
       placeholder="X-API-Key"
       onchange={(v) => updateField('key', v)}
     />
-    <label>Key value</label>
+    <label>Giá trị khóa</label>
     <EnvInput
       value={data.value ?? ''}
-      placeholder="Enter value or &#123;&#123;variable&#125;&#125;"
+      placeholder="Nhập giá trị hoặc &#123;&#123;biến&#125;&#125;"
       onchange={(v) => updateField('value', v)}
     />
-    <label>Add to</label>
+    <label>Thêm vào</label>
     <select
       value={data.add_to ?? 'header'}
       onchange={(e) => updateField('add_to', (e.target as HTMLSelectElement).value)}
     >
       <option value="header">Header</option>
-      <option value="query">Query Param</option>
+      <option value="query">Tham số truy vấn</option>
     </select>
   {/if}
 </div>
