@@ -1,0 +1,107 @@
+name: Release VN
+
+# Build và publish release cho fork Việt hóa.
+# Khác với publish.yml gốc: không yêu cầu Apple cert hay Tauri signing key,
+# chỉ build cho user thường (Windows x64, macOS universal, Linux x64).
+
+on:
+  push:
+    tags:
+      - 'v*-vi*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag để build (vd. v3.0.2-vi.1)'
+        required: true
+        default: 'v3.0.2-vi.1'
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'windows-latest'
+            args: ''
+            label: 'Windows x64'
+          - platform: 'macos-latest'
+            args: '--target universal-apple-darwin'
+            rust-targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
+            label: 'macOS Universal'
+          - platform: 'ubuntu-22.04'
+            args: ''
+            label: 'Linux x64'
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.tag || github.ref }}
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libsoup-3.0-dev \
+            libdbus-1-dev \
+            libsecret-1-dev \
+            patchelf \
+            pkg-config \
+            xdg-utils
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust-targets || '' }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install frontend dependencies
+        run: bun install
+
+      - name: Build & upload Tauri release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.event.inputs.tag || github.ref_name }}
+          releaseName: 'Clauge ${{ github.event.inputs.tag || github.ref_name }} — Bản Việt hóa'
+          releaseBody: |
+            ## Bản Việt hóa của Clauge
+
+            Đã build sẵn binary cho ${{ matrix.label }}.
+
+            **Tải bản phù hợp ở phần Assets bên dưới:**
+            - Windows: `.msi` hoặc `.exe` (NSIS)
+            - macOS: `.dmg` (universal — chạy trên cả Intel & Apple Silicon)
+            - Linux: `.deb` hoặc `.AppImage`
+
+            ⚠️ **Bản này không ký số (unsigned)** — Windows SmartScreen / macOS Gatekeeper có thể cảnh báo. Đây là bình thường với fork cá nhân.
+
+            - **Windows**: nhấn "More info" → "Run anyway"
+            - **macOS**: chuột phải file `.app` → Open → Open lần nữa, hoặc chạy `xattr -cr /Applications/Clauge.app`
+            - **Linux**: cấp quyền chạy `chmod +x *.AppImage`
+
+            ## Build từ source
+
+            Xem [README.vi.md](https://github.com/${{ github.repository }}/blob/main/README.vi.md).
+
+            ## Upstream
+
+            Fork từ https://github.com/ansxuman/Clauge
+          releaseDraft: false
+          prerelease: false
+          args: ${{ matrix.args }}
