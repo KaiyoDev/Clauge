@@ -24,8 +24,8 @@
   <button
     class="avatar"
     title={needsAttention
-      ? `Action required — ${$cloudConflicts.length} item${$cloudConflicts.length === 1 ? '' : 's'} to resolve`
-      : ($cloudConnected ? `${$cloudDisplayHandle?.handle ?? ''}` : 'Profile')}
+      ? `Cần xử lý — ${$cloudConflicts.length} mục cần giải quyết`
+      : ($cloudConnected ? `${$cloudDisplayHandle?.handle ?? ''}` : 'Hồ sơ')}
   >
     {#if $cloudConnected && $cloudUser?.avatarUrl && !imgFailed}
       <img
@@ -42,7 +42,7 @@
     {/if}
   </button>
   {#if needsAttention}
-    <span class="avatar-dot avatar-dot-action" aria-label="Action required"></span>
+    <span class="avatar-dot avatar-dot-action" aria-label="Cần xử lý"></span>
   {/if}
 </div>
 

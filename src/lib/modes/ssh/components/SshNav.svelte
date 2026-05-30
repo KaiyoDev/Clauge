@@ -327,19 +327,19 @@
         const ms = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6]);
         if (!Number.isNaN(ms)) return formatDiff(Date.now() - ms);
       }
-      return 'never';
+      return 'chưa từng';
     }
     return formatDiff(Date.now() - t);
   }
 
   function formatDiff(diff: number): string {
-    if (diff < 0) return 'just now';
-    if (diff < 60_000) return 'just now';
-    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
-    if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
-    if (diff < 30 * 86_400_000) return `${Math.floor(diff / 86_400_000)}d ago`;
-    if (diff < 365 * 86_400_000) return `${Math.floor(diff / (30 * 86_400_000))}mo ago`;
-    return `${Math.floor(diff / (365 * 86_400_000))}y ago`;
+    if (diff < 0) return 'vừa xong';
+    if (diff < 60_000) return 'vừa xong';
+    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} phút trước`;
+    if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} giờ trước`;
+    if (diff < 30 * 86_400_000) return `${Math.floor(diff / 86_400_000)} ngày trước`;
+    if (diff < 365 * 86_400_000) return `${Math.floor(diff / (30 * 86_400_000))} tháng trước`;
+    return `${Math.floor(diff / (365 * 86_400_000))} năm trước`;
   }
 </script>
 
@@ -347,13 +347,13 @@
   {#if filteredProfiles.length === 0}
     <div class="nav-empty">
       {#if searchQuery}
-        <span>No results for "{searchQuery}"</span>
+        <span>Không có kết quả cho "{searchQuery}"</span>
       {:else}
-        <span>No SSH profiles yet</span>
-        <button class="nav-empty-btn" onclick={() => (showAdd = true)}>+ New Connection</button>
+        <span>Chưa có profile SSH nào</span>
+        <button class="nav-empty-btn" onclick={() => (showAdd = true)}>+ Kết nối mới</button>
         {#if importableCount > 0}
           <button class="nav-empty-btn import" onclick={openAddImport}>
-            Import {importableCount} {importableCount === 1 ? 'host' : 'hosts'} from SSH config
+            Import {importableCount} host từ SSH config
           </button>
         {/if}
       {/if}
@@ -399,7 +399,7 @@
           </div>
           <button
             class="coll-menu"
-            title="More"
+            title="Thêm tùy chọn"
             onclick={(e) => { e.stopPropagation(); showProfileMenu(e, profile); }}
           >
             <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
@@ -417,7 +417,7 @@
   bind:show={confirmShow}
   title={confirmTitle}
   message={confirmMessage}
-  confirmText={confirmDanger ? 'Delete' : 'Disconnect'}
+  confirmText={confirmDanger ? 'Xóa' : 'Ngắt kết nối'}
   confirmColor={confirmDanger ? 'var(--err)' : 'var(--acc)'}
   onconfirm={handleConfirmOk}
 />

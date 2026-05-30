@@ -45,8 +45,8 @@
   }
 
   async function handleSave() {
-    if (!name.trim()) { showToast('Name is required', 'error'); return; }
-    if (!host.trim()) { showToast('Host is required', 'error'); return; }
+    if (!name.trim()) { showToast('Tên là bắt buộc', 'error'); return; }
+    if (!host.trim()) { showToast('Host là bắt buộc', 'error'); return; }
     saving = true;
     try {
       const payload: ExplorerConnection = {
@@ -78,49 +78,49 @@
       }
       if (password) await setSecret(connId, 'password', password);
       await loadExplorerConnections();
-      showToast(isEdit ? 'FTP connection updated' : 'FTP connection saved', 'success');
+      showToast(isEdit ? 'Đã cập nhật kết nối FTP' : 'Đã lưu kết nối FTP', 'success');
       resetForm();
       show = false;
       onclose?.();
     } catch (e: any) {
-      errorToast('Save failed', e);
+      errorToast('Không lưu được', e);
     } finally {
       saving = false;
     }
   }
 </script>
 
-<Modal bind:show title={isEdit ? 'Edit FTP connection' : 'New FTP connection'} width="500px" onclose={() => onclose?.()}>
+<Modal bind:show title={isEdit ? 'Chỉnh sửa kết nối FTP' : 'Kết nối FTP mới'} width="500px" onclose={() => onclose?.()}>
   <div class="form">
     <label class="row">
-      <span>Name</span>
-      <input class="inp" type="text" bind:value={name} placeholder="e.g. NAS" />
+      <span>Tên</span>
+      <input class="inp" type="text" bind:value={name} placeholder="vd. NAS" />
     </label>
     <label class="row">
       <span>Host</span>
       <input class="inp" type="text" bind:value={host} placeholder="ftp.example.com" />
     </label>
     <label class="row">
-      <span>Port</span>
+      <span>Cổng</span>
       <input class="inp" type="number" bind:value={port} />
     </label>
     <label class="row">
-      <span>Username</span>
+      <span>Tên đăng nhập</span>
       <input class="inp" type="text" bind:value={username} />
     </label>
     <label class="row">
-      <span>Password</span>
-      <input class="inp" type="password" bind:value={password} placeholder="(blank for anonymous)" />
+      <span>Mật khẩu</span>
+      <input class="inp" type="password" bind:value={password} placeholder="(để trống nếu đăng nhập ẩn danh)" />
     </label>
     <label class="row checkbox">
       <input type="checkbox" bind:checked={passive} />
-      <span>Passive mode (recommended)</span>
+      <span>Chế độ passive (khuyến nghị)</span>
     </label>
 
     <div class="actions">
-      <button class="btn" onclick={() => { show = false; onclose?.(); }}>Cancel</button>
+      <button class="btn" onclick={() => { show = false; onclose?.(); }}>Hủy</button>
       <button class="btn primary" onclick={handleSave} disabled={saving}>
-        {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Save connection'}
+        {saving ? 'Đang lưu…' : isEdit ? 'Lưu thay đổi' : 'Lưu kết nối'}
       </button>
     </div>
   </div>

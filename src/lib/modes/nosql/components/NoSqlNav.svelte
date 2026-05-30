@@ -67,13 +67,13 @@
   let confirmTitle = $state('');
   let confirmMessage = $state('');
   let confirmDanger = $state(false);
-  let confirmText = $state('Delete');
+  let confirmText = $state('Xóa');
   let confirmAction: (() => Promise<void>) | null = $state(null);
 
   // Rename/Create dialog state
   let renameShow = $state(false);
-  let renameTitle = $state('Rename Collection');
-  let renameButtonLabel = $state('Rename');
+  let renameTitle = $state('Đổi tên Collection');
+  let renameButtonLabel = $state('Đổi tên');
   let renameValue = $state('');
   let renameAction: ((name: string) => Promise<void>) | null = $state(null);
 
@@ -194,7 +194,7 @@
     if (($nosqlConnectionStates.get(conn.id) ?? 'idle') === 'connecting') return;
     try {
       await connectToNoSql(conn.id);
-      showToast(`Connected to ${conn.name}`, 'success');
+      showToast(`Đã kết nối đến ${conn.name}`, 'success');
       // Database/collection tree is MongoDB-only; Redis browses keys in the
       // panel viewer instead, so skip the (mongo-only) list-databases call.
       if (conn.driver === 'mongodb') await loadDatabases(conn.id);
@@ -207,7 +207,7 @@
     confirmTitle = title;
     confirmMessage = message;
     confirmDanger = danger;
-    confirmText = verb ?? (danger ? 'Delete' : 'Confirm');
+    confirmText = verb ?? (danger ? 'Xóa' : 'Xác nhận');
     confirmAction = action;
     confirmShow = true;
   }
@@ -218,7 +218,7 @@
     confirmAction = null;
   }
 
-  function showRename(currentName: string, action: (name: string) => Promise<void>, title = 'Rename Collection', btnLabel = 'Rename') {
+  function showRename(currentName: string, action: (name: string) => Promise<void>, title = 'Đổi tên Collection', btnLabel = 'Đổi tên') {
     renameValue = currentName;
     renameAction = action;
     renameTitle = title;
@@ -313,13 +313,13 @@
     showContextMenu(e.clientX, e.clientY, [
       ...(isConnected ? [
         {
-          label: 'Refresh',
+          label: 'Làm mới',
           icon: icons.refresh,
           action: async () => {
             // Redis browses keys in the panel viewer (it has its own Scan
             // button), so the nav-level refresh only applies to Mongo.
             if (conn.driver !== 'mongodb') {
-              showToast('Refreshed', 'success');
+              showToast('Đã làm mới', 'success');
               return;
             }
             dbCache = new Map([...dbCache].filter(([k]) => k !== conn.id));
@@ -331,29 +331,29 @@
               const key = `${conn.id}:${db}`;
               if (expandedDbs.has(key)) loadCollections(conn.id, db);
             }
-            showToast('Refreshed', 'success');
+            showToast('Đã làm mới', 'success');
           },
         },
         { label: '', action: () => {}, separator: true },
       ] : []),
       ...(isConnected ? [{
-        label: 'Disconnect',
+        label: 'Ngắt kết nối',
         icon: icons.disconnect,
-        action: () => showConfirm('Disconnect', `Disconnect from "${conn.name}"?`, false, async () => {
+        action: () => showConfirm('Ngắt kết nối', `Ngắt kết nối khỏi "${conn.name}"?`, false, async () => {
           try {
             await disconnectFromNoSql(conn.id);
             expandedConns = new Set([...expandedConns].filter(id => id !== conn.id));
-            showToast(`Disconnected from ${conn.name}`, 'info');
+            showToast(`Đã ngắt kết nối khỏi ${conn.name}`, 'info');
           } catch (e: any) { showToast(friendlyError(e), 'error'); }
-        }, 'Disconnect'),
+        }, 'Ngắt kết nối'),
       }] : [{
-        label: 'Connect',
+        label: 'Kết nối',
         icon: icons.connect,
         action: () => doConnect(conn),
       }]),
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Edit',
+        label: 'Chỉnh sửa',
         icon: icons.edit,
         action: () => {
           editingNoSqlConnection.set(conn);
@@ -361,22 +361,22 @@
         },
       },
       {
-        label: 'Copy Connection String',
+        label: 'Sao chép chuỗi kết nối',
         icon: icons.copy,
         action: async () => {
           await navigator.clipboard.writeText(connString);
-          showToast('Copied to clipboard', 'success');
+          showToast('Đã sao chép vào clipboard', 'success');
         },
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Delete',
+        label: 'Xóa',
         icon: icons.trash,
         danger: true,
-        action: () => showConfirm('Delete Connection', `Delete "${conn.name}"? This cannot be undone.`, true, async () => {
+        action: () => showConfirm('Xóa kết nối', `Xóa "${conn.name}"? Hành động này không thể hoàn tác.`, true, async () => {
           try {
             await deleteNoSqlConnection(conn.id);
-            showToast('Connection removed', 'success');
+            showToast('Đã xóa kết nối', 'success');
           } catch (e: any) { showToast(friendlyError(e), 'error'); }
         }),
       },
@@ -473,11 +473,11 @@
   {#if filtered.length === 0}
     <div class="nav-empty">
       {#if searchQuery}
-        <span>No results for "{searchQuery}"</span>
+        <span>Không có kết quả cho "{searchQuery}"</span>
       {:else}
-        <span>No connections yet</span>
+        <span>Chưa có kết nối nào</span>
         <button class="nav-empty-btn" onclick={showAddConnection}>
-          + New Connection
+          + Kết nối mới
         </button>
       {/if}
     </div>
@@ -576,7 +576,7 @@
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
                 </span>
                 <span class="db-action db-action-danger" role="button" tabindex="-1" title="Xóa CSDL"
-                  onclick={(e) => { e.stopPropagation(); const liveId = $nosqlLiveConnectionIds[conn.id]; if (liveId) showConfirm('Drop Database', `Drop "${db}"? All collections and documents will be permanently deleted.`, true, async () => { try { await nosqlDropDatabase(liveId, db); dbCache = new Map([...dbCache].filter(([k]) => k !== conn.id)); collCache = new Map([...collCache].filter(([k]) => !k.startsWith(`${conn.id}:${db}`))); await loadDatabases(conn.id); showToast(`Dropped ${db}`, 'success'); } catch (err) { showToast(friendlyError(err), 'error'); } }, 'Drop'); }}>
+                  onclick={(e) => { e.stopPropagation(); const liveId = $nosqlLiveConnectionIds[conn.id]; if (liveId) showConfirm('Xóa CSDL', `Xóa "${db}"? Tất cả collection và tài liệu sẽ bị xóa vĩnh viễn.`, true, async () => { try { await nosqlDropDatabase(liveId, db); dbCache = new Map([...dbCache].filter(([k]) => k !== conn.id)); collCache = new Map([...collCache].filter(([k]) => !k.startsWith(`${conn.id}:${db}`))); await loadDatabases(conn.id); showToast(`Đã xóa ${db}`, 'success'); } catch (err) { showToast(friendlyError(err), 'error'); } }, 'Xóa'); }}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                 </span>
               </button>

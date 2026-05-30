@@ -18,9 +18,9 @@
     const reset = new Date(resetsAt);
     const now = new Date();
     const days = Math.max(0, Math.ceil((reset.getTime() - now.getTime()) / 86400000));
-    if (days === 0) return 'Resets today';
-    if (days === 1) return 'Resets tomorrow';
-    return `Resets in ${days} days`;
+    if (days === 0) return 'Đặt lại hôm nay';
+    if (days === 1) return 'Đặt lại vào ngày mai';
+    return `Đặt lại sau ${days} ngày`;
   }
 </script>
 
@@ -33,22 +33,22 @@
     </div>
     <div class="cai-body">
       <h3 class="cai-title">Clauge AI</h3>
-      <p class="cai-desc">Managed AI assistance, included with Pro. Skip the API key setup.</p>
+      <p class="cai-desc">Trợ lý AI được quản lý sẵn, bao gồm trong gói Pro. Bỏ qua bước thiết lập API Key.</p>
     </div>
-    <button class="cai-btn cai-btn-primary" onclick={onUpgradeClick}>Upgrade to Pro</button>
+    <button class="cai-btn cai-btn-primary" onclick={onUpgradeClick}>Nâng cấp lên Pro</button>
   </div>
 {:else if credits}
   <div class="cai-card balance">
     <div class="cai-row">
       <h3 class="cai-title">Clauge AI</h3>
       <span class="cai-badge {subscription?.cancel_at_period_end ? 'cai-badge-warn' : 'cai-badge-ok'}">
-        {subscription?.cancel_at_period_end ? 'Cancelling' : 'Active'}
+        {subscription?.cancel_at_period_end ? 'Đang hủy' : 'Hoạt động'}
       </span>
     </div>
     <div class="cai-credit-row">
       <span class="cai-credit-val">{credits.remaining}</span>
       <span class="cai-credit-sep">/</span>
-      <span class="cai-credit-total">{credits.allowance} credits</span>
+      <span class="cai-credit-total">{credits.allowance} tín dụng</span>
     </div>
     <div class="cai-progress-wrap">
       <div

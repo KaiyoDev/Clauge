@@ -117,7 +117,7 @@
 
   function buildConfig(): NoSqlConnectionConfig {
     return {
-      name: name.trim() || `${driver} connection`,
+      name: name.trim() || `kết nối ${driver}`,
       driver,
       connectionString: useConnectionString ? connectionString.trim() : '',
       host: useConnectionString ? '' : host.trim(),
@@ -229,7 +229,7 @@
   );
 </script>
 
-<Modal bind:show title={connection ? 'Edit connection' : 'New connection'} width="560px" {onclose}>
+<Modal bind:show title={connection ? 'Chỉnh sửa kết nối' : 'Kết nối mới'} width="560px" {onclose}>
   <div class="cd-root">
     <!-- Tabs -->
     <div class="cd-tabs" role="tablist">
@@ -241,7 +241,7 @@
         aria-selected={tab === 'general'}
         onclick={() => (tab = 'general')}
       >
-        General
+        Chung
       </button>
       <button
         type="button"
@@ -251,7 +251,7 @@
         aria-selected={tab === 'advanced'}
         onclick={() => (tab = 'advanced')}
       >
-        Advanced
+        Nâng cao
         {#if advancedHasState}<span class="cd-tab-dot" aria-hidden="true"></span>{/if}
       </button>
     </div>
@@ -259,7 +259,7 @@
     {#if tab === 'general'}
       <!-- Connection name -->
       <div class="cd-block">
-        <span class="cd-label">Connection name</span>
+        <span class="cd-label">Tên kết nối</span>
         <input
           class="cd-input"
           type="text"
@@ -305,7 +305,7 @@
 
       <!-- Input mode segmented toggle -->
       <div class="cd-block">
-        <span class="cd-label">Input mode</span>
+        <span class="cd-label">Chế độ nhập</span>
         <div class="cd-segment">
           <button
             type="button"
@@ -347,22 +347,22 @@
 
         {#if driver === 'mongodb'}
           <div class="cd-block">
-            <span class="cd-label">Database <span class="cd-optional">(optional)</span></span>
+            <span class="cd-label">Database <span class="cd-optional">(tùy chọn)</span></span>
             <input class="cd-input mono" type="text" bind:value={database} placeholder="mydb" />
           </div>
           <div class="cd-row">
             <div class="cd-block grow">
-              <span class="cd-label">Username <span class="cd-optional">(optional)</span></span>
+              <span class="cd-label">Username <span class="cd-optional">(tùy chọn)</span></span>
               <input class="cd-input mono" type="text" bind:value={username} placeholder="user" />
             </div>
             <div class="cd-block grow">
-              <span class="cd-label">Password <span class="cd-optional">(optional)</span></span>
+              <span class="cd-label">Password <span class="cd-optional">(tùy chọn)</span></span>
               <input class="cd-input" type="password" bind:value={password} placeholder="••••••••" />
             </div>
           </div>
         {:else}
           <div class="cd-block">
-            <span class="cd-label">Password <span class="cd-optional">(optional)</span></span>
+            <span class="cd-label">Password <span class="cd-optional">(tùy chọn)</span></span>
             <input class="cd-input" type="password" bind:value={password} placeholder="••••••••" />
           </div>
         {/if}
@@ -376,7 +376,7 @@
                 <rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.6" />
                 <path d="M8 11V8a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.6" />
               </svg>
-              SSL enabled
+              SSL bật
             </span>
           {/if}
           {#if driver === 'mongodb' && directConnection}
@@ -384,7 +384,7 @@
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" aria-hidden="true">
                 <path d="M4 12h14M14 7l5 5-5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
               </svg>
-              Direct connection
+              Kết nối trực tiếp
             </span>
           {/if}
           {#if useSshTunnel}
@@ -412,14 +412,14 @@
                 </svg>
               </div>
               <div class="cd-card-text">
-                <div class="cd-card-title">Use SSL / TLS</div>
-                <div class="cd-card-sub">Encrypt traffic between client and database</div>
+                <div class="cd-card-title">Dùng SSL / TLS</div>
+                <div class="cd-card-sub">Mã hóa lưu lượng giữa client và CSDL</div>
               </div>
             </div>
             <button
               type="button"
               role="switch"
-              aria-label="Use SSL"
+              aria-label="Dùng SSL"
               aria-checked={ssl}
               class="cd-toggle"
               class:on={ssl}
@@ -440,11 +440,11 @@
                 </svg>
               </div>
               <div class="cd-card-text">
-                <div class="cd-card-title">Direct connection</div>
+                <div class="cd-card-title">Kết nối trực tiếp</div>
                 <div class="cd-card-sub">
                   {driver === 'mongodb'
-                    ? 'Skip topology discovery; connect straight to this node'
-                    : 'MongoDB only'}
+                    ? 'Bỏ qua dò topology; kết nối thẳng đến node này'
+                    : 'Chỉ dành cho MongoDB'}
                 </div>
               </div>
             </div>
@@ -474,14 +474,14 @@
                 </svg>
               </div>
               <div class="cd-card-text">
-                <div class="cd-card-title">Connect via SSH tunnel</div>
-                <div class="cd-card-sub">Route the connection through a bastion host</div>
+                <div class="cd-card-title">Kết nối qua SSH tunnel</div>
+                <div class="cd-card-sub">Định tuyến kết nối qua một bastion host</div>
               </div>
             </div>
             <button
               type="button"
               role="switch"
-              aria-label="Use SSH tunnel"
+              aria-label="Dùng SSH tunnel"
               aria-checked={useSshTunnel}
               class="cd-toggle"
               class:on={useSshTunnel}
@@ -494,16 +494,16 @@
           {#if useSshTunnel}
             <div class="cd-card-expand">
               {#if $sshProfiles.length === 0}
-                <p class="cd-empty">No SSH profiles yet.</p>
+                <p class="cd-empty">Chưa có profile SSH nào.</p>
                 <button class="cd-new-ssh" type="button" onclick={() => (showNewSshModal = true)}>
                   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true">
                     <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
                   </svg>
-                  Create new SSH profile
+                  Tạo profile SSH mới
                 </button>
               {:else}
                 <div class="cd-block">
-                  <span class="cd-label">SSH profile</span>
+                  <span class="cd-label">Profile SSH</span>
                   <div class="cd-select-wrap">
                     <select class="cd-input mono cd-select" bind:value={selectedSshProfileId}>
                       {#each $sshProfiles as p (p.id)}
@@ -522,7 +522,7 @@
                   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true">
                     <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
                   </svg>
-                  Create new SSH profile
+                  Tạo profile SSH mới
                 </button>
               {/if}
             </div>
@@ -557,20 +557,20 @@
           {/if}
         </span>
         <span class="cd-test-label">
-          {testing ? (testStatus || 'Testing…') : (testOk ? 'Connected' : 'Test connection')}
+          {testing ? (testStatus || 'Đang kiểm tra…') : (testOk ? 'Đã kết nối' : 'Kiểm tra kết nối')}
         </span>
       </button>
       <div class="cd-spacer"></div>
-      <button type="button" class="cd-btn outline" onclick={() => (show = false)} disabled={saving}>Cancel</button>
+      <button type="button" class="cd-btn outline" onclick={() => (show = false)} disabled={saving}>Hủy</button>
       <button type="button" class="cd-btn primary" onclick={handleSave} disabled={saving || testing}>
         {#if saving}
           <svg viewBox="0 0 24 24" width="13" height="13" fill="none" class="cd-spin" aria-hidden="true">
             <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" stroke-opacity="0.3" />
             <path d="M12 4a8 8 0 018 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
           </svg>
-          Saving…
+          Đang lưu…
         {:else}
-          Save connection
+          Lưu kết nối
         {/if}
       </button>
     </div>

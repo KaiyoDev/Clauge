@@ -81,7 +81,7 @@
     const key = `note:${n.id}`;
     const existing = get(sharedTabs).find(t => t.mode === 'workspace' && t.key === key);
     if (existing) activateTab(existing.id);
-    else addTab(n.title || 'Untitled', 'workspace', key, 'var(--acc)');
+    else addTab(n.title || 'Chưa có tiêu đề', 'workspace', key, 'var(--acc)');
     mode.set('workspace');
   }
 
@@ -99,12 +99,12 @@
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     showContextMenu(rect.left, rect.bottom + 4, [
       {
-        label: 'New Note',
+        label: 'Ghi chú mới',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>',
         action: () => beginAdd('note'),
       },
       {
-        label: 'New Board',
+        label: 'Bảng mới',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="6" height="16" rx="1"/><rect x="11" y="4" width="6" height="10" rx="1"/><rect x="19" y="4" width="2" height="14" rx="1"/></svg>',
         action: () => beginAdd('board'),
       },
@@ -271,7 +271,7 @@
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Delete',
+        label: 'Xóa',
         danger: true,
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>',
         action: () => handleDeleteItem(kind, item),
@@ -347,7 +347,7 @@
     {#if addingKind}
       <div class="inline-add-row">
         <InlineInput
-          placeholder={addingKind === 'note' ? 'Note title…' : 'Board name…'}
+          placeholder={addingKind === 'note' ? 'Tiêu đề ghi chú…' : 'Tên bảng…'}
           onsubmit={commitAdd}
           oncancel={cancelAdd}
         />
@@ -375,23 +375,23 @@
                dark themes. -->
           <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="14 3 14 9 20 9"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
         </span>
-        <span class="ws-leaf-name">{n.title || 'Untitled'}</span>
+        <span class="ws-leaf-name">{n.title || 'Chưa có tiêu đề'}</span>
       </div>
     {/each}
 
     {#if expanded && filteredBoards.length === 0 && filteredNotes.length === 0 && !addingKind}
-      <div class="ws-leaf-empty">Empty — use the + above</div>
+      <div class="ws-leaf-empty">Trống — dùng nút + ở trên</div>
     {/if}
   </div>
 </div>
 
 <ConfirmDialog
   bind:show={showDeleteConfirm}
-  title="Delete workspace"
+  title="Xóa workspace"
   message={deletePreview
-    ? `Delete "${workspace.name}"? This will remove ${deletePreview.noteCount} note${deletePreview.noteCount === 1 ? '' : 's'}, ${deletePreview.boardCount} board${deletePreview.boardCount === 1 ? '' : 's'}, and ${deletePreview.cardCount} card${deletePreview.cardCount === 1 ? '' : 's'}. This cannot be undone.`
-    : `Delete "${workspace.name}"? All notes and boards inside will be removed. This cannot be undone.`}
-  confirmText="Delete"
+    ? `Xóa "${workspace.name}"? Thao tác này sẽ xóa ${deletePreview.noteCount} ghi chú, ${deletePreview.boardCount} bảng và ${deletePreview.cardCount} thẻ. Không thể hoàn tác.`
+    : `Xóa "${workspace.name}"? Toàn bộ ghi chú và bảng bên trong sẽ bị xóa. Không thể hoàn tác.`}
+  confirmText="Xóa"
   onconfirm={confirmDelete}
 >
   {#snippet extra()}
@@ -399,7 +399,7 @@
       <label class="ws-del-wt">
         <input type="checkbox" bind:checked={deleteWorktrees} />
         <span>
-          Remove the {deletePreview.activeWorktrees.length} active git worktree{deletePreview.activeWorktrees.length === 1 ? '' : 's'} from disk too
+          Xóa luôn {deletePreview.activeWorktrees.length} git worktree đang hoạt động khỏi ổ đĩa
         </span>
       </label>
       <ul class="ws-del-wt-list">

@@ -31,10 +31,10 @@
   {#if filtered.length === 0}
     <div class="nav-empty">
       {#if searchQuery}
-        <span>No results for "{searchQuery}"</span>
+        <span>Không có kết quả cho "{searchQuery}"</span>
       {:else}
-        <span>No workspaces yet</span>
-        <button class="nav-empty-btn" onclick={openModal}>+ New Workspace</button>
+        <span>Chưa có workspace nào</span>
+        <button class="nav-empty-btn" onclick={openModal}>+ Workspace mới</button>
       {/if}
     </div>
   {:else}

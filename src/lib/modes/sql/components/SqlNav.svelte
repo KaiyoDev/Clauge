@@ -114,9 +114,9 @@
     createDbLoading = true;
     try {
       const lid = getLiveId(createDbConnId);
-      if (!lid) throw new Error('Not connected');
+      if (!lid) throw new Error('Chưa kết nối');
       const parts = splitLid(lid);
-      if (!parts) throw new Error('Invalid connection key');
+      if (!parts) throw new Error('Khóa kết nối không hợp lệ');
       await sqlCreateDatabase(parts.connId, parts.db, createDbName.trim());
       showToast(`Đã tạo cơ sở dữ liệu "${createDbName.trim()}"`, 'success');
       createDbShow = false;
@@ -657,14 +657,14 @@ ORDER BY ordinal_position;`);
 
     showContextMenu(e.clientX, e.clientY, [
       {
-        label: 'New Query',
+        label: 'Truy vấn mới',
         icon: icons.newQuery,
         action: () => {
-          insertQuery(connId, db, `-- Query on ${db}\n`);
+          insertQuery(connId, db, `-- Truy vấn trên ${db}\n`);
         },
       },
       {
-        label: 'Refresh',
+        label: 'Làm mới',
         icon: icons.refresh,
         action: () => refreshDatabase(connId, db),
       },
@@ -728,8 +728,7 @@ ORDER BY ordinal_position;`);
         label: 'Mô tả bảng',
         icon: icons.describe,
         action: () => genDescribeTable(connId, db, schema, table),
-      },
-      { label: '', action: () => {}, separator: true },
+      },      { label: '', action: () => {}, separator: true },
       {
         label: 'Sao chép câu SELECT',
         icon: icons.selectAll,
@@ -810,9 +809,9 @@ ORDER BY ordinal_position;`);
 
 {#snippet renderTables(tables: TableInfo[], schema: string, db: string, connId: string, isLoadingTbl: boolean)}
   {#if isLoadingTbl}
-    <div class="tree-loading" style="padding-left:38px">Loading tables...</div>
+    <div class="tree-loading" style="padding-left:38px">Đang tải bảng...</div>
   {:else if tables.length === 0}
-    <div class="tree-loading" style="padding-left:38px">No tables</div>
+    <div class="tree-loading" style="padding-left:38px">Không có bảng</div>
   {:else}
     {#each tables as table (table.name)}
       {@const tableVisible = !searchQuery || tableMatchesSearch(table.name)}
@@ -845,9 +844,9 @@ ORDER BY ordinal_position;`);
 
       {#if isTableExpanded}
         {#if isLoadingCol}
-          <div class="tree-loading" style="padding-left:48px">Loading columns...</div>
+          <div class="tree-loading" style="padding-left:48px">Đang tải cột...</div>
         {:else if columns.length === 0}
-          <div class="tree-loading" style="padding-left:48px">No columns</div>
+          <div class="tree-loading" style="padding-left:48px">Không có cột</div>
         {:else}
           {#each columns as col (col.name)}
             <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -877,11 +876,11 @@ ORDER BY ordinal_position;`);
   {#if filteredConnections.length === 0}
     <div class="nav-empty">
       {#if searchQuery}
-        <span>No results for "{searchQuery}"</span>
+        <span>Không có kết quả cho "{searchQuery}"</span>
       {:else}
-        <span>No connections yet</span>
+        <span>Chưa có kết nối nào</span>
         <button class="nav-empty-btn" onclick={() => showAddConnection()}>
-          + New Connection
+          + Kết nối mới
         </button>
       {/if}
     </div>
@@ -1050,24 +1049,24 @@ ORDER BY ordinal_position;`);
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div class="sql-prompt-overlay" use:teleportToBody onclick={() => createDbShow = false}>
     <div class="sql-prompt" onclick={(e) => e.stopPropagation()}>
-      <div class="sql-prompt-title">Create Database</div>
-      <div class="sql-prompt-msg">Enter a name for the new database.</div>
+      <div class="sql-prompt-title">Tạo CSDL</div>
+      <div class="sql-prompt-msg">Nhập tên cho CSDL mới.</div>
       <input
         class="create-db-input"
         type="text"
-        placeholder="database_name"
+        placeholder="ten_csdl"
         bind:value={createDbName}
         onkeydown={(e) => { if (e.key === 'Enter') handleCreateDb(); if (e.key === 'Escape') createDbShow = false; }}
         autofocus
       />
       <div class="sql-prompt-actions">
-        <button class="sql-prompt-btn" onclick={() => createDbShow = false}>Cancel</button>
+        <button class="sql-prompt-btn" onclick={() => createDbShow = false}>Hủy</button>
         <button
           class="sql-prompt-btn primary"
           disabled={!createDbName.trim() || createDbLoading}
           onclick={handleCreateDb}
         >
-          {createDbLoading ? 'Creating...' : 'Create'}
+          {createDbLoading ? 'Đang tạo...' : 'Tạo'}
         </button>
       </div>
     </div>

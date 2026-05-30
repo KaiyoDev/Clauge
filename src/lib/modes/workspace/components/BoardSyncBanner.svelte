@@ -33,10 +33,10 @@
    *  needed for v1 — costs more than it's worth. */
   function relTime(ts: number): string {
     const d = Date.now() - ts;
-    if (d < 30_000) return 'just now';
-    if (d < 3_600_000) return `${Math.floor(d / 60_000)}m ago`;
-    if (d < 86_400_000) return `${Math.floor(d / 3_600_000)}h ago`;
-    return `${Math.floor(d / 86_400_000)}d ago`;
+    if (d < 30_000) return 'vừa xong';
+    if (d < 3_600_000) return `${Math.floor(d / 60_000)} phút trước`;
+    if (d < 86_400_000) return `${Math.floor(d / 3_600_000)} giờ trước`;
+    return `${Math.floor(d / 86_400_000)} ngày trước`;
   }
 </script>
 
@@ -50,15 +50,15 @@
     <div class="sb-body">
       {#if busy}
         <span class="sb-dot sb-busy"></span>
-        <span class="sb-text">Scanning {projectPath} for issues…</span>
+        <span class="sb-text">Đang quét issue trong {projectPath}…</span>
 
       {:else if !state}
         <span class="sb-icon">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 11-9-9c2.5 0 4.7.8 6.3 2.5L21 8"/><path d="M21 3v5h-5"/></svg>
         </span>
-        <span class="sb-text">Pull open issues from this project's Git remote into the board.</span>
+        <span class="sb-text">Kéo các issue đang mở từ Git remote của dự án này vào bảng.</span>
         <button class="sb-btn primary" onclick={() => onsync?.()} disabled={busy}>
-          Sync issues
+          Đồng bộ issue
         </button>
 
       {:else if state.kind === 'success'}
@@ -66,31 +66,31 @@
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </span>
         <span class="sb-text">
-          Imported <strong>{state.issues.length}</strong> {state.source === 'github' ? 'GitHub' : state.source === 'gitlab' ? 'GitLab' : ''} issue{state.issues.length === 1 ? '' : 's'} from <span class="sb-mono">{state.remote}</span>
+          Đã nhập <strong>{state.issues.length}</strong> issue {state.source === 'github' ? 'GitHub' : state.source === 'gitlab' ? 'GitLab' : ''} từ <span class="sb-mono">{state.remote}</span>
         </span>
         {#if lastSyncedAt}
-          <span class="sb-stamp">Synced {relTime(lastSyncedAt)}</span>
+          <span class="sb-stamp">Đồng bộ {relTime(lastSyncedAt)}</span>
         {/if}
-        <button class="sb-btn ghost" onclick={() => onsync?.()} disabled={busy}>Re-sync</button>
+        <button class="sb-btn ghost" onclick={() => onsync?.()} disabled={busy}>Đồng bộ lại</button>
 
       {:else if state.kind === 'notGitRepo'}
         <span class="sb-icon">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
         </span>
-        <span class="sb-text">This folder isn't a Git repository — nothing to pull.</span>
+        <span class="sb-text">Thư mục này không phải kho Git — không có gì để kéo.</span>
 
       {:else if state.kind === 'noRemote'}
         <span class="sb-icon">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
         </span>
-        <span class="sb-text">No <span class="sb-mono">origin</span> remote — add one with <span class="sb-mono">git remote add origin &lt;url&gt;</span> and try again.</span>
-        <button class="sb-btn ghost" onclick={() => onsync?.()} disabled={busy}>Retry</button>
+        <span class="sb-text">Không có remote <span class="sb-mono">origin</span> — thêm bằng <span class="sb-mono">git remote add origin &lt;url&gt;</span> rồi thử lại.</span>
+        <button class="sb-btn ghost" onclick={() => onsync?.()} disabled={busy}>Thử lại</button>
 
       {:else if state.kind === 'unsupportedRemote'}
         <span class="sb-icon">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>
         </span>
-        <span class="sb-text">Issue sync supports GitHub and GitLab only — <span class="sb-mono">{state.url}</span> isn't recognised.</span>
+        <span class="sb-text">Đồng bộ issue chỉ hỗ trợ GitHub và GitLab — không nhận diện được <span class="sb-mono">{state.url}</span>.</span>
 
       {:else if state.kind === 'toolNotInstalled'}
         <span class="sb-icon sb-icon-warn">

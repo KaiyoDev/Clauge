@@ -764,7 +764,7 @@
     <!-- ─────────── Body (Thread / Edit) ─────────── -->
     <div class="cd-tabs">
       <button class="cd-tab" class:cd-tab-on={tab === 'thread'} onclick={() => (tab = 'thread')}>
-        Thread
+        Thảo luận
         {#if comments.length > 0}<span class="cd-tab-count">{comments.length}</span>{/if}
       </button>
       <button class="cd-tab" class:cd-tab-on={tab === 'edit'} onclick={() => (tab = 'edit')}>
@@ -788,7 +788,7 @@
 
       {#if card.reviewChecklist}
         <div class="cd-checklist">
-          <div class="cd-checklist-key">Checklist review <span class="cd-dim">(đặt bởi {editor.label})</span></div>
+          <div class="cd-checklist-key">Checklist đánh giá <span class="cd-dim">(đặt bởi {editor.label})</span></div>
           <pre>{card.reviewChecklist}</pre>
         </div>
       {/if}
@@ -935,7 +935,7 @@
       {/if}
       <span class="cd-foot-spacer"></span>
       <span class="cd-foot-meta">
-        Updated {formatAttribution(card.updatedBy, card.updatedAt)}
+        Cập nhật {formatAttribution(card.updatedBy, card.updatedAt)}
       </span>
     </div>
   </div>

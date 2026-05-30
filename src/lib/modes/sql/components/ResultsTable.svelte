@@ -506,7 +506,7 @@
     a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
-    showToast(`Saved ${filename}`, 'success');
+    showToast(`Đã lưu ${filename}`, 'success');
   }
 
   const totalWidth = $derived(
@@ -522,7 +522,7 @@
       <div class="rt-connecting">
         <span class="rt-spinner"></span>
         <span class="rt-connecting-text">
-          Connecting{connectingLabel ? ` to ${connectingLabel}` : ''}…
+          Đang kết nối{connectingLabel ? ` tới ${connectingLabel}` : ''}…
         </span>
       </div>
     </div>
@@ -532,17 +532,17 @@
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
           ><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <div class="rt-conn-error-msg">
-          {connectError ?? 'Connection failed'}
+          {connectError ?? 'Kết nối thất bại'}
         </div>
-        <button class="rt-retry-btn" onclick={() => onretry?.()}>Retry</button>
+        <button class="rt-retry-btn" onclick={() => onretry?.()}>Thử lại</button>
       </div>
     </div>
   {:else if loading}
     <div class="rt-empty">
       <div class="rt-running">
         <span class="rt-spinner"></span>
-        <span class="rt-running-text">Running query… ⏱ {(elapsedMs / 1000).toFixed(1)}s</span>
-        <button class="rt-cancel-btn" onclick={() => oncancel?.()}>Cancel</button>
+        <span class="rt-running-text">Đang chạy truy vấn… ⏱ {(elapsedMs / 1000).toFixed(1)}s</span>
+        <button class="rt-cancel-btn" onclick={() => oncancel?.()}>Hủy</button>
       </div>
     </div>
   {:else if error}
@@ -561,35 +561,35 @@
           <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
         </svg>
       </div>
-      <div class="rt-empty-text">Execute a query to see results</div>
+      <div class="rt-empty-text">Thực thi một truy vấn để xem kết quả</div>
     </div>
   {:else if result.queryKind === 'dml' || result.queryKind === 'ddl'}
     <div class="rt-stats">
       <div class="rt-stats-head">
-        <div class="rt-stats-col-name">Name</div>
-        <div class="rt-stats-col-value">Value</div>
+        <div class="rt-stats-col-name">Tên</div>
+        <div class="rt-stats-col-value">Giá trị</div>
       </div>
       <div class="rt-stats-row">
-        <div class="rt-stats-col-name">{dmlVerb(query)} Rows</div>
+        <div class="rt-stats-col-name">{dmlVerb(query)} hàng</div>
         <div class="rt-stats-col-value">{result.affectedRows}</div>
       </div>
       <div class="rt-stats-row">
-        <div class="rt-stats-col-name">Execute time</div>
+        <div class="rt-stats-col-name">Thời gian thực thi</div>
         <div class="rt-stats-col-value">{fmtExec(result.durationMs)}</div>
       </div>
       {#if startedAt}
         <div class="rt-stats-row">
-          <div class="rt-stats-col-name">Start time</div>
+          <div class="rt-stats-col-name">Thời điểm bắt đầu</div>
           <div class="rt-stats-col-value">{fmtTs(startedAt)}</div>
         </div>
         <div class="rt-stats-row">
-          <div class="rt-stats-col-name">Finish time</div>
+          <div class="rt-stats-col-name">Thời điểm kết thúc</div>
           <div class="rt-stats-col-value">{fmtTs(startedAt + result.durationMs)}</div>
         </div>
       {/if}
       {#if query}
         <div class="rt-stats-row rt-stats-row-query">
-          <div class="rt-stats-col-name">Query</div>
+          <div class="rt-stats-col-name">Truy vấn</div>
           <pre class="rt-stats-col-value rt-stats-query">{query}</pre>
         </div>
       {/if}
@@ -675,8 +675,8 @@
             <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
             <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
           </svg>
-          <div class="rt-no-rows-text">No rows returned</div>
-          <div class="rt-no-rows-meta">Query ran in {result.durationMs}ms</div>
+          <div class="rt-no-rows-text">Không có hàng nào trả về</div>
+          <div class="rt-no-rows-meta">Truy vấn chạy trong {result.durationMs}ms</div>
         </div>
       {/if}
     </div>
@@ -733,17 +733,17 @@
 <!-- Context Menu -->
 {#if contextMenu}
   <div class="rt-ctx" style="left:{contextMenu.x}px;top:{contextMenu.y}px">
-    <button class="rt-ctx-item" onclick={copyCellValue}>Copy Cell</button>
-    <button class="rt-ctx-item" onclick={copyRow}>Copy Row as JSON</button>
+    <button class="rt-ctx-item" onclick={copyCellValue}>Sao chép ô</button>
+    <button class="rt-ctx-item" onclick={copyRow}>Sao chép hàng dạng JSON</button>
     <div class="rt-ctx-sep"></div>
     {#if deletedRows.has(contextMenu.rowIdx)}
-      <button class="rt-ctx-item" onclick={() => { handleUndoDelete(contextMenu!.rowIdx); closeContextMenu(); }}>Undo Delete</button>
+      <button class="rt-ctx-item" onclick={() => { handleUndoDelete(contextMenu!.rowIdx); closeContextMenu(); }}>Hoàn tác xóa</button>
     {:else}
-      <button class="rt-ctx-item rt-ctx-danger" onclick={() => { handleDeleteRow(contextMenu!.rowIdx); closeContextMenu(); }}>Delete Row</button>
+      <button class="rt-ctx-item rt-ctx-danger" onclick={() => { handleDeleteRow(contextMenu!.rowIdx); closeContextMenu(); }}>Xóa hàng</button>
     {/if}
     <div class="rt-ctx-sep"></div>
-    <button class="rt-ctx-item" onclick={() => { copyAllResults(); closeContextMenu(); }}>Copy All</button>
-    <button class="rt-ctx-item" onclick={() => { exportCsv(); closeContextMenu(); }}>Export CSV</button>
+    <button class="rt-ctx-item" onclick={() => { copyAllResults(); closeContextMenu(); }}>Sao chép tất cả</button>
+    <button class="rt-ctx-item" onclick={() => { exportCsv(); closeContextMenu(); }}>Xuất CSV</button>
   </div>
 {/if}
 
@@ -765,9 +765,9 @@
       {/each}
     </div>
     <div class="rt-save-footer">
-      <button class="rt-save-cancel" onclick={() => showSaveModal = false}>Cancel</button>
+      <button class="rt-save-cancel" onclick={() => showSaveModal = false}>Hủy</button>
       <button class="rt-save-execute" disabled={savingChanges} onclick={executeSave}>
-        {savingChanges ? 'Executing…' : 'Execute'}
+        {savingChanges ? 'Đang thực thi…' : 'Thực thi'}
       </button>
     </div>
   {/snippet}

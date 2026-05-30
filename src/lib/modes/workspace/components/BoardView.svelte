@@ -398,7 +398,7 @@
     const isLocal = !card.externalId || !card.externalId.trim();
     const items: any[] = [
       {
-        label: 'Edit',
+        label: 'Chỉnh sửa',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
         action: () => editingCard = card,
       },
@@ -411,14 +411,14 @@
 
     if (isLocal && repoUrl) {
       items.push({
-        label: `Create issue on ${repoLabel}`,
+        label: `Tạo issue trên ${repoLabel}`,
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>',
         action: () => pushOneCardAsIssue(card),
       });
     }
     if (card.externalUrl) {
       items.push({
-        label: 'View issue on host',
+        label: 'Xem issue trên host',
         sub: card.externalId ?? undefined,
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
         action: () => openExternalUrl(card.externalUrl!),
@@ -426,7 +426,7 @@
     }
     if (card.prUrl) {
       items.push({
-        label: 'View PR on host',
+        label: 'Xem PR trên host',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="18" cy="18" r="2"/><path d="M6 8v8M11 6h4a3 3 0 0 1 3 3v7"/></svg>',
         action: () => openExternalUrl(card.prUrl!),
       });
@@ -436,31 +436,31 @@
     // falling back to a clauge:// card link so other panes can
     // navigate back here.
     items.push({
-      label: card.prUrl ? 'Copy PR URL' : card.externalUrl ? 'Copy issue URL' : 'Copy card title',
+      label: card.prUrl ? 'Sao chép URL của PR' : card.externalUrl ? 'Sao chép URL của issue' : 'Sao chép tiêu đề thẻ',
       icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
       action: () =>
         copyToClipboard(
           card.prUrl ?? card.externalUrl ?? card.title,
-          card.prUrl ? 'PR URL' : card.externalUrl ? 'issue URL' : 'title',
+          card.prUrl ? 'URL của PR' : card.externalUrl ? 'URL của issue' : 'tiêu đề',
         ),
     });
 
     if (card.reviewPending === 1) {
       items.push({ label: '', action: () => {}, separator: true });
       items.push({
-        label: 'Approve (clear review)',
+        label: 'Duyệt (xóa cờ review)',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>',
         action: () => approveCard(card),
       });
       items.push({
-        label: 'Request changes',
+        label: 'Yêu cầu chỉnh sửa',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>',
         action: () => requestChanges(card),
       });
     }
     items.push({ label: '', action: () => {}, separator: true });
     items.push({
-      label: 'Delete',
+      label: 'Xóa',
       danger: true,
       icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>',
       action: () => {
@@ -478,9 +478,9 @@
     try {
       await workspaceCardDelete(target.id);
       await loadBoardContents(boardId);
-      showToast(`Deleted "${target.title}"`, 'success');
+      showToast(`Đã xóa "${target.title}"`, 'success');
     } catch (e) {
-      errorToast('Delete failed', e);
+      errorToast('Xóa thất bại', e);
     }
   }
 
@@ -554,7 +554,7 @@
 </script>
 
 {#if !board}
-  <div class="bv-loading">Loading board…</div>
+  <div class="bv-loading">Đang tải bảng…</div>
 {:else}
   <div class="bv">
     <header class="bv-header">

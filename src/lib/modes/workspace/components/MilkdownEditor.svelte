@@ -23,7 +23,7 @@
     placeholder?: string;
   }
 
-  let { value, onChange, placeholder = "Type '/' for commands" }: Props = $props();
+  let { value, onChange, placeholder = "Gõ '/' để xem lệnh" }: Props = $props();
 
   let host: HTMLDivElement;
   let crepe: Crepe | null = null;

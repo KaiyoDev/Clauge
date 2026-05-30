@@ -63,11 +63,11 @@
           <path d="M14 13a4.5 4.5 0 0 1 8.5 2"/>
         </svg>
       </span>
-      <h1 class="cv-title">Co-workers</h1>
-      <span class="cv-count">{$coworkers.length} {$coworkers.length === 1 ? 'persona' : 'personas'}</span>
-      <button class="cv-new" onclick={openNew}>+ New coworker</button>
+      <h1 class="cv-title">Đồng nghiệp</h1>
+      <span class="cv-count">{$coworkers.length} {$coworkers.length === 1 ? 'persona' : 'persona'}</span>
+      <button class="cv-new" onclick={openNew}>+ Đồng nghiệp mới</button>
     </div>
-    <p class="cv-sub">Agent personas with custom roles and instructions. Assign them to cards to get focused, consistent responses.</p>
+    <p class="cv-sub">Persona agent với vai trò và hướng dẫn tùy chỉnh. Giao chúng cho các thẻ để nhận phản hồi tập trung và nhất quán.</p>
   </header>
 
   <div class="cv-body">
@@ -76,16 +76,16 @@
         <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="var(--t4)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="9" cy="8" r="3.5"/><path d="M2.5 19a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="6" r="2.6"/><path d="M14 13a4.5 4.5 0 0 1 8.5 2"/>
         </svg>
-        <h3>No coworkers yet</h3>
-        <p>Create a persona, give it a role and instructions, then assign it to a card.</p>
-        <button class="cv-cta" onclick={openNew}>+ Create your first coworker</button>
+        <h3>Chưa có đồng nghiệp nào</h3>
+        <p>Tạo một persona, gán vai trò và hướng dẫn, rồi giao nó cho một thẻ.</p>
+        <button class="cv-cta" onclick={openNew}>+ Tạo đồng nghiệp đầu tiên</button>
       </div>
     {:else}
       <div class="cv-grid">
         <!-- "Add" tile -->
         <button class="cv-tile cv-tile-add" onclick={openNew}>
           <span class="cv-tile-add-plus">+</span>
-          <span class="cv-tile-add-label">New coworker</span>
+          <span class="cv-tile-add-label">Đồng nghiệp mới</span>
         </button>
 
         {#each $coworkers as cw (cw.id)}
@@ -96,8 +96,8 @@
             class:cv-tile-locked={locked}
             onclick={() => openTile(cw)}
             title={locked
-              ? `Locked — upgrade to Pro to re-enable @${cw.name}`
-              : `Edit @${cw.name}`}
+              ? `Đã khóa — nâng cấp lên Pro để bật lại @${cw.name}`
+              : `Chỉnh sửa @${cw.name}`}
           >
             <div class="cv-avatar-wrap">
               <CoworkerAvatar seed={cw.avatarSeed} style={cw.avatarStyle} size={64} ring />
@@ -117,7 +117,7 @@
               <div class="cv-tile-role">{cw.role}</div>
             {/if}
             {#if locked}
-              <div class="cv-tile-locked-cta">Upgrade to re-enable</div>
+              <div class="cv-tile-locked-cta">Nâng cấp để bật lại</div>
             {:else if cw.systemPrompt}
               <div class="cv-tile-prompt">{cw.systemPrompt}</div>
             {/if}

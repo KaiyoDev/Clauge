@@ -60,7 +60,7 @@
       <div class="empty-icon">
         <svg viewBox="0 0 24 24" width="40" height="40"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" stroke="var(--t4)" fill="none" stroke-width="1.5" stroke-linejoin="round"/></svg>
       </div>
-      <p class="empty-text">Pick or add a connection to start browsing</p>
+      <p class="empty-text">Chọn hoặc thêm kết nối để bắt đầu duyệt</p>
       <p class="empty-hint">SFTP &middot; FTP &middot; S3-compatible &middot; Azure Blob</p>
     </div>
   {/if}

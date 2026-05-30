@@ -455,7 +455,7 @@
     try {
       await ensureConnected(execBinding.connectionId, execBinding.database);
     } catch (e: any) {
-      showToast(`Couldn't connect: ${friendlyError(e)}`, 'error');
+      showToast(`Không thể kết nối: ${friendlyError(e)}`, 'error');
       return;
     }
 
@@ -495,7 +495,7 @@
         activeResultIdx: focusIdx,
         inFlight: null,
       });
-      showToast(`Query completed in ${result.durationMs}ms`, 'success');
+      showToast(`Truy vấn hoàn tất trong ${result.durationMs}ms`, 'success');
       void refreshSchemaIfDdl(execBinding, [result]);
     } catch (e: any) {
       const msg = e?.toString?.() ?? String(e);
@@ -533,7 +533,7 @@
     try {
       await ensureConnected(execBinding.connectionId, execBinding.database);
     } catch (e: any) {
-      showToast(`Couldn't connect: ${friendlyError(e)}`, 'error');
+      showToast(`Không thể kết nối: ${friendlyError(e)}`, 'error');
       return;
     }
 
@@ -599,12 +599,12 @@
       });
       if (isTransactional) {
         showToast(
-          `Batch rolled back — ${queries.length - firstUnsuccessful} statements failed (no changes persisted)`,
+          `Đã rollback batch — ${queries.length - firstUnsuccessful} lệnh thất bại (không có thay đổi nào được lưu)`,
           'error',
         );
       } else {
         showToast(
-          `Batch failed at statement ${firstUnsuccessful + 1} — ${firstUnsuccessful} statement(s) already persisted (engine has no rollback)`,
+          `Batch thất bại tại lệnh ${firstUnsuccessful + 1} — ${firstUnsuccessful} lệnh đã được lưu (engine không hỗ trợ rollback)`,
           'error',
         );
       }
@@ -624,8 +624,8 @@
     });
     showToast(
       isTransactional
-        ? `${queries.length} statements committed atomically`
-        : `${queries.length} statements completed`,
+        ? `${queries.length} lệnh đã được commit nguyên tử`
+        : `${queries.length} lệnh đã hoàn tất`,
       'success',
     );
     void refreshSchemaIfDdl(execBinding, results);
@@ -822,8 +822,8 @@
           ><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
         <span>
           {$connections.length === 0
-            ? 'No saved connections yet. Create one from the SQL sidebar to start querying.'
-            : 'Pick a database from the dropdown above to start querying.'}
+            ? 'Chưa có kết nối nào được lưu. Tạo một kết nối từ thanh bên SQL để bắt đầu truy vấn.'
+            : 'Chọn một CSDL từ dropdown phía trên để bắt đầu truy vấn.'}
         </span>
       </div>
     {/if}
@@ -922,9 +922,9 @@
         <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
       </svg>
     </div>
-    <div class="sql-empty-text">Create a new query with the + button in the tab bar</div>
-    <div class="sql-empty-hint">or press {m}+T</div>
-    <div class="sql-empty-ai"><kbd>{m}+L</kbd> AI Assistant</div>
+    <div class="sql-empty-text">Tạo một truy vấn mới bằng nút + trên thanh tab</div>
+    <div class="sql-empty-hint">hoặc nhấn {m}+T</div>
+    <div class="sql-empty-ai"><kbd>{m}+L</kbd> Trợ lý AI</div>
   </div>
 {/if}
 

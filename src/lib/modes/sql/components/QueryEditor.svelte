@@ -481,7 +481,7 @@
         keymap.of([
           { key: 'Mod-Enter', run: (view) => {
               if (disabled) {
-                showToast('Query already running — cancel to start a new one', 'info');
+                showToast('Truy vấn đang chạy — hãy hủy để bắt đầu truy vấn mới', 'info');
                 return true;
               }
               executeFromCursor(view);
@@ -526,7 +526,7 @@
         search({ top: true }),
         syntaxHighlighting(oneDarkHighlightStyle),
         editorTheme,
-        cmPlaceholder(`Write your SQL query here -- ${mod()}+Enter to execute`),
+        cmPlaceholder(`Viết truy vấn SQL của bạn ở đây -- ${mod()}+Enter để thực thi`),
         EditorView.updateListener.of((update) => {
           if (update.docChanged) {
             suppressExternalSync = true;
@@ -597,7 +597,7 @@
         });
       }
     } catch (e: any) {
-      showToast(`Format failed: ${e?.message ?? String(e)}`, 'error');
+      showToast(`Định dạng thất bại: ${e?.message ?? String(e)}`, 'error');
     }
     return true;
   }
@@ -652,7 +652,7 @@
   export function handleExecute() {
     if (!editorView) return;
     if (disabled) {
-      showToast('Query already running — cancel to start a new one', 'info');
+      showToast('Truy vấn đang chạy — hãy hủy để bắt đầu truy vấn mới', 'info');
       return;
     }
     const sel = editorView.state.selection.main;
@@ -662,7 +662,7 @@
       return;
     }
 
-    showToast('Select the query you want to execute', 'info');
+    showToast('Hãy chọn truy vấn bạn muốn thực thi', 'info');
   }
 </script>
 

@@ -139,7 +139,7 @@
             </button>
           {/each}
         </div>
-        <button class="cp-add" onclick={openNew} type="button">+ New coworker</button>
+        <button class="cp-add" onclick={openNew} type="button">+ Đồng nghiệp mới</button>
       {/if}
     </div>
   {/if}

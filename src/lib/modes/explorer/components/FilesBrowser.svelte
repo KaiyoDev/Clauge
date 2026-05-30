@@ -145,15 +145,15 @@
 
   function handleMkdir() {
     openPrompt({
-      title: 'New folder',
-      label: 'Folder name',
-      placeholder: 'e.g. uploads',
+      title: 'Thư mục mới',
+      label: 'Tên thư mục',
+      placeholder: 'ví dụ: uploads',
       onSubmit: async (name) => {
         try {
           await fsMkdir(tabKey, posixJoin(cwd, name));
           await refresh();
         } catch (err: any) {
-          errorToast('mkdir failed', err);
+          errorToast('Tạo thư mục thất bại', err);
         }
       },
     });
@@ -169,9 +169,9 @@
     try {
       await fsDelete(tabKey, pendingDeletePaths);
       await refresh();
-      showToast(`Deleted ${pendingDeletePaths.length} item(s)`, 'success');
+      showToast(`Đã xóa ${pendingDeletePaths.length} mục`, 'success');
     } catch (err: any) {
-      errorToast('Delete failed', err);
+      errorToast('Xóa thất bại', err);
     }
     pendingDeletePaths = [];
   }
@@ -181,13 +181,13 @@
     ev.stopPropagation();
     const items: any[] = [];
     if (e.kind === 'dir') {
-      items.push({ label: 'Open', action: () => openEntry(e) });
+      items.push({ label: 'Mở', action: () => openEntry(e) });
     } else if (e.kind === 'file') {
-      items.push({ label: 'Download to…', action: () => handleDownload(e) });
+      items.push({ label: 'Tải xuống…', action: () => handleDownload(e) });
     }
-    items.push({ label: 'Rename', action: () => handleRename(e) });
+    items.push({ label: 'Đổi tên', action: () => handleRename(e) });
     items.push({ label: '', action: () => {}, separator: true });
-    items.push({ label: 'Delete', danger: true, action: () => handleDeleteEntry(e) });
+    items.push({ label: 'Xóa', danger: true, action: () => handleDeleteEntry(e) });
     showContextMenu(ev.clientX, ev.clientY, items);
   }
 
@@ -197,14 +197,14 @@
   async function handleDownload(e: DirEntry) {
     try {
       const { save } = await import('@tauri-apps/plugin-dialog');
-      const dest = await save({ defaultPath: e.name, title: `Download ${e.name}` });
+      const dest = await save({ defaultPath: e.name, title: `Tải xuống ${e.name}` });
       if (typeof dest !== 'string' || !dest) return;
       const id = (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`) as string;
       downloadFile(id, tabKey, e.path, dest).catch((err) =>
-        errorToast('Download failed', err),
+        errorToast('Tải xuống thất bại', err),
       );
     } catch (err: any) {
-      errorToast('Download failed', err);
+      errorToast('Tải xuống thất bại', err);
     }
   }
 
@@ -240,7 +240,7 @@
           dragDepth = 0;
           dragOver = false;
           if (connState !== 'connected') {
-            showToast('Connect first before dropping files', 'error');
+            showToast('Hãy kết nối trước khi thả tệp', 'error');
             return;
           }
           const paths: string[] = (event.payload as any).paths ?? [];
@@ -268,14 +268,14 @@
       const dest = posixJoin(cwd, name);
       uploadFile(id, tabKey, p, dest)
         .then(() => refresh())
-        .catch((err) => errorToast('Upload failed', err));
+        .catch((err) => errorToast('Tải lên thất bại', err));
     }
   }
 
   function handleRename(e: DirEntry) {
     openPrompt({
-      title: 'Rename',
-      label: 'New name',
+      title: 'Đổi tên',
+      label: 'Tên mới',
       value: e.name,
       placeholder: e.name,
       onSubmit: async (next) => {
@@ -284,7 +284,7 @@
           await fsRename(tabKey, e.path, posixJoin(posixDirname(e.path), next));
           await refresh();
         } catch (err: any) {
-          errorToast('Rename failed', err);
+          errorToast('Đổi tên thất bại', err);
         }
       },
     });
@@ -356,7 +356,7 @@
             next.set(tabKey, 'error');
             return next;
           });
-          errorToast('Connection failed', err);
+          errorToast('Kết nối thất bại', err);
         });
     }
   });
@@ -461,7 +461,7 @@
       <div class="fb-state">
         <div class="fb-spin" aria-hidden="true"></div>
         <div class="fb-state-text">
-          <span class="fb-state-title">Loading directory</span>
+          <span class="fb-state-title">Đang tải thư mục</span>
           <span class="fb-state-sub"><span class="fb-state-path">{cwd}</span><span class="fb-dots"></span></span>
         </div>
       </div>
@@ -473,7 +473,7 @@
           <circle cx="12" cy="16.5" r="0.6" fill="var(--err)"/>
         </svg>
         <div class="fb-state-text">
-          <span class="fb-state-title">Couldn't load directory</span>
+          <span class="fb-state-title">Không tải được thư mục</span>
           <span class="fb-state-sub fb-state-err-detail">{error}</span>
         </div>
       </div>
@@ -483,18 +483,18 @@
           <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
         </svg>
         <div class="fb-state-text">
-          <span class="fb-state-title">Empty directory</span>
-          <span class="fb-state-sub">Nothing in <span class="fb-state-path">{cwd}</span> — drop files here to upload</span>
+          <span class="fb-state-title">Thư mục trống</span>
+          <span class="fb-state-sub">Không có gì trong <span class="fb-state-path">{cwd}</span> — thả tệp vào đây để tải lên</span>
         </div>
       </div>
     {:else}
       <table class="fb-table">
         <thead>
           <tr>
-            <th class="fb-col-name">Name</th>
-            <th class="fb-col-size">Size</th>
-            <th class="fb-col-mod">Modified</th>
-            <th class="fb-col-perm">Perms</th>
+            <th class="fb-col-name">Tên</th>
+            <th class="fb-col-size">Kích thước</th>
+            <th class="fb-col-mod">Sửa đổi</th>
+            <th class="fb-col-perm">Quyền</th>
           </tr>
         </thead>
         <tbody>
@@ -552,8 +552,8 @@
           <path d="M5 12l7-7 7 7"/>
           <path d="M5 21h14"/>
         </svg>
-        <div class="fb-drop-title">Drop to upload</div>
-        <div class="fb-drop-sub">into <span class="fb-drop-path">{cwd}</span></div>
+        <div class="fb-drop-title">Thả để tải lên</div>
+        <div class="fb-drop-sub">vào <span class="fb-drop-path">{cwd}</span></div>
       </div>
     </div>
   {/if}
@@ -571,20 +571,20 @@
       {/if}
       <div class="fb-overlay-text">
         {#if connState === 'error'}
-          <span class="fb-overlay-title">Failed to connect to {conn?.name ?? 'server'}</span>
+          <span class="fb-overlay-title">Không kết nối được tới {conn?.name ?? 'máy chủ'}</span>
           <span class="fb-overlay-sub">{loadingSubLine()}</span>
         {:else}
-          <span class="fb-overlay-title">Connecting to {conn?.name ?? 'server'}</span>
+          <span class="fb-overlay-title">Đang kết nối tới {conn?.name ?? 'máy chủ'}</span>
           <span class="fb-overlay-sub">{loadingSubLine()}<span class="fb-dots"></span></span>
         {/if}
       </div>
       {#if connState === 'error'}
         <div class="fb-overlay-actions">
-          <button class="fb-overlay-btn primary" onclick={retryConnect}>Retry</button>
-          <button class="fb-overlay-btn" onclick={cancelConnect}>Close tab</button>
+          <button class="fb-overlay-btn primary" onclick={retryConnect}>Thử lại</button>
+          <button class="fb-overlay-btn" onclick={cancelConnect}>Đóng tab</button>
         </div>
       {:else}
-        <button class="fb-overlay-btn" onclick={cancelConnect}>Cancel</button>
+        <button class="fb-overlay-btn" onclick={cancelConnect}>Hủy</button>
       {/if}
     </div>
   {/if}
@@ -613,7 +613,7 @@
       />
     </label>
     <div class="fb-prompt-actions">
-      <button type="button" class="fb-prompt-btn" onclick={() => (promptShow = false)}>Cancel</button>
+      <button type="button" class="fb-prompt-btn" onclick={() => (promptShow = false)}>Hủy</button>
       <button type="submit" class="fb-prompt-btn primary">OK</button>
     </div>
   </form>

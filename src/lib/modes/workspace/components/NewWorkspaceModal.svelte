@@ -64,7 +64,7 @@
         }
       }
     } catch (e) {
-      errorToast('Folder pick failed', e);
+      errorToast('Chọn thư mục thất bại', e);
     }
   }
 

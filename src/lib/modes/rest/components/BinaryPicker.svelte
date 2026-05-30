@@ -75,9 +75,9 @@
           <polyline points="17 8 12 3 7 8"/>
           <line x1="12" y1="3" x2="12" y2="15"/>
         </svg>
-        Choose File
+        Chọn tệp
       </button>
-      <span class="bin-hint">Select a file to upload as the request body</span>
+      <span class="bin-hint">Chọn một tệp để tải lên làm body của yêu cầu</span>
     </div>
   {/if}
 </div>

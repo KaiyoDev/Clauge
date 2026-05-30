@@ -26,17 +26,17 @@
   onmouseenter={() => hovering = true}
   onmouseleave={() => hovering = false}
 >
-  <button class="wc-btn wc-close" onclick={handleClose} title="Close">
+  <button class="wc-btn wc-close" onclick={handleClose} title="Đóng">
     {#if hovering}
       <svg viewBox="0 0 12 12"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5"/></svg>
     {/if}
   </button>
-  <button class="wc-btn wc-minimize" onclick={handleMinimize} title="Minimize">
+  <button class="wc-btn wc-minimize" onclick={handleMinimize} title="Thu nhỏ">
     {#if hovering}
       <svg viewBox="0 0 12 12"><path d="M2.5 6h7"/></svg>
     {/if}
   </button>
-  <button class="wc-btn wc-maximize" onclick={handleMaximize} title="Fullscreen">
+  <button class="wc-btn wc-maximize" onclick={handleMaximize} title="Toàn màn hình">
     {#if hovering}
       <svg viewBox="0 0 12 12"><path d="M2 8l3 3M7 2l3 3" stroke-width="2"/></svg>
     {/if}

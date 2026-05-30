@@ -245,7 +245,7 @@
   const driverLabel = $derived(descriptorFor(driver)?.displayName ?? driver);
 </script>
 
-<Modal bind:show title={editConnection ? 'Edit connection' : 'New connection'} width="560px" {onclose}>
+<Modal bind:show title={editConnection ? 'Chỉnh sửa kết nối' : 'Kết nối mới'} width="560px" {onclose}>
   <div class="cd-root">
     <!-- Tabs -->
     <div class="cd-tabs" role="tablist">
@@ -257,7 +257,7 @@
         aria-selected={tab === 'general'}
         onclick={() => (tab = 'general')}
       >
-        General
+        Chung
       </button>
       <button
         type="button"
@@ -483,16 +483,16 @@
           {#if useSshTunnel && supportsSslSsh}
             <div class="cd-card-expand">
               {#if $sshProfiles.length === 0}
-                <p class="cd-empty">No SSH profiles yet.</p>
+                <p class="cd-empty">Chưa có profile SSH nào.</p>
                 <button class="cd-new-ssh" type="button" onclick={() => (showNewSshModal = true)}>
                   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true">
                     <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
                   </svg>
-                  Create new SSH profile
+                  Tạo profile SSH mới
                 </button>
               {:else}
                 <div class="cd-block">
-                  <span class="cd-label">SSH profile</span>
+                  <span class="cd-label">Profile SSH</span>
                   <div class="cd-select-wrap">
                     <select class="cd-input mono cd-select" bind:value={selectedSshProfileId}>
                       {#each $sshProfiles as p (p.id)}
@@ -511,7 +511,7 @@
                   <svg viewBox="0 0 24 24" width="15" height="15" fill="none" aria-hidden="true">
                     <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
                   </svg>
-                  Create new SSH profile
+                  Tạo profile SSH mới
                 </button>
               {/if}
             </div>
@@ -546,12 +546,12 @@
           {/if}
         </span>
         <span class="cd-test-label">
-          {testing ? (testStatus || 'Testing…') : (testOk ? 'Connected' : 'Test connection')}
+          {testing ? (testStatus || 'Đang kiểm tra…') : (testOk ? 'Đã kết nối' : 'Kiểm tra kết nối')}
         </span>
       </button>
       <div class="cd-spacer"></div>
-      <button type="button" class="cd-btn outline" onclick={() => show = false}>Cancel</button>
-      <button type="button" class="cd-btn primary" onclick={handleSave}>Save connection</button>
+      <button type="button" class="cd-btn outline" onclick={() => show = false}>Hủy</button>
+      <button type="button" class="cd-btn primary" onclick={handleSave}>Lưu kết nối</button>
     </div>
   </div>
 </Modal>

@@ -105,7 +105,7 @@
 {#if open && matches.length > 0}
   <div class="cmp" role="listbox">
     <div class="cmp-head">
-      Tag a coworker
+      Nhắc đến đồng nghiệp
       {#if query}<span class="cmp-q">· @{query}</span>{/if}
     </div>
     <div class="cmp-list">
@@ -127,15 +127,15 @@
       {/each}
     </div>
     <div class="cmp-foot">
-      <kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>↵</kbd> select · <kbd>esc</kbd> dismiss
+      <kbd>↑</kbd><kbd>↓</kbd> di chuyển · <kbd>↵</kbd> chọn · <kbd>esc</kbd> đóng
     </div>
   </div>
 {:else if open && matches.length === 0}
   <div class="cmp cmp-empty">
     <div class="cmp-empty-text">
-      No coworker matches <strong>@{query}</strong>
+      Không có đồng nghiệp khớp <strong>@{query}</strong>
     </div>
-    <div class="cmp-foot">Press <kbd>esc</kbd> to dismiss</div>
+    <div class="cmp-foot">Nhấn <kbd>esc</kbd> để đóng</div>
   </div>
 {/if}
 

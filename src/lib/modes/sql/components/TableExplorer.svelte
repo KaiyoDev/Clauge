@@ -62,7 +62,7 @@
     try {
       tables = await sqlListTables(parts.connId, selectedDatabase || parts.db);
     } catch (err: any) {
-      errorToast('Failed to load tables', err);
+      errorToast('Không tải được danh sách bảng', err);
       tables = [];
     } finally {
       loadingTables = false;
@@ -82,7 +82,7 @@
         const cols = await sqlDescribeTable(parts.connId, selectedDatabase || parts.db, tableName);
         tableColumns = { ...tableColumns, [tableName]: cols };
       } catch (err: any) {
-        errorToast('Failed to describe table', err);
+        errorToast('Không mô tả được bảng', err);
       } finally {
         loadingColumns = null;
       }
@@ -101,12 +101,12 @@
 
 <div class="table-explorer">
   {#if !isConnected}
-    <div class="te-empty">Connect to a database to explore tables</div>
+    <div class="te-empty">Kết nối tới một CSDL để khám phá các bảng</div>
   {:else}
     {#if databases.length > 1}
       <div class="te-db-select">
         <select class="te-select" value={selectedDatabase} onchange={handleDatabaseChange}>
-          <option value="">Default database</option>
+          <option value="">CSDL mặc định</option>
           {#each databases as db}
             <option value={db}>{db}</option>
           {/each}
@@ -115,9 +115,9 @@
     {/if}
 
     {#if loadingTables}
-      <div class="te-empty">Loading tables...</div>
+      <div class="te-empty">Đang tải bảng...</div>
     {:else if tables.length === 0}
-      <div class="te-empty">No tables found</div>
+      <div class="te-empty">Không tìm thấy bảng nào</div>
     {:else}
       <div class="te-list">
         {#each tables as table (table.name)}
@@ -144,7 +144,7 @@
             {#if expandedTable === table.name}
               <div class="te-columns">
                 {#if loadingColumns === table.name}
-                  <div class="te-col-loading">Loading columns...</div>
+                  <div class="te-col-loading">Đang tải cột...</div>
                 {:else if tableColumns[table.name]}
                   {#each tableColumns[table.name] as col}
                     <div class="te-col-row">

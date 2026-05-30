@@ -57,22 +57,22 @@
     <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="var(--t4)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/>
     </svg>
-    <h2>Welcome to Workspaces</h2>
-    <p>Organize notes and Kanban boards around your projects. Your agents can read and write here through the MCP server, keeping everything in sync with your work.</p>
-    <button class="ws-cta" onclick={newWorkspace}>+ Create your first workspace</button>
+    <h2>Chào mừng đến với Workspace</h2>
+    <p>Sắp xếp ghi chú và bảng Kanban quanh các dự án của bạn. Agent có thể đọc và ghi tại đây thông qua máy chủ MCP, giữ mọi thứ đồng bộ với công việc của bạn.</p>
+    <button class="ws-cta" onclick={newWorkspace}>+ Tạo workspace đầu tiên</button>
   </div>
 {:else}
   <div class="ws-empty-pane">
     <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="var(--t4)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="4" y="3" width="16" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="13" y2="16"/>
     </svg>
-    <h2>{$activeWorkspace?.name ?? 'No workspace selected'}</h2>
-    <p>Select a note or board from the side panel, or create something new below.</p>
+    <h2>{$activeWorkspace?.name ?? 'Chưa chọn workspace'}</h2>
+    <p>Chọn một ghi chú hoặc bảng từ bảng bên, hoặc tạo mới bên dưới.</p>
     <div class="ws-cta-row">
-      <button class="ws-cta-secondary" onclick={newNote}>+ New Note</button>
-      <button class="ws-cta-secondary" onclick={newBoard}>+ New Board</button>
+      <button class="ws-cta-secondary" onclick={newNote}>+ Ghi chú mới</button>
+      <button class="ws-cta-secondary" onclick={newBoard}>+ Bảng mới</button>
     </div>
-    <p class="ws-hint">Cards moved to <strong>Review</strong> by an agent show a pending badge — approve them before they advance to Done.</p>
+    <p class="ws-hint">Thẻ được agent chuyển sang <strong>In Review</strong> sẽ hiện huy hiệu chờ duyệt — hãy phê duyệt trước khi chúng chuyển sang Done.</p>
   </div>
 {/if}
 

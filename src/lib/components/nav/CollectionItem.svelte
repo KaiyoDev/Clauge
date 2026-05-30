@@ -95,12 +95,12 @@
   function buildCollMenuItems() {
     return [
       {
-        label: 'Rename',
+        label: 'Đổi tên',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
         action: () => { renaming = true; },
       },
       {
-        label: 'Add Request',
+        label: 'Thêm yêu cầu',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
         action: () => {
           expanded = true;
@@ -110,7 +110,7 @@
       },
       { label: '', action: () => {}, separator: true },
       {
-        label: 'Delete',
+        label: 'Xóa',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
         danger: true,
         action: () => { showDeleteConfirm = true; },
@@ -228,7 +228,7 @@
         await cmd.moveRequest(req.id, collection.id);
       }
       showToast(
-        incoming.length === 1 ? 'Request moved' : `${incoming.length} requests moved`,
+        incoming.length === 1 ? 'Đã di chuyển yêu cầu' : `Đã di chuyển ${incoming.length} yêu cầu`,
         'success'
       );
       // loadCollections bumps collectionsRefreshTrigger, which makes every
@@ -236,7 +236,7 @@
       // both the source and target lists pick up the canonical state.
       await loadCollections();
     } catch (err) {
-      showToast('Failed to move request', 'error');
+      showToast('Không di chuyển yêu cầu được', 'error');
       await loadRequests();
     }
   }
@@ -268,15 +268,15 @@
         </div>
         <div class="ncoll-row-bot">
           <span class="ncoll-sub">
-            {requests.length} {requests.length === 1 ? 'request' : 'requests'}
+            {requests.length} yêu cầu
           </span>
         </div>
       {/if}
     </div>
-    <button class="coll-add" title="Add request" onclick={handleAddClick}>
+    <button class="coll-add" title="Thêm yêu cầu" onclick={handleAddClick}>
       <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
     </button>
-    <button class="coll-menu" title="Options" onclick={handleCollMenuBtn}>
+    <button class="coll-menu" title="Tùy chọn" onclick={handleCollMenuBtn}>
       <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
     </button>
     <svg class="ncoll-arr" class:open={expanded} viewBox="0 0 24 24">
@@ -320,9 +320,9 @@
 
 <ConfirmDialog
   bind:show={showDeleteConfirm}
-  title="Delete Collection"
-  message="Are you sure you want to delete '{collection.name}'? All requests in this collection will be deleted. This cannot be undone."
-  confirmText="Delete"
+  title="Xóa collection"
+  message="Bạn có chắc muốn xóa '{collection.name}'? Tất cả yêu cầu trong collection này sẽ bị xóa. Không thể hoàn tác."
+  confirmText="Xóa"
   onconfirm={handleDeleteCollection}
 />
 

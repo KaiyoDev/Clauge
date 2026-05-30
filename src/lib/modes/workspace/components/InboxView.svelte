@@ -38,7 +38,7 @@
     // Cards open the parent board; notes open themselves.
     const kind = item.kind === 'card' ? 'board' : 'note';
     const id = item.kind === 'card' ? item.boardId! : item.id;
-    const label = item.kind === 'card' ? (item.boardName ?? 'Board') : item.label;
+    const label = item.kind === 'card' ? (item.boardName ?? 'Bảng') : item.label;
     const dot = 'var(--acc)';
     const key = `${kind}:${id}`;
     const existing = get(sharedTabs).find(t => t.mode === 'workspace' && t.key === key);
@@ -51,10 +51,10 @@
     const d = new Date(iso).getTime();
     if (isNaN(d)) return '';
     const diff = Date.now() - d;
-    if (diff < 60_000) return 'just now';
-    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
-    if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
-    return `${Math.floor(diff / 86_400_000)}d ago`;
+    if (diff < 60_000) return 'vừa xong';
+    if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} phút trước`;
+    if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} giờ trước`;
+    return `${Math.floor(diff / 86_400_000)} ngày trước`;
   }
 </script>
 

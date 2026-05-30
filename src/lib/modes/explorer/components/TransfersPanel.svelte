@@ -31,7 +31,7 @@
     try {
       await cancelTransfer(id);
     } catch (e: any) {
-      errorToast('Cancel failed', e);
+      errorToast('Hủy thất bại', e);
     }
   }
 
@@ -42,9 +42,9 @@
 
 {#if $explorerTransfers.length > 0}
   <div class="tp" class:collapsed>
-    <button class="tp-header" onclick={() => (collapsed = !collapsed)} title={collapsed ? 'Expand' : 'Collapse'}>
+    <button class="tp-header" onclick={() => (collapsed = !collapsed)} title={collapsed ? 'Mở rộng' : 'Thu gọn'}>
       <span class="tp-title">
-        {runningCount > 0 ? `Transferring (${runningCount})` : 'Transfers'}
+        {runningCount > 0 ? `Đang truyền (${runningCount})` : 'Truyền tải'}
       </span>
       <svg class="tp-caret" class:rot={collapsed} viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="6 9 12 15 18 9"/>
@@ -74,11 +74,11 @@
                   {#if t.state === 'running'}
                     {pct(t.bytesDone, t.bytesTotal)}%
                   {:else if t.state === 'completed'}
-                    Done
+                    Xong
                   {:else if t.state === 'cancelled'}
-                    Cancelled
+                    Đã hủy
                   {:else if t.state === 'failed'}
-                    Failed
+                    Thất bại
                   {/if}
                 </span>
               </div>

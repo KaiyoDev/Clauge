@@ -202,7 +202,7 @@
       <div class="nosql-empty-icon">
         <svg viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3" /><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" /><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" /></svg>
       </div>
-      <div class="nosql-empty-text">Select or create a connection from the sidebar</div>
+      <div class="nosql-empty-text">Chọn hoặc tạo một kết nối từ thanh bên</div>
     </div>
   {:else if !isConnected}
     <div class="nosql-empty">
@@ -210,8 +210,8 @@
         <svg viewBox="0 0 24 24"><path d="M1 1l22 22" /><path d="M16.72 11.06A10.94 10.94 0 0119 12.55" /><path d="M5 12.55a10.94 10.94 0 015.17-2.39" /><path d="M8.53 16.11a6 6 0 016.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" /></svg>
       </div>
       <div class="nosql-empty-text">
-        "{conn.name}" is not connected<br />
-        <span class="nosql-empty-hint">Click the connection in the sidebar to connect</span>
+        "{conn.name}" chưa được kết nối<br />
+        <span class="nosql-empty-hint">Nhấn vào kết nối trong thanh bên để kết nối</span>
       </div>
     </div>
   {:else if !activeNoSqlTab}
@@ -220,9 +220,9 @@
         <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" stroke="var(--t4)" fill="none" stroke-width="1.5" stroke-linecap="round"/></svg>
       </div>
       <div class="nosql-empty-text">
-        Open a tab to start querying<br />
-        <span class="nosql-empty-hint">Press <kbd>+</kbd> in the tab bar or click a collection in the sidebar</span>
-        <div class="nosql-empty-ai"><kbd>{m}+L</kbd> AI Assistant</div>
+        Mở một tab để bắt đầu truy vấn<br />
+        <span class="nosql-empty-hint">Nhấn <kbd>+</kbd> trên thanh tab hoặc nhấn vào một bộ sưu tập trong thanh bên</span>
+        <div class="nosql-empty-ai"><kbd>{m}+L</kbd> Trợ lý AI</div>
       </div>
     </div>
   {:else if isRedis && liveId}
@@ -236,7 +236,7 @@
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <button class="nosql-db-pill" onclick={(e) => { e.stopPropagation(); toggleDbDropdown(); }}>
           <svg viewBox="0 0 24 24" width="12" height="12"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-          <span class="nosql-db-pill-name">{selectedDb || 'Select database'}</span>
+          <span class="nosql-db-pill-name">{selectedDb || 'Chọn CSDL'}</span>
           {#if currentConnName}
             <span class="nosql-db-pill-conn">{currentConnName}</span>
           {/if}
@@ -246,7 +246,7 @@
           <!-- svelte-ignore a11y_no_static_element_interactions -->
           <div class="nosql-db-dropdown" onclick={(e) => e.stopPropagation()}>
             {#if connGroups.length === 0}
-              <div class="nosql-dd-empty">No databases available</div>
+              <div class="nosql-dd-empty">Không có CSDL nào</div>
             {:else}
               {#each connGroups as group, gi}
                 {#if gi > 0}
@@ -257,7 +257,7 @@
                   {group.connName}
                 </div>
                 {#if group.databases.length === 0}
-                  <div class="nosql-dd-empty-sub">Loading databases...</div>
+                  <div class="nosql-dd-empty-sub">Đang tải CSDL...</div>
                 {:else}
                   {#each group.databases as db}
                     <button
@@ -281,7 +281,7 @@
       <!-- Collection select -->
       <select class="nosql-sel" value={selectedColl} onchange={handleCollChange} disabled={loadingColls || !selectedDb}>
         {#if collections.length === 0}
-          <option value="">{loadingColls ? 'Loading...' : 'No collections'}</option>
+          <option value="">{loadingColls ? 'Đang tải...' : 'Không có bộ sưu tập'}</option>
         {/if}
         {#each collections as coll}
           <option value={coll}>{coll}</option>
@@ -296,7 +296,7 @@
         <div class="nosql-empty-icon">
           <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         </div>
-        <div class="nosql-empty-text">Select a database and collection</div>
+        <div class="nosql-empty-text">Chọn một CSDL và bộ sưu tập</div>
       </div>
     {/if}
   {/if}

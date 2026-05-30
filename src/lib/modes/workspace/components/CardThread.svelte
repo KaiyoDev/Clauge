@@ -55,9 +55,9 @@
   function thinkingCopy(c: WorkspaceCardComment, name: string): string {
     const started = Date.parse(c.createdAt);
     const ageSec = Number.isFinite(started) ? (nowTick - started) / 1000 : 0;
-    if (ageSec < 25) return 'is thinking…';
-    if (ageSec < 90) return 'is composing a reply…';
-    return 'is still working — Claude can take a moment for complex requests';
+    if (ageSec < 25) return 'đang suy nghĩ…';
+    if (ageSec < 90) return 'đang soạn trả lời…';
+    return 'vẫn đang làm — Claude có thể mất một chút với yêu cầu phức tạp';
   }
 
   /** Body markdown — same image-collapse treatment as comment bodies
@@ -92,12 +92,12 @@
         const srcMatch = attrs.match(/src=["']([^"']+)["']/i);
         const altMatch = attrs.match(/alt=["']([^"']*)["']/i);
         const src = srcMatch ? srcMatch[1] : '';
-        const alt = (altMatch ? altMatch[1] : '').trim() || 'image';
+        const alt = (altMatch ? altMatch[1] : '').trim() || 'hình ảnh';
         if (!src) return '';
         // Encode quotes in attributes to prevent breaking out.
         const safeSrc = src.replace(/"/g, '&quot;');
         const safeAlt = alt.replace(/</g, '&lt;');
-        return `<button type="button" class="th-img-toggle" data-src="${safeSrc}" data-alt="${safeAlt}">📎 ${safeAlt} <span class="th-img-hint">· click to view</span></button>`;
+        return `<button type="button" class="th-img-toggle" data-src="${safeSrc}" data-alt="${safeAlt}">📎 ${safeAlt} <span class="th-img-hint">· bấm để xem</span></button>`;
       },
     );
     return html;
@@ -143,7 +143,7 @@
       img.className = 'th-img-revealed';
       img.dataset.src = src;
       img.dataset.alt = alt;
-      img.innerHTML = `<img src="${src}" alt="${alt}"><span class="th-img-collapse">collapse</span>`;
+      img.innerHTML = `<img src="${src}" alt="${alt}"><span class="th-img-collapse">thu gọn</span>`;
       btn.replaceWith(img);
     } else {
       const src = btn.dataset.src ?? '';
@@ -153,7 +153,7 @@
       ph.className = 'th-img-toggle';
       ph.dataset.src = src;
       ph.dataset.alt = alt;
-      ph.innerHTML = `📎 ${alt} <span class="th-img-hint">· click to view</span>`;
+      ph.innerHTML = `📎 ${alt} <span class="th-img-hint">· bấm để xem</span>`;
       btn.replaceWith(ph);
     }
   }
@@ -170,14 +170,14 @@
 
   {#if comments.length === 0 && !renderedBody}
     <div class="th-empty">
-      No description or comments yet — the thread will start here once
-      you add a comment or trigger an agent.
+      Chưa có mô tả hay bình luận nào — cuộc trao đổi sẽ bắt đầu ở đây khi
+      bạn thêm bình luận hoặc kích hoạt một agent.
     </div>
   {/if}
 
   {#if hiddenCount > 0}
     <button class="th-show-earlier" onclick={() => (showAllComments = true)}>
-      ▴ Show {hiddenCount} earlier comment{hiddenCount === 1 ? '' : 's'}
+      ▴ Hiện {hiddenCount} bình luận trước đó
     </button>
   {/if}
 
@@ -225,7 +225,7 @@
           {#if c.pending === 'thinking'}
             <span class="th-pending-label">{thinkingCopy(c, displayName)}</span>
           {:else if c.pending === 'error'}
-            <span class="th-pending-error-label">hit an issue</span>
+            <span class="th-pending-error-label">gặp sự cố</span>
           {/if}
           {#if c.pending !== 'thinking'}
             <span class="th-stamp" title={c.createdAt}>{shortStamp(c.createdAt)}</span>
@@ -236,7 +236,7 @@
             <!-- Animated three-dot indicator. The bubble has the same
                  shape as a real reply so the swap is seamless when
                  the agent's response lands. -->
-            <span class="th-dots" aria-label="thinking">
+            <span class="th-dots" aria-label="đang suy nghĩ">
               <span></span><span></span><span></span>
             </span>
           {:else if isLong(c) && !expanded[c.id]}
@@ -249,7 +249,7 @@
               class="th-expand"
               onclick={(e) => { e.stopPropagation(); toggleExpand(c.id); }}
             >
-              ▾ Show full message ({c.body.length} chars)
+              ▾ Hiện toàn bộ tin nhắn ({c.body.length} ký tự)
             </button>
           {:else}
             <!-- eslint-disable-next-line svelte/no-at-html-tags -->
@@ -260,7 +260,7 @@
                 class="th-expand th-collapse"
                 onclick={(e) => { e.stopPropagation(); toggleExpand(c.id); }}
               >
-                ▴ Collapse
+                ▴ Thu gọn
               </button>
             {/if}
           {/if}

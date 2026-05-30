@@ -9,7 +9,7 @@
     ([$envs, $id]) => $envs.find(e => e.id === $id) ?? null
   );
 
-  let envName = $derived($activeEnv?.name ?? 'No env');
+  let envName = $derived($activeEnv?.name ?? 'Không có môi trường');
   let envColor = $derived($activeEnv?.color ?? 'var(--t3)');
 
   let showDropdown = $state(false);
@@ -26,7 +26,7 @@
     }
     items.push({ label: '', action: () => {}, separator: true });
     items.push({
-      label: 'Manage environments\u2026',
+      label: 'Qu\u1ea3n l\u00fd m\u00f4i tr\u01b0\u1eddng\u2026',
       action: () => activeModal.set('environments'),
     });
     return items;
@@ -39,7 +39,7 @@
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="env-pill" title="Switch environment" bind:this={pillEl} onclick={toggleDropdown}>
+<div class="env-pill" title="Đổi môi trường" bind:this={pillEl} onclick={toggleDropdown}>
   <span class="env-dot" style="background:{envColor}"></span>
   <span>{envName}</span>
   <svg class="env-chevron" width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">

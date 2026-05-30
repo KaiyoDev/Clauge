@@ -265,7 +265,7 @@
     </button>
     <div class="rv-tab-spacer"></div>
     {#if activeTab === 'keys'}
-      <span class="rv-meta">{keys.length} keys</span>
+      <span class="rv-meta">{keys.length} khóa</span>
     {/if}
   </div>
 
@@ -277,12 +277,12 @@
         class="rv-search-input"
         type="text"
         bind:value={searchPattern}
-        placeholder="Pattern (vd. user:*)"
+        placeholder="Mẫu (vd. user:*)"
         spellcheck="false"
         onkeydown={(e) => { if (e.key === 'Enter') loadKeys(); }}
       />
-      <button class="rv-action-btn rv-scan-btn" onclick={loadKeys}>Scan</button>
-      <button class="rv-action-btn rv-set-btn" onclick={() => showSetKey = true}>+ Set Key</button>
+      <button class="rv-action-btn rv-scan-btn" onclick={loadKeys}>Quét</button>
+      <button class="rv-action-btn rv-set-btn" onclick={() => showSetKey = true}>+ Đặt khóa</button>
     </div>
 
     <div class="rv-content">
@@ -291,12 +291,12 @@
         {#if loading && keys.length === 0}
           <div class="rv-empty-state">
             <svg viewBox="0 0 24 24" width="28" height="28"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-            <span>Scanning<span class="rv-dots"></span></span>
+            <span>Đang quét<span class="rv-dots"></span></span>
           </div>
         {:else if keys.length === 0}
           <div class="rv-empty-state">
             <svg viewBox="0 0 24 24" width="28" height="28"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
-            <span>No keys found</span>
+            <span>Không tìm thấy khóa nào</span>
           </div>
         {:else}
           {#each keys as keyInfo (keyInfo.key)}
@@ -312,14 +312,14 @@
               </span>
               <span class="rv-key-name">{keyInfo.key}</span>
               <span class="rv-key-ttl">{formatTtl(keyInfo.ttl)}</span>
-              <button class="rv-key-del" title="Delete" onclick={(e) => { e.stopPropagation(); handleDeleteKey(keyInfo.key); }}>
+              <button class="rv-key-del" title="Xóa" onclick={(e) => { e.stopPropagation(); handleDeleteKey(keyInfo.key); }}>
                 <svg viewBox="0 0 24 24" width="11" height="11"><path d="M18 6L6 18M6 6l12 12"/></svg>
               </button>
             </div>
           {/each}
           {#if hasMore}
             <button class="rv-load-more" onclick={loadMore} disabled={loading}>
-              {loading ? 'Loading...' : 'Load more keys'}
+              {loading ? 'Đang tải...' : 'Tải thêm khóa'}
             </button>
           {/if}
         {/if}
@@ -329,7 +329,7 @@
       <div class="rv-value-pane">
         {#if loadingValue}
           <div class="rv-empty-state">
-            <span>Loading<span class="rv-dots"></span></span>
+            <span>Đang tải<span class="rv-dots"></span></span>
           </div>
         {:else if selectedKey}
           <div class="rv-value-header">
@@ -338,7 +338,7 @@
               {selectedKey.keyType}
             </span>
             <span class="rv-value-ttl">{formatTtl(selectedKey.ttl)}</span>
-            <button class="rv-value-copy" onclick={copyValue} title="Copy value">
+            <button class="rv-value-copy" onclick={copyValue} title="Sao chép giá trị">
               <svg viewBox="0 0 24 24" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
             </button>
           </div>
@@ -346,7 +346,7 @@
         {:else}
           <div class="rv-empty-state">
             <svg viewBox="0 0 24 24" width="28" height="28"><polyline points="15 18 9 12 15 6"/></svg>
-            <span>Select a key to view its value</span>
+            <span>Chọn một khóa để xem giá trị</span>
           </div>
         {/if}
       </div>
@@ -359,7 +359,7 @@
       <div class="rv-modal-overlay" onclick={(e) => { if (e.target === e.currentTarget) showSetKey = false; }}>
         <div class="rv-modal">
           <div class="rv-modal-hdr">
-            <span>Set Key</span>
+            <span>Đặt khóa</span>
             <button class="rv-modal-close" onclick={() => showSetKey = false}>&times;</button>
           </div>
           <div class="rv-modal-body">
@@ -369,16 +369,16 @@
             </label>
             <label class="rv-field">
               <span class="rv-field-label">Value</span>
-              <textarea class="rv-field-ta" bind:value={newKeyValue} placeholder="value" spellcheck="false"></textarea>
+              <textarea class="rv-field-ta" bind:value={newKeyValue} placeholder="giá trị" spellcheck="false"></textarea>
             </label>
             <label class="rv-field">
-              <span class="rv-field-label">TTL (seconds)</span>
-              <input class="rv-field-input" type="number" bind:value={newKeyTtl} placeholder="-1 for no expiry" />
+              <span class="rv-field-label">TTL (giây)</span>
+              <input class="rv-field-input" type="number" bind:value={newKeyTtl} placeholder="-1 nếu không hết hạn" />
             </label>
           </div>
           <div class="rv-modal-actions">
-            <button class="rv-modal-cancel" onclick={() => showSetKey = false}>Cancel</button>
-            <button class="rv-modal-primary" onclick={handleSetKey}>Set</button>
+            <button class="rv-modal-cancel" onclick={() => showSetKey = false}>Hủy</button>
+            <button class="rv-modal-primary" onclick={handleSetKey}>Đặt</button>
           </div>
         </div>
       </div>
@@ -388,9 +388,9 @@
     <div class="rv-console" bind:this={consoleEl}>
       {#if consoleHistory.length === 0}
         <div class="rv-console-welcome">
-          <span class="rv-console-welcome-title">Redis Console</span>
-          <span class="rv-console-welcome-hint">Type commands below. Use Up/Down arrows for history.</span>
-          <span class="rv-console-welcome-hint">Try: PING, INFO server, KEYS *, GET key</span>
+          <span class="rv-console-welcome-title">Console Redis</span>
+          <span class="rv-console-welcome-hint">Gõ lệnh bên dưới. Dùng phím Lên/Xuống để xem lịch sử.</span>
+          <span class="rv-console-welcome-hint">Thử: PING, INFO server, KEYS *, GET key</span>
         </div>
       {/if}
       {#each consoleHistory as entry}
@@ -406,11 +406,11 @@
         class="rv-console-input"
         type="text"
         bind:value={consoleInput}
-        placeholder="Enter Redis command..."
+        placeholder="Nhập lệnh Redis..."
         onkeydown={handleConsoleKeydown}
         spellcheck="false"
       />
-      <button class="rv-action-btn" onclick={executeCommand}>Send</button>
+      <button class="rv-action-btn" onclick={executeCommand}>Gửi</button>
     </div>
   {/if}
 </div>

@@ -51,7 +51,7 @@
         projectPath = selected;
       }
     } catch (e) {
-      errorToast('Folder pick failed', e);
+      errorToast('Chọn thư mục thất bại', e);
     }
   }
 
@@ -65,7 +65,7 @@
       show = false;
       onclose?.();
     } catch (e) {
-      errorToast('Save failed', e);
+      errorToast('Lưu thất bại', e);
     } finally {
       saving = false;
     }
@@ -81,7 +81,7 @@
       show = false;
       onclose?.();
     } catch (e) {
-      errorToast('Clear failed', e);
+      errorToast('Xóa thất bại', e);
     } finally {
       saving = false;
     }

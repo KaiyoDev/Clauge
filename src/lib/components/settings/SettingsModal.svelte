@@ -1659,11 +1659,11 @@
                                     </svg>
                                 </span>
                                 <div class="stg-card-titles">
-                                    <h3 class="stg-card-title">Chat History</h3>
+                                    <h3 class="stg-card-title">Lịch sử trò chuyện</h3>
                                     <p class="stg-card-sub">
-                                        Applies to the History section
-                                        (request/response log) and the AI
-                                        Assistance chat across all modes.
+                                        Áp dụng cho mục Lịch sử (nhật ký
+                                        yêu cầu/phản hồi) và trò chuyện Trợ
+                                        lý AI trên mọi chế độ.
                                     </p>
                                 </div>
                             </header>
@@ -1675,9 +1675,7 @@
                                         >{restHistoryCount.toLocaleString()}</span
                                     >
                                     <span class="stg-card-stat-lbl"
-                                        >Request{restHistoryCount === 1
-                                            ? ""
-                                            : "s"}</span
+                                        >Yêu cầu</span
                                     >
                                 </div>
                                 <div
@@ -1689,9 +1687,7 @@
                                         >{aiChatCount.toLocaleString()}</span
                                     >
                                     <span class="stg-card-stat-lbl"
-                                        >AI message{aiChatCount === 1
-                                            ? ""
-                                            : "s"}</span
+                                        >Tin nhắn AI</span
                                     >
                                 </div>
                                 <div
@@ -1703,7 +1699,7 @@
                                         >{formatBytes(totalStorageBytes)}</span
                                     >
                                     <span class="stg-card-stat-lbl"
-                                        >Storage</span
+                                        >Bộ nhớ</span
                                     >
                                 </div>
                             </div>
@@ -1711,7 +1707,7 @@
                             <div class="stg-card-body">
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Auto-clear after</label
+                                        >Tự động xóa sau</label
                                     >
                                     <select
                                         class="stg-select stg-card-input-lg"
@@ -1721,23 +1717,24 @@
                                                 e.currentTarget.value,
                                             )}
                                     >
-                                        <option value="24h">24 Hours</option>
-                                        <option value="7d">7 Days</option>
+                                        <option value="24h">24 Giờ</option>
+                                        <option value="7d">7 Ngày</option>
                                         <option value="30d"
-                                            >30 Days (default)</option
+                                            >30 Ngày (mặc định)</option
                                         >
-                                        <option value="1y">1 Year</option>
-                                        <option value="never">Never</option>
+                                        <option value="1y">1 Năm</option>
+                                        <option value="never">Không bao giờ</option>
                                     </select>
                                 </div>
                                 <div class="stg-card-row stg-card-row-action">
                                     <div class="stg-card-row-action-text">
                                         <span class="stg-card-row-label"
-                                            >Clear all chat history</span
+                                            >Xóa toàn bộ lịch sử trò chuyện</span
                                         >
                                         <span class="stg-card-row-help"
-                                            >Removes every request log and AI
-                                            conversation. This cannot be undone.</span
+                                            >Xóa mọi nhật ký yêu cầu và cuộc
+                                            trò chuyện AI. Thao tác này không
+                                            thể hoàn tác.</span
                                         >
                                     </div>
                                     <button
@@ -1764,7 +1761,7 @@
                                                 d="M14 11v6"
                                             />
                                         </svg>
-                                        <span>Clear History</span>
+                                        <span>Xóa lịch sử</span>
                                     </button>
                                 </div>
                             </div>
@@ -1790,17 +1787,17 @@
                                     </svg>
                                 </span>
                                 <div class="stg-card-titles">
-                                    <h3 class="stg-card-title">Privacy</h3>
+                                    <h3 class="stg-card-title">Quyền riêng tư</h3>
                                     <p class="stg-card-sub">
-                                        Help improve Clauge with anonymous usage
-                                        data.
+                                        Giúp cải thiện Clauge bằng dữ liệu sử
+                                        dụng ẩn danh.
                                     </p>
                                 </div>
                             </header>
                             <div class="stg-card-body">
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Share anonymous usage data</label
+                                        >Chia sẻ dữ liệu sử dụng ẩn danh</label
                                     >
                                     <label class="stg-toggle">
                                         <input
@@ -1845,11 +1842,11 @@
                                 <div class="stg-card-titles">
                                     <h3 class="stg-card-title">MCP Server</h3>
                                     <p class="stg-card-sub">
-                                        Local MCP server that lets MCP-aware
-                                        coding agents read and edit your Notes
-                                        and Boards via tool calls. Each
-                                        installed agent's config is registered
-                                        automatically when enabled.
+                                        MCP server cục bộ cho phép các coding
+                                        agent hỗ trợ MCP đọc và chỉnh sửa Ghi
+                                        chú và Bảng của bạn thông qua tool
+                                        call. Cấu hình của mỗi agent đã cài đặt
+                                        được đăng ký tự động khi bật.
                                     </p>
                                 </div>
                                 <span
@@ -1858,15 +1855,15 @@
                                 >
                                     <span class="stg-card-pill-dot"></span>
                                     {mcpStatus.running
-                                        ? `Running · :${mcpStatus.port}`
-                                        : "Stopped"}
+                                        ? `Đang chạy · :${mcpStatus.port}`
+                                        : "Đã dừng"}
                                 </span>
                             </header>
 
                             <div class="stg-card-body">
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Enable MCP server</label
+                                        >Bật MCP server</label
                                     >
                                     <label class="stg-toggle">
                                         <input
@@ -1901,7 +1898,7 @@
 
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Auth token</label
+                                        >Token xác thực</label
                                     >
                                     <div class="stg-card-token-row">
                                         <input
@@ -1917,22 +1914,22 @@
                                             onclick={() =>
                                                 (showMcpToken = !showMcpToken)}
                                             title={showMcpToken
-                                                ? "Hide"
-                                                : "Show"}
+                                                ? "Ẩn"
+                                                : "Hiện"}
                                         >
-                                            {showMcpToken ? "Hide" : "Show"}
+                                            {showMcpToken ? "Ẩn" : "Hiện"}
                                         </button>
                                         <button
                                             class="stg-card-mini-btn"
                                             onclick={handleCopyMcpToken}
-                                            title="Copy">Copy</button
+                                            title="Sao chép">Sao chép</button
                                         >
                                         <button
                                             class="stg-card-mini-btn"
                                             onclick={handleRotateMcpToken}
                                             disabled={mcpStatus.running}
                                             title="Tạo token mới"
-                                            >Rotate</button
+                                            >Xoay</button
                                         >
                                     </div>
                                 </div>
@@ -1958,22 +1955,23 @@
                                 </span>
                                 <div class="stg-card-titles">
                                     <h3 class="stg-card-title">
-                                        Board automation
+                                        Tự động hóa bảng
                                     </h3>
                                     <p class="stg-card-sub">
-                                        When a card's PR merges on GitHub or
-                                        GitLab, automatically move it to your
-                                        board's final column. Checked on app
-                                        focus, debounced to 5 minutes. The card
-                                        thread gets a system comment so the move
-                                        is auditable.
+                                        Khi PR của một thẻ được merge trên
+                                        GitHub hoặc GitLab, tự động chuyển thẻ
+                                        đó sang cột cuối cùng của bảng. Kiểm
+                                        tra khi ứng dụng được focus, giới hạn
+                                        tần suất 5 phút. Luồng thẻ nhận một bình
+                                        luận hệ thống để có thể theo dõi việc
+                                        di chuyển.
                                     </p>
                                 </div>
                             </header>
                             <div class="stg-card-body">
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Auto-move cards on PR merge</label
+                                        >Tự động chuyển thẻ khi PR được merge</label
                                     >
                                     <label class="stg-toggle">
                                         <input
@@ -2015,18 +2013,18 @@
                                 </span>
                                 <div class="stg-card-titles">
                                     <h3 class="stg-card-title">
-                                        Request Settings
+                                        Cài đặt yêu cầu
                                     </h3>
                                     <p class="stg-card-sub">
-                                        Defaults applied to every REST request
-                                        you send.
+                                        Giá trị mặc định áp dụng cho mọi yêu
+                                        cầu REST bạn gửi.
                                     </p>
                                 </div>
                             </header>
                             <div class="stg-card-body">
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Request Timeout (ms)</label
+                                        >Thời gian chờ yêu cầu (ms)</label
                                     >
                                     <input
                                         class="stg-input"
@@ -2043,7 +2041,7 @@
                                 </div>
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Follow Redirects</label
+                                        >Theo dõi chuyển hướng</label
                                     >
                                     <label class="stg-toggle">
                                         <input
@@ -2062,7 +2060,7 @@
                                 </div>
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >SSL Verification</label
+                                        >Xác minh SSL</label
                                     >
                                     <label class="stg-toggle">
                                         <input
@@ -2081,7 +2079,7 @@
                                 </div>
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Max Response Size (MB)</label
+                                        >Kích thước phản hồi tối đa (MB)</label
                                     >
                                     <input
                                         class="stg-input"
@@ -2101,7 +2099,7 @@
                     </div>
                 {:else if activeTab === "appearance"}
                     <div class="stg-section">
-                        <span class="stg-section-label">Theme</span>
+                        <span class="stg-section-label">Giao diện</span>
                         <div class="theme-grid">
                             {#each getThemes() as theme}
                                 <button
@@ -2138,19 +2136,19 @@
 
                         {#if previewThemeId}
                             {@const previewName =
-                                getTheme(previewThemeId)?.name ?? "Theme"}
+                                getTheme(previewThemeId)?.name ?? "Giao diện"}
                             <div class="theme-preview-banner" role="alert">
                                 <div class="theme-preview-info">
                                     <span class="theme-preview-eyebrow"
-                                        >PREVIEWING</span
+                                        >ĐANG XEM TRƯỚC</span
                                     >
                                     <strong class="theme-preview-name"
                                         >{previewName}</strong
                                     >
                                     <p class="theme-preview-sub">
-                                        This is a premium theme. Upgrade to keep
-                                        it, or cancel to go back to your current
-                                        theme.
+                                        Đây là giao diện cao cấp. Nâng cấp để
+                                        giữ lại, hoặc hủy để quay về giao diện
+                                        hiện tại.
                                     </p>
                                 </div>
                                 <div class="theme-preview-actions">
@@ -2158,13 +2156,13 @@
                                         class="theme-preview-btn"
                                         onclick={cancelThemePreview}
                                     >
-                                        Cancel
+                                        Hủy
                                     </button>
                                     <button
                                         class="theme-preview-btn theme-preview-btn-primary"
                                         onclick={upgradeFromThemePreview}
                                     >
-                                        Upgrade to Pro
+                                        Nâng cấp lên Pro
                                     </button>
                                 </div>
                             </div>
@@ -2172,7 +2170,7 @@
                     </div>
 
                     <div class="stg-section">
-                        <span class="stg-section-label">Accent Color</span>
+                        <span class="stg-section-label">Màu nhấn</span>
                         {#if accentLocked}
                             <div class="stg-accent-locked-note">
                                 <svg
@@ -2194,8 +2192,8 @@
                                     /><path d="M7 11V7a5 5 0 0110 0v4" /></svg
                                 >
                                 <span
-                                    ><strong>{activeThemeDef?.name}</strong> provides
-                                    its own accent. Pick a different theme to customize.</span
+                                    ><strong>{activeThemeDef?.name}</strong> đã cung
+                                    cấp màu nhấn riêng. Chọn giao diện khác để tùy chỉnh.</span
                                 >
                             </div>
                         {/if}
@@ -2209,7 +2207,7 @@
                                     class:active={accentColor === color.value}
                                     style="background: {color.value}"
                                     title={accentLocked
-                                        ? `${activeThemeDef?.name} controls the accent`
+                                        ? `${activeThemeDef?.name} kiểm soát màu nhấn`
                                         : color.name}
                                     disabled={accentLocked}
                                     onclick={() =>
@@ -2265,12 +2263,12 @@
                                     : 0}
                             {@const intervalLabel =
                                 $cloudSub?.interval === "yearly"
-                                    ? "Yearly"
-                                    : "Monthly"}
+                                    ? "Hàng năm"
+                                    : "Hàng tháng"}
                             {@const periodLabel =
                                 $cloudSub?.interval === "yearly"
-                                    ? "this year"
-                                    : "this month"}
+                                    ? "năm nay"
+                                    : "tháng này"}
                             <div class="cai2-pane">
                                 <!-- Card 1: Credits hero -->
                                 <section class="cai2-card">
@@ -2291,13 +2289,13 @@
                                             </svg>
                                         </span>
                                         <div class="cai2-titles">
-                                            <h3 class="cai2-title">Credits</h3>
+                                            <h3 class="cai2-title">Tín dụng</h3>
                                             <p class="cai2-sub">
-                                                {intervalLabel} allocation{#if cloudCreditsLocal?.resets_at}
+                                                Phân bổ {intervalLabel}{#if cloudCreditsLocal?.resets_at}
                                                     <span class="cai2-dot"
                                                         >·</span
                                                     >
-                                                    resets {new Date(
+                                                    đặt lại {new Date(
                                                         cloudCreditsLocal.resets_at,
                                                     ).toLocaleDateString(
                                                         undefined,
@@ -2313,8 +2311,8 @@
                                         {#if cloudSubLocal?.status}
                                             <span class="cai2-status">
                                                 {cloudSubLocal.cancel_at_period_end
-                                                    ? "Cancelling"
-                                                    : "Active"}
+                                                    ? "Đang hủy"
+                                                    : "Hoạt động"}
                                             </span>
                                         {/if}
                                     </header>
@@ -2324,7 +2322,7 @@
                                             >{remaining.toLocaleString()}</span
                                         >
                                         <span class="cai2-hero-tot"
-                                            >/ {allowance.toLocaleString()} remaining</span
+                                            >/ {allowance.toLocaleString()} còn lại</span
                                         >
                                     </div>
                                     <div class="cai2-bar-wrap">
@@ -2334,7 +2332,7 @@
                                         ></div>
                                     </div>
                                     <p class="cai2-meta">
-                                        {used.toLocaleString()} credits used {periodLabel}
+                                        {used.toLocaleString()} tín dụng đã dùng {periodLabel}
                                     </p>
                                 </section>
 
@@ -2376,11 +2374,11 @@
                                             </span>
                                             <div class="cai2-titles">
                                                 <h3 class="cai2-title">
-                                                    Credits by mode
+                                                    Tín dụng theo chế độ
                                                 </h3>
                                                 <p class="cai2-sub">
-                                                    Breakdown of usage across
-                                                    modes {periodLabel}.
+                                                    Phân tích mức sử dụng trên
+                                                    các chế độ {periodLabel}.
                                                 </p>
                                             </div>
                                         </header>
@@ -2449,25 +2447,25 @@
                                         </span>
                                         <div class="cai2-titles">
                                             <h3 class="cai2-title">
-                                                Recent activity
+                                                Hoạt động gần đây
                                             </h3>
                                         </div>
                                         <span class="cai2-sub-right">
                                             {cloudAiUsage.length}
                                             {cloudAiUsage.length === 1
-                                                ? "request"
-                                                : "requests"}
-                                            {#if cloudAiUsageNextBefore}loaded ·
-                                                scroll for more{/if}
+                                                ? "yêu cầu"
+                                                : "yêu cầu"}
+                                            {#if cloudAiUsageNextBefore}đã tải ·
+                                                cuộn để xem thêm{/if}
                                         </span>
                                     </header>
                                     {#if cloudAiUsageLoading && cloudAiUsage.length === 0}
-                                        <p class="cai2-empty">Loading…</p>
+                                        <p class="cai2-empty">Đang tải…</p>
                                     {:else if cloudAiUsage.length === 0}
                                         <p class="cai2-empty">
-                                            No Clauge AI requests yet. Start
-                                            chatting from any mode with Clauge
-                                            AI selected in the panel.
+                                            Chưa có yêu cầu Clauge AI nào. Bắt
+                                            đầu trò chuyện từ bất kỳ chế độ nào
+                                            với Clauge AI được chọn trong panel.
                                         </p>
                                     {:else}
                                         <div
@@ -2475,11 +2473,11 @@
                                             onscroll={handleActivityScroll}
                                         >
                                             <div class="cai2-tr cai2-th">
-                                                <span>TIME</span>
-                                                <span>TYPE</span>
-                                                <span>MODE</span>
+                                                <span>THỜI GIAN</span>
+                                                <span>LOẠI</span>
+                                                <span>CHẾ ĐỘ</span>
                                                 <span class="cai2-th-right"
-                                                    >CREDITS</span
+                                                    >TÍN DỤNG</span
                                                 >
                                             </div>
                                             {#each cloudAiUsage as e (e.request_id)}
@@ -2512,13 +2510,13 @@
                                             {/each}
                                             {#if cloudAiUsageLoadingMore}
                                                 <div class="cai2-loading-more">
-                                                    Loading more…
+                                                    Đang tải thêm…
                                                 </div>
                                             {:else if !cloudAiUsageNextBefore && cloudAiUsage.length >= CLOUD_AI_USAGE_PAGE}
                                                 <div
                                                     class="cai2-loading-more cai2-end"
                                                 >
-                                                    End of history
+                                                    Hết lịch sử
                                                 </div>
                                             {/if}
                                         </div>
@@ -2534,7 +2532,7 @@
                                 class:active={aiSubTab === "config"}
                                 onclick={() => (aiSubTab = "config")}
                             >
-                                Configuration
+                                Cấu hình
                             </button>
                             <button
                                 class="ai-subtab"
@@ -2544,7 +2542,7 @@
                                     if (aiHasKey) aiSubTab = "usage";
                                 }}
                             >
-                                Usage Stats
+                                Thống kê sử dụng
                                 {#if !aiHasKey}
                                     <svg
                                         class="ai-subtab-lock"
@@ -2594,11 +2592,11 @@
                                         </span>
                                         <div class="stg-card-titles">
                                             <h3 class="stg-card-title">
-                                                Configuration
+                                                Cấu hình
                                             </h3>
                                             <p class="stg-card-sub">
-                                                Provider, model, and API key for
-                                                the in-app AI assistant.
+                                                Nhà cung cấp, model và API Key
+                                                cho trợ lý AI trong ứng dụng.
                                             </p>
                                         </div>
                                     </header>
@@ -2607,7 +2605,7 @@
                                         <div class="ai-cfg-row">
                                             <div class="ai-cfg-field">
                                                 <label class="ai-cfg-label"
-                                                    >Provider</label
+                                                    >Nhà cung cấp</label
                                                 >
                                                 <select
                                                     class="ai-cfg-select"
@@ -2755,16 +2753,16 @@
                                                             "testing"}
                                                 >
                                                     {#if aiTestStatus === "testing"}
-                                                        Verifying...
+                                                        Đang xác minh...
                                                     {:else}
-                                                        Save & Verify
+                                                        Lưu & Xác minh
                                                     {/if}
                                                 </button>
                                                 {#if aiHasKey}
                                                     <button
                                                         class="ai-action-btn danger"
                                                         onclick={handleRemoveAiKey}
-                                                        >Remove Key</button
+                                                        >Xóa khóa</button
                                                     >
                                                 {/if}
                                             </div>
@@ -2797,7 +2795,7 @@
                                                             d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"
                                                         /></svg
                                                     >
-                                                    Get API Key
+                                                    Lấy API Key
                                                 </a>
                                                 <span class="ai-link-sep"
                                                     >&middot;</span
@@ -2830,7 +2828,7 @@
                                                 <span class="ai-status-badge">
                                                     <span class="ai-status-dot"
                                                     ></span>
-                                                    Connected
+                                                    Đã kết nối
                                                 </span>
                                             {/if}
                                         </div>
@@ -2865,22 +2863,23 @@
                                         </span>
                                         <div class="stg-card-titles">
                                             <h3 class="stg-card-title">
-                                                Configured providers
+                                                Nhà cung cấp đã cấu hình
                                                 <span class="cfg-prov-count"
                                                     >{configuredProviders.length}</span
                                                 >
                                             </h3>
                                             <p class="stg-card-sub">
-                                                Keys you've saved. Click a row
-                                                to edit, or remove with delete.
+                                                Các khóa bạn đã lưu. Nhấp vào
+                                                một dòng để chỉnh sửa, hoặc gỡ
+                                                bằng nút xóa.
                                             </p>
                                         </div>
                                     </header>
 
                                     {#if configuredProviders.length === 0}
                                         <p class="cfg-prov-empty">
-                                            No providers configured yet. Save a
-                                            key above to add one.
+                                            Chưa có nhà cung cấp nào được cấu
+                                            hình. Lưu một khóa ở trên để thêm.
                                         </p>
                                     {:else}
                                         <ul class="cfg-prov-list">
@@ -2912,7 +2911,7 @@
                                                             {#if p.providerId === aiProvider}
                                                                 <span
                                                                     class="cfg-prov-active-tag"
-                                                                    >Active</span
+                                                                    >Đang dùng</span
                                                                 >
                                                             {/if}
                                                         </span>
@@ -2980,10 +2979,10 @@
                                             d="M18 20V10M12 20V4M6 20v-6"
                                         /></svg
                                     >
-                                    <p>No API calls recorded yet</p>
+                                    <p>Chưa ghi nhận lệnh gọi API nào</p>
                                     <span
-                                        >Start chatting with AI to see usage
-                                        data here</span
+                                        >Bắt đầu trò chuyện với AI để xem dữ
+                                        liệu sử dụng tại đây</span
                                     >
                                 </div>
                             {:else}
@@ -3023,27 +3022,27 @@
                                             </span>
                                             <div class="stg-card-titles">
                                                 <h3 class="stg-card-title">
-                                                    Overview
+                                                    Tổng quan
                                                 </h3>
                                                 <p class="stg-card-sub">
-                                                    Aggregated calls, tokens,
-                                                    and estimated cost across
-                                                    all AI activity.
+                                                    Tổng hợp lệnh gọi, token và
+                                                    chi phí ước tính trên toàn
+                                                    bộ hoạt động AI.
                                                 </p>
                                             </div>
                                             {#if showResetConfirm}
                                                 <div class="ai-reset-confirm">
-                                                    <span>Reset all data?</span>
+                                                    <span>Đặt lại toàn bộ dữ liệu?</span>
                                                     <button
                                                         class="ai-action-btn danger sm"
                                                         onclick={handleResetUsage}
-                                                        >Reset</button
+                                                        >Đặt lại</button
                                                     >
                                                     <button
                                                         class="ai-action-btn sm"
                                                         onclick={() =>
                                                             (showResetConfirm = false)}
-                                                        >Cancel</button
+                                                        >Hủy</button
                                                     >
                                                 </div>
                                             {:else}
@@ -3065,7 +3064,7 @@
                                                             d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
                                                         /></svg
                                                     >
-                                                    Reset
+                                                    Đặt lại
                                                 </button>
                                             {/if}
                                         </header>
@@ -3081,7 +3080,7 @@
                                                         )}</span
                                                     >
                                                     <span class="ai-summary-lbl"
-                                                        >Total Calls</span
+                                                        >Tổng lệnh gọi</span
                                                     >
                                                 </div>
                                                 <div class="ai-summary-card">
@@ -3096,7 +3095,7 @@
                                                         )}</span
                                                     >
                                                     <span class="ai-summary-lbl"
-                                                        >Input Tokens</span
+                                                        >Token đầu vào</span
                                                     >
                                                 </div>
                                                 <div class="ai-summary-card">
@@ -3111,7 +3110,7 @@
                                                         )}</span
                                                     >
                                                     <span class="ai-summary-lbl"
-                                                        >Output Tokens</span
+                                                        >Token đầu ra</span
                                                     >
                                                 </div>
                                                 <div
@@ -3134,7 +3133,7 @@
                                                         )}</span
                                                     >
                                                     <span class="ai-summary-lbl"
-                                                        >Est. Cost</span
+                                                        >Chi phí ước tính</span
                                                     >
                                                 </div>
                                             </div>
@@ -3167,22 +3166,23 @@
                                             </span>
                                             <div class="stg-card-titles">
                                                 <h3 class="stg-card-title">
-                                                    By Mode
+                                                    Theo chế độ
                                                 </h3>
                                                 <p class="stg-card-sub">
-                                                    Per-mode breakdown of AI
-                                                    calls and token spend.
+                                                    Phân tích lệnh gọi AI và
+                                                    mức tiêu thụ token theo từng
+                                                    chế độ.
                                                 </p>
                                             </div>
                                         </header>
                                         <div class="stg-card-body">
                                             <div class="ai-table">
                                                 <div class="ai-table-head">
-                                                    <span>Mode</span>
-                                                    <span>Calls</span>
-                                                    <span>Input</span>
-                                                    <span>Output</span>
-                                                    <span>Cost</span>
+                                                    <span>Chế độ</span>
+                                                    <span>Lệnh gọi</span>
+                                                    <span>Đầu vào</span>
+                                                    <span>Đầu ra</span>
+                                                    <span>Chi phí</span>
                                                 </div>
                                                 {#each aiUsageStats as stat}
                                                     <div class="ai-table-row">
@@ -3296,12 +3296,12 @@
                                                 </span>
                                                 <div class="stg-card-titles">
                                                     <h3 class="stg-card-title">
-                                                        By Provider
+                                                        Theo nhà cung cấp
                                                     </h3>
                                                     <p class="stg-card-sub">
-                                                        Spend grouped by model —
-                                                        useful when switching
-                                                        providers.
+                                                        Chi phí được nhóm theo
+                                                        model — hữu ích khi
+                                                        chuyển đổi nhà cung cấp.
                                                     </p>
                                                 </div>
                                             </header>
@@ -3309,10 +3309,10 @@
                                                 <div class="ai-table">
                                                     <div class="ai-table-head">
                                                         <span>Model</span>
-                                                        <span>Calls</span>
-                                                        <span>Input</span>
-                                                        <span>Output</span>
-                                                        <span>Cost</span>
+                                                        <span>Lệnh gọi</span>
+                                                        <span>Đầu vào</span>
+                                                        <span>Đầu ra</span>
+                                                        <span>Chi phí</span>
                                                     </div>
                                                     {#each aiProviderStats as pstat}
                                                         <div
@@ -3375,28 +3375,28 @@
                                 class:active={agentSubTab === "general"}
                                 onclick={() => (agentSubTab = "general")}
                             >
-                                General
+                                Chung
                             </button>
                             <button
                                 class="ai-subtab"
                                 class:active={agentSubTab === "plugins"}
                                 onclick={() => (agentSubTab = "plugins")}
                             >
-                                Plugins
+                                Plugin
                             </button>
                             <button
                                 class="ai-subtab"
                                 class:active={agentSubTab === "contexts"}
                                 onclick={() => (agentSubTab = "contexts")}
                             >
-                                Contexts
+                                Bối cảnh
                             </button>
                             <button
                                 class="ai-subtab"
                                 class:active={agentSubTab === "usage"}
                                 onclick={() => (agentSubTab = "usage")}
                             >
-                                Usage Stats
+                                Thống kê sử dụng
                             </button>
                         </div>
 
@@ -3425,19 +3425,18 @@
                                             </span>
                                             <div class="stg-card-titles">
                                                 <h3 class="stg-card-title">
-                                                    Live usage tracking
+                                                    Theo dõi mức sử dụng trực tiếp
                                                 </h3>
                                                 <p class="stg-card-sub">
-                                                    Configure the provider
-                                                    limits shown in the Agent
-                                                    footer.
+                                                    Cấu hình giới hạn nhà cung
+                                                    cấp hiển thị ở chân Agent.
                                                 </p>
                                             </div>
                                             {#if agentFooterProvider === "claude" && agentSessionKey && $agentUsageAuthStatus.state === "valid"}
                                                 <span class="ai-status-badge">
                                                     <span class="ai-status-dot"
                                                     ></span>
-                                                    Claude connected
+                                                    Claude đã kết nối
                                                 </span>
                                             {:else if agentFooterProvider === "claude" && agentSessionKey && $agentUsageAuthStatus.state === "checking"}
                                                 <span
@@ -3445,7 +3444,7 @@
                                                 >
                                                     <span class="ai-status-dot"
                                                     ></span>
-                                                    Checking Claude
+                                                    Đang kiểm tra Claude
                                                 </span>
                                             {:else if agentFooterProvider === "claude" && agentSessionKey && $agentUsageAuthStatus.state === "invalid"}
                                                 <span
@@ -3454,19 +3453,19 @@
                                                 >
                                                     <span class="ai-status-dot"
                                                     ></span>
-                                                    Claude needs reconfigure
+                                                    Claude cần cấu hình lại
                                                 </span>
                                             {:else if agentFooterProvider === "codex" && agentCodexToken}
                                                 <span class="ai-status-badge">
                                                     <span class="ai-status-dot"
                                                     ></span>
-                                                    Codex configured
+                                                    Codex đã cấu hình
                                                 </span>
                                             {:else}
                                                 <span
                                                     class="ai-status-badge muted"
                                                 >
-                                                    Footer not configured
+                                                    Chân trang chưa cấu hình
                                                 </span>
                                             {/if}
                                         </header>
@@ -3477,15 +3476,15 @@
                                                 >
                                                     <span
                                                         class="stg-card-row-label"
-                                                        >Show in Agent footer</span
+                                                        >Hiển thị ở chân Agent</span
                                                     >
                                                     <span
                                                         class="stg-card-row-help"
                                                     >
-                                                        Choose the provider
-                                                        whose live limit appears
-                                                        next to the Agent
-                                                        terminal.
+                                                        Chọn nhà cung cấp có
+                                                        giới hạn trực tiếp hiển
+                                                        thị bên cạnh terminal
+                                                        Agent.
                                                     </span>
                                                 </div>
                                                 <select
@@ -3503,22 +3502,22 @@
                                                         disabled={!agentSessionKey}
                                                         >Claude Code{agentSessionKey
                                                             ? ""
-                                                            : " (not configured)"}</option
+                                                            : " (chưa cấu hình)"}</option
                                                     >
                                                     <option
                                                         value="codex"
                                                         disabled={!agentCodexToken}
                                                         >Codex{agentCodexToken
                                                             ? ""
-                                                            : " (not configured)"}</option
+                                                            : " (chưa cấu hình)"}</option
                                                     >
                                                     <option value="gemini"
-                                                        >Gemini (local data
-                                                        only)</option
+                                                        >Gemini (chỉ dữ liệu
+                                                        cục bộ)</option
                                                     >
                                                     <option value="opencode"
-                                                        >OpenCode (local data
-                                                        only)</option
+                                                        >OpenCode (chỉ dữ liệu
+                                                        cục bộ)</option
                                                     >
                                                 </select>
                                             </div>
@@ -3531,16 +3530,16 @@
                                                 >
                                                     <span
                                                         class="stg-card-row-label"
-                                                        >Claude session key</span
+                                                        >Session key của Claude</span
                                                     >
                                                     <span
                                                         class="stg-card-row-help"
                                                     >
-                                                        Used only to read Claude
-                                                        usage limits. Find it in
-                                                        claude.ai DevTools >
-                                                        Application > Cookies >
-                                                        sessionKey.
+                                                        Chỉ dùng để đọc giới
+                                                        hạn sử dụng của Claude.
+                                                        Tìm trong claude.ai
+                                                        DevTools > Application >
+                                                        Cookies > sessionKey.
                                                     </span>
                                                     {#if agentKeyTestStatus === "success"}
                                                         <span
@@ -3629,8 +3628,8 @@
                                                                     !showAgentKey)}
                                                             type="button"
                                                             title={showAgentKey
-                                                                ? "Hide key"
-                                                                : "Show key"}
+                                                                ? "Ẩn khóa"
+                                                                : "Hiện khóa"}
                                                         >
                                                             {#if showAgentKey}
                                                                 <svg
@@ -3674,14 +3673,14 @@
                                                         {#if agentKeyTestStatus === "testing"}
                                                             <span
                                                                 class="ai-test-result"
-                                                                >Verifying…</span
+                                                                >Đang xác minh…</span
                                                             >
                                                         {/if}
                                                         {#if agentSessionKey}
                                                             <button
                                                                 class="ai-action-btn danger"
                                                                 onclick={handleRemoveAgentKey}
-                                                                >Remove</button
+                                                                >Xóa</button
                                                             >
                                                         {/if}
                                                     </div>
@@ -3696,12 +3695,12 @@
                                                 >
                                                     <span
                                                         class="stg-card-row-label"
-                                                        >Codex access token</span
+                                                        >Access token của Codex</span
                                                     >
                                                     <span
                                                         class="stg-card-row-help"
                                                     >
-                                                        Grab from <strong
+                                                        Lấy từ <strong
                                                             >chatgpt.com/codex/cloud/settings/analytics</strong
                                                         >
                                                         → DevTools → Network →
@@ -3710,7 +3709,7 @@
                                                         <code
                                                             >authorization</code
                                                         >
-                                                        header (after
+                                                        header (sau
                                                         <code>Bearer </code>).
                                                     </span>
                                                     {#if codexTokenTestStatus === "success"}
@@ -3795,8 +3794,8 @@
                                                                     !showCodexToken)}
                                                             type="button"
                                                             title={showCodexToken
-                                                                ? "Hide token"
-                                                                : "Show token"}
+                                                                ? "Ẩn token"
+                                                                : "Hiện token"}
                                                         >
                                                             {#if showCodexToken}
                                                                 <svg
@@ -3840,14 +3839,14 @@
                                                         {#if codexTokenTestStatus === "testing"}
                                                             <span
                                                                 class="ai-test-result"
-                                                                >Verifying…</span
+                                                                >Đang xác minh…</span
                                                             >
                                                         {/if}
                                                         {#if agentCodexToken}
                                                             <button
                                                                 class="ai-action-btn danger"
                                                                 onclick={handleRemoveCodexToken}
-                                                                >Remove</button
+                                                                >Xóa</button
                                                             >
                                                         {/if}
                                                     </div>
@@ -3860,15 +3859,14 @@
                                                 >
                                                     <span
                                                         class="stg-card-row-label"
-                                                        >Refresh interval</span
+                                                        >Tần suất làm mới</span
                                                     >
                                                     <span
                                                         class="stg-card-row-help"
                                                     >
-                                                        How often Clauge
-                                                        refreshes live limits
-                                                        while Agent mode is
-                                                        open.
+                                                        Tần suất Clauge làm mới
+                                                        giới hạn trực tiếp khi
+                                                        chế độ Agent đang mở.
                                                     </span>
                                                 </div>
                                                 <select
@@ -3916,12 +3914,12 @@
                                             </span>
                                             <div class="stg-card-titles">
                                                 <h3 class="stg-card-title">
-                                                    Notifications
+                                                    Thông báo
                                                 </h3>
                                                 <p class="stg-card-sub">
-                                                    Sound and dock bounce when
-                                                    an agent session finishes
-                                                    its work.
+                                                    Âm thanh và nảy dock khi một
+                                                    phiên agent hoàn thành công
+                                                    việc.
                                                 </p>
                                             </div>
                                         </header>
@@ -3929,7 +3927,7 @@
                                             <div class="stg-card-row">
                                                 <label
                                                     class="stg-card-row-label"
-                                                    >Enable sound alerts</label
+                                                    >Bật cảnh báo âm thanh</label
                                                 >
                                                 <label class="stg-toggle">
                                                     <input
@@ -3953,7 +3951,7 @@
                                             <div class="stg-card-row">
                                                 <label
                                                     class="stg-card-row-label"
-                                                    >Enable dock bounce</label
+                                                    >Bật nảy dock</label
                                                 >
                                                 <label class="stg-toggle">
                                                     <input
@@ -4015,7 +4013,7 @@
                                                     "installed"}
                                                 onclick={() =>
                                                     (pluginView = "installed")}
-                                                >Installed</button
+                                                >Đã cài đặt</button
                                             >
                                             <button
                                                 class="ai-action-btn"
@@ -4061,14 +4059,15 @@
                                                 />
                                             </svg>
                                             <span>
-                                                Codex installs plugins from
-                                                inside its own UI — run <code
+                                                Codex cài đặt plugin từ bên
+                                                trong giao diện riêng của nó —
+                                                chạy <code
                                                     >codex</code
                                                 >
-                                                in a terminal and use the
-                                                <code>/plugins</code> slash command.
-                                                Installed plugins show up here and
-                                                can be enabled or disabled.
+                                                trong terminal và dùng lệnh
+                                                <code>/plugins</code>. Các
+                                                plugin đã cài hiển thị tại đây
+                                                và có thể bật hoặc tắt.
                                             </span>
                                         </div>
                                     {/if}
@@ -4089,10 +4088,10 @@
                                                         d="M20.5 7.27783L12 12.0001M12 12.0001L3.49997 7.27783M12 12.0001L12 21.5001M14 20.6701L12.7 21.4001C12.2 21.6001 11.8 21.6001 11.3 21.4001L4.8 17.7001C4.3 17.4001 4 16.9001 4 16.3001V7.70011C4 7.10011 4.3 6.60011 4.8 6.30011L11.3 2.60011C11.8 2.40011 12.2 2.40011 12.7 2.60011L19.2 6.30011C19.7 6.60011 20 7.10011 20 7.70011V16.3001"
                                                     /></svg
                                                 >
-                                                <p>No plugins installed</p>
+                                                <p>Chưa cài đặt plugin nào</p>
                                                 <span
-                                                    >Browse the marketplace to
-                                                    install plugins</span
+                                                    >Duyệt marketplace để cài
+                                                    đặt plugin</span
                                                 >
                                             </div>
                                         {:else}
@@ -4148,7 +4147,7 @@
                                                                         plugin.marketplace,
                                                                     )}
                                                             >
-                                                                Uninstall
+                                                                Gỡ cài đặt
                                                             </button>
                                                         </div>
                                                     </div>
@@ -4167,7 +4166,7 @@
                                         </div>
                                         {#if filteredMarketplacePlugins.length === 0}
                                             <div class="ai-usage-empty">
-                                                <p>No plugins found</p>
+                                                <p>Không tìm thấy plugin nào</p>
                                             </div>
                                         {:else}
                                             <div class="agent-plugin-list">
@@ -4190,7 +4189,7 @@
                                                                 <span
                                                                     class="agent-plugin-meta"
                                                                     >{plugin.installs.toLocaleString()}
-                                                                    installs</span
+                                                                    lượt cài</span
                                                                 >
                                                             {/if}
                                                         </div>
@@ -4204,7 +4203,7 @@
                                                                     <span
                                                                         class="ai-status-dot"
                                                                     ></span>
-                                                                    Installed
+                                                                    Đã cài đặt
                                                                 </span>
                                                             {:else}
                                                                 <button
@@ -4215,7 +4214,7 @@
                                                                             plugin.marketplace,
                                                                         )}
                                                                 >
-                                                                    Install
+                                                                    Cài đặt
                                                                 </button>
                                                             {/if}
                                                         </div>
@@ -4234,7 +4233,7 @@
                                             class="stg-field"
                                             style="flex-direction: column; align-items: stretch;"
                                         >
-                                            <label class="stg-label">Name</label
+                                            <label class="stg-label">Tên</label
                                             >
                                             <input
                                                 class="stg-input"
@@ -4249,7 +4248,7 @@
                                             style="flex-direction: column; align-items: stretch;"
                                         >
                                             <label class="stg-label"
-                                                >Content</label
+                                                >Nội dung</label
                                             >
                                             <textarea
                                                 class="agent-ctx-textarea"
@@ -4261,12 +4260,12 @@
                                             <button
                                                 class="ai-action-btn primary"
                                                 onclick={handleSaveAgentContext}
-                                                >Save</button
+                                                >Lưu</button
                                             >
                                             <button
                                                 class="ai-action-btn"
                                                 onclick={cancelEditContext}
-                                                >Cancel</button
+                                                >Hủy</button
                                             >
                                         </div>
                                     </div>
@@ -4275,12 +4274,12 @@
                                         <span
                                             class="stg-section-label"
                                             style="margin-bottom: 0;"
-                                            >Contexts</span
+                                            >Bối cảnh</span
                                         >
                                         <button
                                             class="ai-action-btn primary sm"
                                             onclick={startNewContext}
-                                            >New Context</button
+                                            >Bối cảnh mới</button
                                         >
                                     </div>
 
@@ -4313,10 +4312,10 @@
                                                     points="10 9 9 9 8 9"
                                                 /></svg
                                             >
-                                            <p>No contexts yet</p>
+                                            <p>Chưa có bối cảnh nào</p>
                                             <span
-                                                >Create a context to attach to
-                                                agent sessions</span
+                                                >Tạo một bối cảnh để gắn vào
+                                                các phiên agent</span
                                             >
                                         </div>
                                     {:else}
@@ -4366,7 +4365,7 @@
                                                                 class="ai-reset-confirm"
                                                             >
                                                                 <span
-                                                                    >Delete?</span
+                                                                    >Xóa?</span
                                                                 >
                                                                 <button
                                                                     class="ai-action-btn danger sm"
@@ -4378,7 +4377,7 @@
                                                                             ctx.id,
                                                                         );
                                                                     }}
-                                                                    >Yes</button
+                                                                    >Có</button
                                                                 >
                                                                 <button
                                                                     class="ai-action-btn sm"
@@ -4389,7 +4388,7 @@
                                                                         deleteConfirmId =
                                                                             null;
                                                                     }}
-                                                                    >No</button
+                                                                    >Không</button
                                                                 >
                                                             </span>
                                                         {:else}
@@ -4402,7 +4401,7 @@
                                                                     deleteConfirmId =
                                                                         ctx.id;
                                                                 }}
-                                                                >Delete</button
+                                                                >Xóa</button
                                                             >
                                                         {/if}
                                                     </div>
@@ -4441,14 +4440,14 @@
                                                 d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"
                                             /></svg
                                         >
-                                        Refresh
+                                        Làm mới
                                     </button>
                                 </div>
 
                                 {#if agentUsageLoading}
                                     <div class="ud-loading">
                                         <div class="ud-spinner"></div>
-                                        Loading analytics...
+                                        Đang tải phân tích...
                                     </div>
                                 {:else if agentUsageData}
                                     <!-- Summary cards -->
@@ -4459,20 +4458,20 @@
                                                     agentUsageData.totalCost,
                                                 )}</span
                                             ><span class="ud-lbl"
-                                                >Total Cost</span
+                                                >Tổng chi phí</span
                                             >
                                         </div>
                                         <div class="ud-card">
                                             <span class="ud-val"
                                                 >{agentUsageData.totalApiCalls.toLocaleString()}</span
                                             ><span class="ud-lbl"
-                                                >API Calls</span
+                                                >Lệnh gọi API</span
                                             >
                                         </div>
                                         <div class="ud-card">
                                             <span class="ud-val"
                                                 >{agentUsageData.totalSessions}</span
-                                            ><span class="ud-lbl">Sessions</span
+                                            ><span class="ud-lbl">Phiên</span
                                             >
                                         </div>
                                         <div class="ud-card">
@@ -4481,7 +4480,7 @@
                                                     1,
                                                 )}%</span
                                             ><span class="ud-lbl"
-                                                >Cache Hit</span
+                                                >Tỷ lệ Cache</span
                                             >
                                         </div>
                                     </div>
@@ -4518,7 +4517,7 @@
                                     {#if agentUsageData.daily.length > 0}
                                         <div class="ud-section-inline">
                                             <div class="ud-section-title">
-                                                Daily Activity
+                                                Hoạt động hàng ngày
                                             </div>
                                             <div class="ud-chart">
                                                 {#each agentUsageData.daily.slice(-21) as day}
@@ -4532,7 +4531,7 @@
                                                         class="ud-bar-wrap"
                                                         title="{day.date}: {agentFormatCost(
                                                             day.cost,
-                                                        )} / {day.calls} calls"
+                                                        )} / {day.calls} lệnh gọi"
                                                     >
                                                         <div
                                                             class="ud-bar"
@@ -4557,7 +4556,7 @@
                                     <div class="ud-grid">
                                         <div class="ud-section">
                                             <div class="ud-section-title">
-                                                Live Usage
+                                                Sử dụng trực tiếp
                                             </div>
                                             {#if $agentUsageLimits}
                                                 {@const sessionPct =
@@ -4583,7 +4582,7 @@
                                                         >
                                                             <span
                                                                 class="ud-live-lbl"
-                                                                >Session</span
+                                                                >Phiên</span
                                                             >
                                                             <div
                                                                 class="ud-live-bar"
@@ -4612,7 +4611,7 @@
                                                         >
                                                             <span
                                                                 class="ud-live-lbl"
-                                                                >Weekly</span
+                                                                >Hàng tuần</span
                                                             >
                                                             <div
                                                                 class="ud-live-bar"
@@ -4669,7 +4668,7 @@
                                                 <div
                                                     style="padding:8px 0;font-size:11px;color:var(--t3);"
                                                 >
-                                                    Fetching live data...
+                                                    Đang lấy dữ liệu trực tiếp...
                                                 </div>
                                             {/if}
                                         </div>
@@ -4689,7 +4688,7 @@
                                                             >
                                                             <span
                                                                 class="ud-row-meta"
-                                                                >{m.calls} calls &middot;
+                                                                >{m.calls} lệnh gọi &middot;
                                                                 {m.cacheHitPercent.toFixed(
                                                                     0,
                                                                 )}% cache</span
@@ -4711,7 +4710,7 @@
                                     <div class="ud-grid">
                                         <div class="ud-section">
                                             <div class="ud-section-title">
-                                                Projects ({agentUsageData
+                                                Dự án ({agentUsageData
                                                     .byProject.length})
                                             </div>
                                             <div class="ud-scroll">
@@ -4729,9 +4728,9 @@
                                                             >
                                                             <span
                                                                 class="ud-row-meta"
-                                                                >{p.sessions} sess
+                                                                >{p.sessions} phiên
                                                                 &middot; {p.calls}
-                                                                calls</span
+                                                                lệnh gọi</span
                                                             >
                                                         </div>
                                                         <span
@@ -4746,7 +4745,7 @@
                                         </div>
                                         <div class="ud-section">
                                             <div class="ud-section-title">
-                                                Top Sessions
+                                                Phiên hàng đầu
                                             </div>
                                             <div class="ud-scroll">
                                                 {#each agentUsageData.topSessions.slice(0, 6) as s}
@@ -4786,7 +4785,7 @@
                                     <div class="ud-grid">
                                         <div class="ud-section">
                                             <div class="ud-section-title">
-                                                Tools
+                                                Công cụ
                                             </div>
                                             <div class="ud-scroll">
                                                 {#each agentUsageData.tools.slice(0, 6) as t}
@@ -4872,12 +4871,12 @@
                                         <p
                                             style="margin: 0; font-size: 13px; color: var(--t2); font-weight: 500;"
                                         >
-                                            No usage data found
+                                            Không tìm thấy dữ liệu sử dụng
                                         </p>
                                         <span
                                             style="font-size: 11px; color: var(--t3);"
-                                            >Start using Claude Code sessions to
-                                            see analytics here</span
+                                            >Bắt đầu sử dụng các phiên Claude
+                                            Code để xem phân tích tại đây</span
                                         >
                                     </div>
                                 {/if}
@@ -4886,7 +4885,7 @@
                     </div>
                 {:else if activeTab === "shortcuts"}
                     <div class="stg-section">
-                        <span class="stg-section-label">Keyboard Shortcuts</span
+                        <span class="stg-section-label">Phím tắt bàn phím</span
                         >
                         <div class="stg-shortcuts">
                             {#each SHORTCUTS as shortcut}
@@ -4936,20 +4935,20 @@
                                 </span>
                                 <div class="stg-card-titles">
                                     <h3 class="stg-card-title">
-                                        Connection & Query
+                                        Kết nối & Truy vấn
                                     </h3>
                                     <p class="stg-card-sub">
-                                        Defaults for SQL connections. Timeout
-                                        changes apply to new connections —
-                                        already-open pools keep their existing
-                                        values until reconnect.
+                                        Giá trị mặc định cho kết nối SQL. Thay
+                                        đổi thời gian chờ áp dụng cho kết nối
+                                        mới — các pool đang mở giữ giá trị hiện
+                                        tại đến khi kết nối lại.
                                     </p>
                                 </div>
                             </header>
                             <div class="stg-card-body">
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Pool Acquire Timeout (ms)</label
+                                        >Thời gian chờ lấy pool (ms)</label
                                     >
                                     <input
                                         class="stg-input"
@@ -4966,7 +4965,7 @@
                                 </div>
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Pool Idle Timeout (minutes)</label
+                                        >Thời gian chờ pool nhàn rỗi (phút)</label
                                     >
                                     <input
                                         class="stg-input"
@@ -4983,7 +4982,7 @@
                                 </div>
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >HTTP Query Timeout (s)</label
+                                        >Thời gian chờ truy vấn HTTP (giây)</label
                                     >
                                     <input
                                         class="stg-input"
@@ -5000,7 +4999,7 @@
                                 </div>
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Schema Browser Limit</label
+                                        >Giới hạn trình duyệt schema</label
                                     >
                                     <input
                                         class="stg-input"
@@ -5042,20 +5041,20 @@
                                 </span>
                                 <div class="stg-card-titles">
                                     <h3 class="stg-card-title">
-                                        Connection & Query
+                                        Kết nối & Truy vấn
                                     </h3>
                                     <p class="stg-card-sub">
-                                        Defaults for NoSQL connections. Timeouts
-                                        apply to new connections; the find-limit
-                                        caps gate both the document viewer and
-                                        the AI-tool query path.
+                                        Giá trị mặc định cho kết nối NoSQL.
+                                        Thời gian chờ áp dụng cho kết nối mới;
+                                        giới hạn find chi phối cả trình xem tài
+                                        liệu và đường truy vấn của công cụ AI.
                                     </p>
                                 </div>
                             </header>
                             <div class="stg-card-body">
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Server Selection Timeout (ms)</label
+                                        >Thời gian chờ chọn server (ms)</label
                                     >
                                     <input
                                         class="stg-input"
@@ -5072,7 +5071,7 @@
                                 </div>
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Connect Timeout (ms)</label
+                                        >Thời gian chờ kết nối (ms)</label
                                     >
                                     <input
                                         class="stg-input"
@@ -5089,7 +5088,7 @@
                                 </div>
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Default Find Limit</label
+                                        >Giới hạn find mặc định</label
                                     >
                                     <input
                                         class="stg-input"
@@ -5106,7 +5105,7 @@
                                 </div>
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Max Find Limit</label
+                                        >Giới hạn find tối đa</label
                                     >
                                     <input
                                         class="stg-input"
@@ -5144,23 +5143,24 @@
                                     >
                                 </span>
                                 <div class="stg-card-titles">
-                                    <h3 class="stg-card-title">Listing</h3>
+                                    <h3 class="stg-card-title">Liệt kê</h3>
                                     <p class="stg-card-sub">
-                                        Defaults for the Explorer file browser.
-                                        Folder-size aggregation walks every
-                                        object under each subfolder — accurate,
-                                        but adds N×pages extra round-trips per
-                                        listing on object stores (S3, Azure).
-                                        Off keeps folder navigation snappy on
-                                        large buckets. Change takes effect on
-                                        the next connection.
+                                        Giá trị mặc định cho trình duyệt tệp
+                                        Explorer. Tổng hợp kích thước thư mục
+                                        sẽ duyệt qua mọi đối tượng trong từng
+                                        thư mục con — chính xác, nhưng thêm
+                                        N×trang lượt truy vấn cho mỗi lần liệt
+                                        kê trên object store (S3, Azure). Tắt
+                                        giúp điều hướng thư mục nhanh trên các
+                                        bucket lớn. Thay đổi có hiệu lực ở lần
+                                        kết nối tiếp theo.
                                     </p>
                                 </div>
                             </header>
                             <div class="stg-card-body">
                                 <div class="stg-card-row">
                                     <label class="stg-card-row-label"
-                                        >Show folder sizes (S3, Azure)</label
+                                        >Hiển thị kích thước thư mục (S3, Azure)</label
                                     >
                                     <label class="stg-toggle">
                                         <input
@@ -5190,8 +5190,8 @@
                                 >
                             </div>
                             <p class="about-desc">
-                                An AI-powered cross-platform desktop super-app
-                                for developers. One shell, many tools.
+                                Siêu ứng dụng desktop đa nền tảng tích hợp AI
+                                dành cho lập trình viên. Một vỏ, nhiều công cụ.
                             </p>
                         </section>
 
@@ -5219,7 +5219,7 @@
                                 <div class="stg-card-titles">
                                     <h3 class="stg-card-title">Tech Stack</h3>
                                     <p class="stg-card-sub">
-                                        What Clauge is built on.
+                                        Clauge được xây dựng trên nền tảng nào.
                                     </p>
                                 </div>
                             </header>
@@ -5365,9 +5365,9 @@
                                     >
                                 </span>
                                 <div class="stg-card-titles">
-                                    <h3 class="stg-card-title">Links</h3>
+                                    <h3 class="stg-card-title">Liên kết</h3>
                                     <p class="stg-card-sub">
-                                        Project, issues, developer, website.
+                                        Dự án, lỗi, nhà phát triển, website.
                                     </p>
                                 </div>
                             </header>
@@ -5378,14 +5378,14 @@
                                         href="https://github.com/ansxuman/Clauge"
                                         target="_blank"
                                         rel="noopener"
-                                        title="GitHub Repository"
+                                        title="Kho GitHub"
                                     >
                                         <svg viewBox="0 0 24 24"
                                             ><path
                                                 d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"
                                             /></svg
                                         >
-                                        <span>Project</span>
+                                        <span>Dự án</span>
                                     </a>
                                     <a
                                         class="about-link-btn"
@@ -5403,14 +5403,14 @@
                                                 d="M12 8v4M12 16h.01"
                                             /></svg
                                         >
-                                        <span>Report Issue</span>
+                                        <span>Báo lỗi</span>
                                     </a>
                                     <a
                                         class="about-link-btn"
                                         href="https://github.com/ansxuman"
                                         target="_blank"
                                         rel="noopener"
-                                        title="Developer"
+                                        title="Nhà phát triển"
                                     >
                                         <svg viewBox="0 0 24 24"
                                             ><path
@@ -5421,7 +5421,7 @@
                                                 r="4"
                                             /></svg
                                         >
-                                        <span>Developer</span>
+                                        <span>Nhà phát triển</span>
                                     </a>
                                     <a
                                         class="about-link-btn"
@@ -5463,7 +5463,7 @@
                                     <a
                                         class="about-link-btn"
                                         href="mailto:support@clauge.in"
-                                        title="Email Support"
+                                        title="Hỗ trợ qua Email"
                                     >
                                         <svg viewBox="0 0 24 24"
                                             ><rect
@@ -5490,9 +5490,9 @@
 
 <ConfirmDialog
     bind:show={showClearChatHistoryConfirm}
-    title="Clear History"
-    message={`This will clear ${restHistoryCount.toLocaleString()} request${restHistoryCount === 1 ? "" : "s"} from the History section and ${aiChatCount.toLocaleString()} AI Assistance chat message${aiChatCount === 1 ? "" : "s"} across all modes.\n\nThis cannot be undone.`}
-    confirmText="Clear History"
+    title="Xóa lịch sử"
+    message={`Thao tác này sẽ xóa ${restHistoryCount.toLocaleString()} yêu cầu khỏi mục Lịch sử và ${aiChatCount.toLocaleString()} tin nhắn trò chuyện Trợ lý AI trên mọi chế độ.\n\nThao tác này không thể hoàn tác.`}
+    confirmText="Xóa lịch sử"
     onconfirm={handleClearChatHistory}
 />
 

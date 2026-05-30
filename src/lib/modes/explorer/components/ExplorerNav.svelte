@@ -31,7 +31,7 @@
   function subLine(conn: ExplorerConnection): string {
     switch (conn.kind) {
       case 'sftp':
-        if (conn.sshProfileId) return 'via SSH profile';
+        if (conn.sshProfileId) return 'qua profile SSH';
         if (conn.host) {
           const port = conn.port && conn.port !== 22 ? `:${conn.port}` : '';
           return `${conn.username || ''}@${conn.host}${port}`;
@@ -43,7 +43,7 @@
       }
       case 's3': {
         const preset = conn.s3Preset && conn.s3Preset !== 'custom' ? `${conn.s3Preset.toUpperCase()} · ` : '';
-        return `${preset}${conn.s3Bucket || '(no bucket)'}`;
+        return `${preset}${conn.s3Bucket || '(chưa có bucket)'}`;
       }
       case 'azure_blob':
         return `${conn.azureAccount || '?'} / ${conn.azureContainer || '?'}`;
@@ -84,7 +84,7 @@
     const t = Date.parse(iso);
     if (!Number.isFinite(t)) return '';
     const diff = Math.max(0, Date.now() - t);
-    if (diff < 60_000) return 'just now';
+    if (diff < 60_000) return 'vừa xong';
     if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m`;
     if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h`;
     if (diff < 7 * 86_400_000) return `${Math.floor(diff / 86_400_000)}d`;
@@ -206,7 +206,7 @@
         next.set(tabKey, 'error');
         return next;
       });
-      errorToast('Connection failed', err);
+      errorToast('Kết nối thất bại', err);
     }
   }
 
@@ -247,7 +247,7 @@
     const items: any[] = [];
     if (connected) {
       items.push({
-        label: 'Disconnect',
+        label: 'Ngắt kết nối',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18.36 6.64a9 9 0 11-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>',
         action: () => {
           pendingDisconnect = conn;
@@ -255,26 +255,26 @@
         },
       });
       items.push({
-        label: 'Duplicate Session',
+        label: 'Nhân đôi phiên',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>',
         action: () => handleConnect(conn, true),
       });
     } else {
       items.push({
-        label: 'Connect',
+        label: 'Kết nối',
         icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>',
         action: () => handleConnect(conn),
       });
     }
     items.push({ label: '', action: () => {}, separator: true });
     items.push({
-      label: 'Edit',
+      label: 'Chỉnh sửa',
       icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
       action: () => openEditModal(conn),
     });
     items.push({ label: '', action: () => {}, separator: true });
     items.push({
-      label: 'Delete',
+      label: 'Xóa',
       icon: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>',
       danger: true,
       action: () => { pendingDelete = conn; showDeleteConfirm = true; },

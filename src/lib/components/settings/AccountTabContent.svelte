@@ -969,7 +969,7 @@
                                             d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"
                                         />
                                     </svg>
-                                    Clauge AI credits
+                                    Tín dụng Clauge AI
                                 </span>
                                 <span class="acc-sub-credits-val">
                                     {#if $cloudCredits}
@@ -991,7 +991,7 @@
                             </div>
                             {#if $cloudCredits}
                                 <p class="acc-sub-credits-meta">
-                                    Đã dùng {used.toLocaleString()} credits{#if periodEnd}
+                                    Đã dùng {used.toLocaleString()} tín dụng{#if periodEnd}
                                         <span class="acc-sub-dot">·</span> đặt lại {fmtAbsDate(
                                             periodEnd,
                                         )}
@@ -1023,7 +1023,7 @@
                                     </span>
                                 {:else}
                                     <span class="acc-sub-meta-sub"
-                                        >Managed AI</span
+                                        >AI được quản lý</span
                                     >
                                 {/if}
                             </div>
@@ -1320,7 +1320,7 @@
                             {#if isPro}
                                 <li>
                                     Gói Pro của bạn{$cloudCredits?.remaining
-                                        ? ` và ${$cloudCredits.remaining.toLocaleString()} Clauge AI credit${$cloudCredits.remaining === 1 ? "" : "s"} còn lại`
+                                        ? ` và ${$cloudCredits.remaining.toLocaleString()} tín dụng Clauge AI còn lại`
                                         : ""}
                                 </li>
                             {/if}

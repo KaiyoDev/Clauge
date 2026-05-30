@@ -644,7 +644,7 @@
   <div class="dv-tabs">
     <button class="dv-tab" class:on={activeTab === 'documents'} onclick={() => activeTab = 'documents'}>
       <svg viewBox="0 0 24 24" width="12" height="12"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      Documents
+      Tài liệu
     </button>
     <button class="dv-tab" class:on={activeTab === 'query'} onclick={() => activeTab = 'query'}>
       <svg viewBox="0 0 24 24" width="12" height="12"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -652,7 +652,7 @@
     </button>
     <button class="dv-tab" class:on={activeTab === 'aggregation'} onclick={() => activeTab = 'aggregation'}>
       <svg viewBox="0 0 24 24" width="12" height="12"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      Aggregation
+      Tổng hợp
     </button>
     <div class="dv-tab-spacer"></div>
     {#if activeTab === 'documents'}
@@ -861,8 +861,8 @@
         <div class="dv-modal dv-insert-modal">
           <div class="dv-insert-header">
             <div>
-              <div class="dv-insert-title">Insert Document</div>
-              <div class="dv-insert-subtitle">To collection <strong>{database}</strong>.<strong>{collection}</strong></div>
+              <div class="dv-insert-title">Chèn tài liệu</div>
+              <div class="dv-insert-subtitle">Vào bộ sưu tập <strong>{database}</strong>.<strong>{collection}</strong></div>
             </div>
             <button class="dv-modal-close" onclick={() => showInsert = false}>
               <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
@@ -871,10 +871,10 @@
           <div class="dv-insert-toolbar">
             <button class="dv-insert-tool-btn" onclick={formatInsertDoc} title="Định dạng JSON">
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-              Format
+              Định dạng
             </button>
             {#if insertDocCount > 0}
-              <span class="dv-insert-doc-count">{insertDocCount} document{insertDocCount > 1 ? 's' : ''}</span>
+              <span class="dv-insert-doc-count">{insertDocCount} tài liệu</span>
             {/if}
           </div>
           <div class="dv-insert-editor-area">
@@ -900,17 +900,17 @@
             {#if !insertValid}
               <div class="dv-edit-error">
                 <svg viewBox="0 0 24 24" width="12" height="12"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                {#if insertErrorLine > 0}<strong>Line {insertErrorLine}:</strong>&nbsp;{/if}{insertError}
+                {#if insertErrorLine > 0}<strong>Dòng {insertErrorLine}:</strong>&nbsp;{/if}{insertError}
               </div>
             {/if}
           </div>
           <div class="dv-insert-footer">
             <span class="dv-insert-hint">
-              <kbd>&#8984;Enter</kbd> to insert
+              <kbd>&#8984;Enter</kbd> để chèn
             </span>
             <button class="dv-modal-cancel" onclick={() => showInsert = false}>Hủy</button>
             <button class="dv-modal-primary" disabled={!insertValid} onclick={handleInsert}>
-              Insert{insertDocCount > 1 ? ` ${insertDocCount} Docs` : ''}
+              Chèn{insertDocCount > 1 ? ` ${insertDocCount} tài liệu` : ''}
             </button>
           </div>
         </div>
@@ -924,7 +924,7 @@
       <div class="dv-modal-overlay" use:teleportToBody onclick={(e) => { if (e.target === e.currentTarget) showUpdateModal = false; }}>
         <div class="dv-modal dv-modal-lg">
           <div class="dv-modal-hdr">
-            <span>Update Document</span>
+            <span>Cập nhật tài liệu</span>
             <button class="dv-modal-close" onclick={() => showUpdateModal = false}>&times;</button>
           </div>
           <div class="dv-modal-editor-wrap">
@@ -976,7 +976,7 @@
       <div class="dv-modal-overlay" use:teleportToBody onclick={(e) => { if (e.target === e.currentTarget) showDeleteModal = false; }}>
         <div class="dv-modal dv-modal-lg">
           <div class="dv-modal-hdr">
-            <span>Delete Document</span>
+            <span>Xóa tài liệu</span>
             <button class="dv-modal-close" onclick={() => showDeleteModal = false}>&times;</button>
           </div>
           <div class="dv-modal-editor-wrap">
@@ -1005,12 +1005,12 @@
     {/if}
   {:else if activeTab === 'query'}
     <div class="dv-query-area">
-      <QueryEditor bind:value={queryValue} label="Find Query" placeholder={'{"field": "value"}'} onexecute={handleQueryExecute} />
+      <QueryEditor bind:value={queryValue} label="Truy vấn Find" placeholder={'{"field": "value"}'} onexecute={handleQueryExecute} />
     </div>
     {#if queryResult}
       <div class="dv-query-result">
         <div class="dv-query-meta">
-          <span>{queryResult.length} results</span>
+          <span>{queryResult.length} kết quả</span>
           <span class="dv-meta-sep">·</span>
           <span>{queryDuration}ms</span>
         </div>
@@ -1019,17 +1019,17 @@
     {:else}
       <div class="dv-empty-state">
         <svg viewBox="0 0 24 24" width="32" height="32"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <span>Write a query and press Run</span>
+        <span>Viết một truy vấn và nhấn Chạy</span>
       </div>
     {/if}
   {:else if activeTab === 'aggregation'}
     <div class="dv-query-area">
-      <QueryEditor bind:value={aggPipeline} label="Aggregation Pipeline" placeholder={'[{"$match": {}}]'} onexecute={handleAggExecute} />
+      <QueryEditor bind:value={aggPipeline} label="Pipeline tổng hợp" placeholder={'[{"$match": {}}]'} onexecute={handleAggExecute} />
     </div>
     {#if queryResult}
       <div class="dv-query-result">
         <div class="dv-query-meta">
-          <span>{queryResult.length} results</span>
+          <span>{queryResult.length} kết quả</span>
           <span class="dv-meta-sep">·</span>
           <span>{queryDuration}ms</span>
         </div>
@@ -1038,7 +1038,7 @@
     {:else}
       <div class="dv-empty-state">
         <svg viewBox="0 0 24 24" width="32" height="32"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        <span>Write a pipeline and press Run</span>
+        <span>Viết một pipeline và nhấn Chạy</span>
       </div>
     {/if}
   {/if}

@@ -9,7 +9,7 @@
     label?: string;
   }
 
-  let { value = $bindable(), placeholder = '{}', onexecute, label = 'Query' }: Props = $props();
+  let { value = $bindable(), placeholder = '{}', onexecute, label = 'Truy vấn' }: Props = $props();
 
   let lineCount = $derived(Math.max(1, (value || '').split('\n').length));
 
@@ -54,13 +54,13 @@
 <div class="qe-wrap">
   <div class="qe-header">
     <span class="qe-label">{label}</span>
-    <span class="qe-hint">{m}+Enter to run</span>
+    <span class="qe-hint">{m}+Enter để chạy</span>
     <button class="qe-btn" onclick={formatJson}>
       <svg viewBox="0 0 24 24" width="10" height="10"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-      Format
+      Định dạng
     </button>
     <button class="qe-btn qe-run" onclick={() => onexecute?.(value)}>
-      Run &#9654;
+      Chạy &#9654;
     </button>
   </div>
   <div class="qe-editor">

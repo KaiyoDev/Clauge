@@ -138,7 +138,7 @@
       const selected = await open({
         directory: false,
         multiple: false,
-        title: 'Select CLI binary',
+        title: 'Chọn binary CLI',
         filters: isWindows
           ? [{ name: 'Executables', extensions: ['exe', 'cmd', 'bat'] }, { name: 'All files', extensions: ['*'] }]
           : [{ name: 'All files', extensions: ['*'] }],
@@ -156,7 +156,7 @@
       binaryProbeResult = { kind: 'idle', msg: '' };
       return;
     }
-    binaryProbeResult = { kind: 'probing', msg: 'Checking…' };
+    binaryProbeResult = { kind: 'probing', msg: 'Đang kiểm tra…' };
     try {
       const banner = await agentValidateBinary(trimmed);
       binaryProbeResult = { kind: 'ok', msg: banner.split('\n')[0].slice(0, 80) };
@@ -169,7 +169,7 @@
   async function pickFolder() {
     try {
       const { open } = await import('@tauri-apps/plugin-dialog');
-      const selected = await open({ directory: true, multiple: false, title: 'Select Project Folder' });
+      const selected = await open({ directory: true, multiple: false, title: 'Chọn thư mục dự án' });
       if (selected) {
         projectPath = selected as string;
         if (!title) title = (selected as string).split('/').filter(Boolean).pop() || '';

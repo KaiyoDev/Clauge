@@ -20,11 +20,11 @@
   const PRESETS = [
     { key: 'aws',    label: 'Amazon S3',                  endpoint: 'https://s3.{region}.amazonaws.com', regionRequired: true,  pathStyle: false },
     { key: 'r2',     label: 'Cloudflare R2',              endpoint: 'https://{account}.r2.cloudflarestorage.com', regionRequired: false, pathStyle: false },
-    { key: 'minio',  label: 'MinIO (self-hosted)',        endpoint: '',                                  regionRequired: false, pathStyle: true  },
+    { key: 'minio',  label: 'MinIO (tự host)',            endpoint: '',                                  regionRequired: false, pathStyle: true  },
     { key: 'wasabi', label: 'Wasabi',                     endpoint: 'https://s3.wasabisys.com',          regionRequired: true,  pathStyle: false },
     { key: 'b2',     label: 'Backblaze B2',               endpoint: 'https://s3.us-west-002.backblazeb2.com', regionRequired: true, pathStyle: true },
-    { key: 'gcs',    label: 'Google Cloud (S3 mode)',     endpoint: 'https://storage.googleapis.com',    regionRequired: false, pathStyle: false },
-    { key: 'custom', label: 'Custom S3-compatible',       endpoint: '',                                  regionRequired: false, pathStyle: false },
+    { key: 'gcs',    label: 'Google Cloud (chế độ S3)',   endpoint: 'https://storage.googleapis.com',    regionRequired: false, pathStyle: false },
+    { key: 'custom', label: 'S3-compatible tùy chỉnh',    endpoint: '',                                  regionRequired: false, pathStyle: false },
   ] as const;
 
   let name = $state('');
@@ -86,13 +86,13 @@
   }
 
   async function handleSave() {
-    if (!name.trim()) { showToast('Name is required', 'error'); return; }
+    if (!name.trim()) { showToast('Tên là bắt buộc', 'error'); return; }
     if (!endpoint.trim() || endpoint.includes('{')) {
-      showToast('Endpoint URL is required (resolve any placeholders)', 'error'); return;
+      showToast('Endpoint URL là bắt buộc (hãy thay các giá trị placeholder)', 'error'); return;
     }
-    if (!bucket.trim()) { showToast('Bucket is required', 'error'); return; }
+    if (!bucket.trim()) { showToast('Bucket là bắt buộc', 'error'); return; }
     if (!accessKey.trim() || !secretKey.trim()) {
-      showToast('Access key + secret key are required', 'error'); return;
+      showToast('Access Key và Secret Key là bắt buộc', 'error'); return;
     }
     saving = true;
     try {
@@ -125,27 +125,27 @@
       if (accessKey.trim()) await setSecret(connId, 'access_key', accessKey.trim());
       if (secretKey.trim()) await setSecret(connId, 'secret_key', secretKey.trim());
       await loadExplorerConnections();
-      showToast(isEdit ? 'S3 connection updated' : 'S3 connection saved', 'success');
+      showToast(isEdit ? 'Đã cập nhật kết nối S3' : 'Đã lưu kết nối S3', 'success');
       resetForm();
       show = false;
       onclose?.();
     } catch (e: any) {
-      errorToast('Save failed', e);
+      errorToast('Không lưu được', e);
     } finally {
       saving = false;
     }
   }
 </script>
 
-<Modal bind:show title={isEdit ? 'Edit S3-compatible connection' : 'New S3-compatible connection'} width="540px" {onclose}>
+<Modal bind:show title={isEdit ? 'Chỉnh sửa kết nối S3-compatible' : 'Kết nối S3-compatible mới'} width="540px" {onclose}>
   <div class="form">
     <label class="row">
-      <span>Name</span>
-      <input class="inp" type="text" bind:value={name} placeholder="e.g. Logs bucket" />
+      <span>Tên</span>
+      <input class="inp" type="text" bind:value={name} placeholder="vd. Bucket logs" />
     </label>
 
     <label class="row">
-      <span>Service</span>
+      <span>Dịch vụ</span>
       <select class="inp" bind:value={preset}>
         {#each PRESETS as p (p.key)}
           <option value={p.key}>{p.label}</option>
@@ -177,23 +177,23 @@
     </div>
 
     <label class="row">
-      <span>Access key ID</span>
+      <span>Access Key ID</span>
       <input class="inp" type="text" bind:value={accessKey} />
     </label>
     <label class="row">
-      <span>Secret access key</span>
+      <span>Secret Access Key</span>
       <input class="inp" type="password" bind:value={secretKey} />
     </label>
 
     <label class="row checkbox">
       <input type="checkbox" bind:checked={pathStyle} />
-      <span>Use path-style addressing (required for MinIO and some self-hosted setups)</span>
+      <span>Dùng địa chỉ kiểu path-style (bắt buộc cho MinIO và một số cấu hình tự host)</span>
     </label>
 
     <div class="actions">
-      <button class="btn" onclick={() => { show = false; onclose?.(); }}>Cancel</button>
+      <button class="btn" onclick={() => { show = false; onclose?.(); }}>Hủy</button>
       <button class="btn primary" onclick={handleSave} disabled={saving}>
-        {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Save connection'}
+        {saving ? 'Đang lưu…' : isEdit ? 'Lưu thay đổi' : 'Lưu kết nối'}
       </button>
     </div>
   </div>

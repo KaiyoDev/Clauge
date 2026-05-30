@@ -50,10 +50,10 @@
   }
 
   async function handleSave() {
-    if (!name.trim()) { showToast('Name is required', 'error'); return; }
-    if (!account.trim()) { showToast('Account is required', 'error'); return; }
-    if (!container.trim()) { showToast('Container is required', 'error'); return; }
-    if (!isEdit && !secretValue.trim()) { showToast('Credential is required', 'error'); return; }
+    if (!name.trim()) { showToast('Tên là bắt buộc', 'error'); return; }
+    if (!account.trim()) { showToast('Storage account là bắt buộc', 'error'); return; }
+    if (!container.trim()) { showToast('Container là bắt buộc', 'error'); return; }
+    if (!isEdit && !secretValue.trim()) { showToast('Thông tin xác thực là bắt buộc', 'error'); return; }
     saving = true;
     try {
       const payload: ExplorerConnection = {
@@ -88,35 +88,35 @@
         await setSecret(connId, secretName, secretValue.trim());
       }
       await loadExplorerConnections();
-      showToast(isEdit ? 'Azure Blob connection updated' : 'Azure Blob connection saved', 'success');
+      showToast(isEdit ? 'Đã cập nhật kết nối Azure Blob' : 'Đã lưu kết nối Azure Blob', 'success');
       resetForm();
       show = false;
       onclose?.();
     } catch (e: any) {
-      errorToast('Save failed', e);
+      errorToast('Không lưu được', e);
     } finally {
       saving = false;
     }
   }
 
   const labels = {
-    shared_key: 'Account key',
+    shared_key: 'Khóa tài khoản',
     sas: 'SAS token',
     connection_string: 'Connection string',
   } as const;
 
   const placeholders = {
-    shared_key: 'paste account key',
+    shared_key: 'dán khóa tài khoản',
     sas: '?sv=...&sig=...',
     connection_string: 'DefaultEndpointsProtocol=https;AccountName=...',
   } as const;
 </script>
 
-<Modal bind:show title={isEdit ? 'Edit Azure Blob connection' : 'New Azure Blob connection'} width="520px" {onclose}>
+<Modal bind:show title={isEdit ? 'Chỉnh sửa kết nối Azure Blob' : 'Kết nối Azure Blob mới'} width="520px" {onclose}>
   <div class="form">
     <label class="row">
-      <span>Name</span>
-      <input class="inp" type="text" bind:value={name} placeholder="e.g. App storage" />
+      <span>Tên</span>
+      <input class="inp" type="text" bind:value={name} placeholder="vd. Lưu trữ ứng dụng" />
     </label>
 
     <label class="row">
@@ -130,7 +130,7 @@
     </label>
 
     <label class="row">
-      <span>Authentication</span>
+      <span>Xác thực</span>
       <select class="inp" bind:value={authKind}>
         <option value="shared_key">Shared key</option>
         <option value="sas">SAS token</option>
@@ -144,9 +144,9 @@
     </label>
 
     <div class="actions">
-      <button class="btn" onclick={() => { show = false; onclose?.(); }}>Cancel</button>
+      <button class="btn" onclick={() => { show = false; onclose?.(); }}>Hủy</button>
       <button class="btn primary" onclick={handleSave} disabled={saving}>
-        {saving ? 'Saving…' : isEdit ? 'Save changes' : 'Save connection'}
+        {saving ? 'Đang lưu…' : isEdit ? 'Lưu thay đổi' : 'Lưu kết nối'}
       </button>
     </div>
   </div>

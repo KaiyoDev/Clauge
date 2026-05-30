@@ -289,9 +289,9 @@
             });
             notes.forEach((n) => {
                 items.push({
-                    label: n.title || "Untitled",
+                    label: n.title || "Chưa đặt tên",
                     icon: noteIcon,
-                    action: () => openItem("note", n.id, n.title || "Untitled"),
+                    action: () => openItem("note", n.id, n.title || "Chưa đặt tên"),
                 });
             });
             if (idx < ws.length - 1)
@@ -300,7 +300,7 @@
         showContextMenu(x, y, items, {
             scrollable: true,
             stickyFooter: {
-                label: "Create new workspace",
+                label: "Tạo workspace mới",
                 icon: plusIcon,
                 action: () => {
                     showNewWorkspaceModal = true;
@@ -328,7 +328,7 @@
                 session.projectPath === ws.projectPath
                     ? session.id
                     : null;
-            const note = await createNote(wsId, "Untitled", linkedSessionId);
+            const note = await createNote(wsId, "Chưa đặt tên", linkedSessionId);
             // Open the new note in a Topbar tab.
             const {
                 addTab,
@@ -343,7 +343,7 @@
             else addTab(note.title, "workspace", key, "var(--acc)");
             mode.set("workspace");
         } catch (e) {
-            showToast(`Failed to create note: ${e}`, "error");
+            showToast(`Không thể tạo ghi chú: ${e}`, "error");
         }
     }
 
@@ -352,7 +352,7 @@
         const wsId = detail?.workspaceId ?? get(activeWorkspaceId);
         if (!wsId) return;
         try {
-            const board = await createBoard(wsId, "New Board");
+            const board = await createBoard(wsId, "Bảng mới");
             const {
                 addTab,
                 activateTab,
@@ -366,7 +366,7 @@
             else addTab(board.name, "workspace", key, "#a78bfa");
             mode.set("workspace");
         } catch (e) {
-            showToast(`Failed to create board: ${e}`, "error");
+            showToast(`Không thể tạo bảng: ${e}`, "error");
         }
     }
 
@@ -457,7 +457,7 @@
         showContextMenu(x, y, items, {
             scrollable: true,
             stickyFooter: {
-                label: "New SSH Profile",
+                label: "Profile SSH mới",
                 icon: plusIcon,
                 action: () =>
                     window.dispatchEvent(
@@ -502,7 +502,7 @@
         showContextMenu(x, y, items, {
             scrollable: true,
             stickyFooter: {
-                label: "New Connection",
+                label: "Kết nối mới",
                 icon: plusIcon,
                 action: () =>
                     window.dispatchEvent(
@@ -573,7 +573,7 @@
         if (!target) return;
         try {
             await disconnectFromDb(target.id);
-            showToast(`Disconnected from ${target.name}`, "success");
+            showToast(`Đã ngắt kết nối khỏi ${target.name}`, "success");
         } catch (err: any) {
             showToast(err.toString(), "error");
         }
@@ -1260,7 +1260,7 @@
         onmousedown={() => (showSessionPicker = false)}
     ></div>
     <div class="session-picker" style="top:{pickerY}px;left:{pickerX}px;">
-        <div class="session-picker-header">Open Agent Session</div>
+        <div class="session-picker-header">Mở phiên Agent</div>
         <div class="session-picker-list">
             {#each $agentSessions as session (session.id)}
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -1291,7 +1291,7 @@
                     pickerNewSession();
                 }}
             >
-                + New Session
+                + Phiên mới
             </button>
         </div>
     </div>
@@ -1312,9 +1312,9 @@
 <SshAuthPromptsModal />
 <ConfirmDialog
     bind:show={$showSqlDisconnectConfirm}
-    title="Disconnect"
-    message={`Are you sure you want to disconnect from "${$sqlDisconnectTarget?.name ?? ""}"?`}
-    confirmText="Disconnect"
+    title="Ngắt kết nối"
+    message={`Bạn có chắc muốn ngắt kết nối khỏi "${$sqlDisconnectTarget?.name ?? ""}"?`}
+    confirmText="Ngắt kết nối"
     onconfirm={handleSqlDisconnectConfirm}
 />
 <SqlConnectionDialog

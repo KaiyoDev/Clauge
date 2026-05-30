@@ -61,10 +61,10 @@
 <div class="req-env-wrap">
   <button bind:this={pillEl} class="req-env-pill" onclick={toggleDropdown} title="Môi trường cho yêu cầu này">
     {#if isUsingGlobal}
-      <span class="req-env-global">Global &middot;</span>
+      <span class="req-env-global">Toàn cục &middot;</span>
     {/if}
     <span class="req-env-dot" style:background={effectiveEnv?.color ?? 'var(--t3)'}></span>
-    <span class="req-env-label">{effectiveEnv?.name ?? 'None'}</span>
+    <span class="req-env-label">{effectiveEnv?.name ?? 'Không có'}</span>
   </button>
 
   {#if dropdownOpen}
@@ -76,7 +76,7 @@
         onclick={() => selectEnv(null)}
       >
         <span class="coll-env-dd-dot" style:background={globalEnv?.color ?? 'var(--t3)'}></span>
-        <span>Use Global ({globalEnv?.name ?? 'None'})</span>
+        <span>Dùng toàn cục ({globalEnv?.name ?? 'Không có'})</span>
         {#if isUsingGlobal}
           <span class="coll-env-dd-check">&#10003;</span>
         {/if}

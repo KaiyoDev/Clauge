@@ -61,8 +61,8 @@
         btn.type = 'button';
         btn.className = 'ai-copy-btn';
         btn.innerHTML = ICON_COPY;
-        btn.title = 'Copy';
-        btn.setAttribute('aria-label', 'Copy code to clipboard');
+        btn.title = 'Sao chép';
+        btn.setAttribute('aria-label', 'Sao chép code vào clipboard');
         btn.addEventListener('click', async (e) => {
           e.stopPropagation();
           const code = pre.querySelector('code');
@@ -424,7 +424,7 @@
       lastMsg.isStreaming = false;
       lastMsg.toolIndicator = undefined;
       if (!lastMsg.content) {
-        lastMsg.content = '[Cancelled]';
+        lastMsg.content = '[Đã hủy]';
       }
     }
     isStreaming = false;
@@ -450,15 +450,15 @@
   // renderer handles emphasis/inline-code formatting consistently.
   function sqlContextGuidance(status: string): string {
     if (status === 'no_sql_tab') {
-      return "I need an open **SQL query tab** to know which database to work against. Click the **+** button in the tab bar (or pick a connection from the sidebar) and try again.";
+      return "Tôi cần một **tab truy vấn SQL** đang mở để biết làm việc với CSDL nào. Nhấn nút **+** trên thanh tab (hoặc chọn một kết nối từ thanh bên) rồi thử lại.";
     }
     if (status === 'no_binding') {
-      return "This SQL tab isn't bound to a connection yet. Pick one from the **connection selector** above the editor, then ask again.";
+      return "Tab SQL này chưa gắn với kết nối nào. Hãy chọn một kết nối từ **bộ chọn kết nối** phía trên editor, rồi hỏi lại.";
     }
     if (status === 'database_unselected') {
-      return "The connection is set, but no **database** is selected for this tab. Pick a database from the dropdown next to the connection name, then ask again.";
+      return "Đã có kết nối, nhưng chưa chọn **CSDL** cho tab này. Hãy chọn một CSDL từ dropdown cạnh tên kết nối, rồi hỏi lại.";
     }
-    return "I need an open SQL query tab with a connection and database bound before I can help with queries.";
+    return "Tôi cần một tab truy vấn SQL đang mở có gắn kết nối và CSDL trước khi có thể giúp viết truy vấn.";
   }
 
   // Same idea for NoSQL. Driver-aware so Redis users see "DB index" while
@@ -467,20 +467,20 @@
   // active tab points at, regardless of which collection is highlighted.
   function nosqlContextGuidance(status: string, driver?: string): string {
     const isRedis = driver === 'redis';
-    const dbWord = isRedis ? 'DB index (0-15)' : 'database';
+    const dbWord = isRedis ? 'DB index (0-15)' : 'CSDL';
     if (status === 'no_nosql_tab') {
-      return "I need an open **NoSQL tab** to know which database to work against. Double-click a collection or key prefix in the sidebar (or pick a connection) and try again.";
+      return "Tôi cần một **tab NoSQL** đang mở để biết làm việc với CSDL nào. Nhấp đúp vào một collection hoặc key prefix trong thanh bên (hoặc chọn một kết nối) rồi thử lại.";
     }
     if (status === 'no_connection') {
-      return "This NoSQL tab isn't bound to a connection yet. Pick one from the **connection selector** above the editor, then ask again.";
+      return "Tab NoSQL này chưa gắn với kết nối nào. Hãy chọn một kết nối từ **bộ chọn kết nối** phía trên editor, rồi hỏi lại.";
     }
     if (status === 'disconnected') {
-      return "The connection bound to this tab isn't live. Click the connection in the sidebar to reconnect, then ask again.";
+      return "Kết nối gắn với tab này chưa hoạt động. Nhấn vào kết nối trong thanh bên để kết nối lại, rồi hỏi lại.";
     }
     if (status === 'no_database') {
-      return `No ${dbWord} is selected in this tab. Pick one from the dropdown above the editor, then ask again.`;
+      return `Chưa chọn ${dbWord} trong tab này. Hãy chọn một mục từ dropdown phía trên editor, rồi hỏi lại.`;
     }
-    return "I need an open NoSQL tab with a connection and database before I can help.";
+    return "Tôi cần một tab NoSQL đang mở có gắn kết nối và CSDL trước khi có thể giúp.";
   }
 
   async function gatherContext(): Promise<ChatContext> {
@@ -653,7 +653,7 @@
           scrollToBottom();
         },
         onToolStart: (toolName) => {
-          messages[lastIdx].toolIndicator = toolLabels[toolName] || `Using ${toolName}...`;
+          messages[lastIdx].toolIndicator = toolLabels[toolName] || `Đang dùng ${toolName}...`;
           scrollToBottom();
         },
         onToolEnd: (_toolName) => {
@@ -682,7 +682,7 @@
               const currentTabs = get(tabStore);
               const sqlTab = currentTabs.find(t => t.mode === 'sql');
               if (!sqlTab) {
-                const tab = addTab('AI Query', 'sql', null, 'var(--sql)');
+                const tab = addTab('Truy vấn AI', 'sql', null, 'var(--sql)');
                 activeTabStore.set(tab.id);
               } else {
                 activeTabStore.set(sqlTab.id);
@@ -711,7 +711,7 @@
               const currentTabs = get(tabStore);
               const nosqlTab = currentTabs.find(t => t.mode === 'nosql');
               if (!nosqlTab) {
-                const tab = addTab('AI Query', 'nosql', null, 'var(--nosql)');
+                const tab = addTab('Truy vấn AI', 'nosql', null, 'var(--nosql)');
                 activeTabStore.set(tab.id);
               } else {
                 activeTabStore.set(nosqlTab.id);
@@ -744,23 +744,23 @@
           const errLower = (error || '').toLowerCase();
           let mapped: AIMessage['error'];
           if (errLower.includes('rate limit') || errLower.includes('429') || errLower.includes('too many')) {
-            mapped = { type: 'rate_limit', message: 'Rate limited. Wait a moment and try again.' };
+            mapped = { type: 'rate_limit', message: 'Bị giới hạn tốc độ. Chờ một lát rồi thử lại.' };
           } else if (errLower.includes('invalid api key') || errLower.includes('401') || errLower.includes('unauthorized') || errLower.includes('sign in required')) {
             // Clauge AI has no API key — auth is the user's cloud session
             // token, which rotates (Google id_tokens expire after ~1h). A
             // 401 here means "session expired, refresh by signing in", not
             // "your stored key is wrong". Different message + action.
             if (provider === 'clauge') {
-              mapped = { type: 'cloud_auth', message: 'Your Clauge session expired. Open Settings → Account and sign in again, then retry.' };
+              mapped = { type: 'cloud_auth', message: 'Phiên Clauge của bạn đã hết hạn. Mở Cài đặt → Tài khoản và đăng nhập lại, rồi thử lại.' };
             } else {
-              mapped = { type: 'auth', message: 'Invalid API key. Check your key in Settings.' };
+              mapped = { type: 'auth', message: 'API key không hợp lệ. Kiểm tra lại key trong Cài đặt.' };
             }
           } else if (errLower.includes('connection failed') || errLower.includes('network') || errLower.includes('timed out') || errLower.includes('timeout') || errLower.includes('econnref') || errLower.includes('dns')) {
-            mapped = { type: 'generic', message: 'Network issue. Check your connection and try again.' };
+            mapped = { type: 'generic', message: 'Sự cố mạng. Kiểm tra kết nối rồi thử lại.' };
           } else if (errLower.includes('500') || errLower.includes('502') || errLower.includes('503') || errLower.includes('504') || errLower.includes('service unavailable') || errLower.includes('internal server')) {
-            mapped = { type: 'generic', message: 'AI service is temporarily unavailable. Try again in a moment.' };
+            mapped = { type: 'generic', message: 'Dịch vụ AI tạm thời không khả dụng. Thử lại sau giây lát.' };
           } else if (errLower.includes('400') || errLower.includes('422') || errLower.includes('bad request') || errLower.includes('invalid request')) {
-            mapped = { type: 'generic', message: "Couldn't process that request. Try rephrasing." };
+            mapped = { type: 'generic', message: 'Không xử lý được yêu cầu đó. Thử diễn đạt lại.' };
           } else if (
             errLower.includes('credits') ||
             errLower.includes('insufficient_credits') ||
@@ -774,16 +774,16 @@
             if (provider === 'clauge') {
               mapped = {
                 type: 'credits',
-                message: "You're out of Clauge AI credits for this cycle. Topup in Settings → Account to continue using Clauge AI, or switch to your own API key.",
+                message: "Bạn đã hết credit Clauge AI cho chu kỳ này. Nạp thêm tại Cài đặt → Tài khoản để tiếp tục dùng Clauge AI, hoặc chuyển sang API key của riêng bạn.",
               };
             } else {
               mapped = {
                 type: 'credits',
-                message: 'Credits exhausted with your AI provider. Check your account billing or switch providers in Settings.',
+                message: 'Đã hết credit với nhà cung cấp AI của bạn. Kiểm tra thanh toán tài khoản hoặc đổi nhà cung cấp trong Cài đặt.',
               };
             }
           } else {
-            mapped = { type: 'generic', message: 'Something went wrong. Try again.' };
+            mapped = { type: 'generic', message: 'Đã xảy ra lỗi. Thử lại.' };
           }
           if (mapped) mapped.provider = provider;
           messages[lastIdx].error = mapped;
@@ -1053,12 +1053,12 @@
                   <div class="action-card exec-card">
                     <div class="action-card-header">
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--acc)" stroke-width="1.8"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-                      <span class="exec-status-text">{action.data.rowCount} row{action.data.rowCount !== 1 ? 's' : ''}</span>
+                      <span class="exec-status-text">{action.data.rowCount} hàng</span>
                       <span class="exec-meta">{action.data.durationMs}ms</span>
                       {#if action.data.columns}
                         <span class="exec-meta exec-cols">{action.data.columns.join(', ')}</span>
                       {/if}
-                      <span class="exec-route-label">results panel</span>
+                      <span class="exec-route-label">bảng kết quả</span>
                     </div>
                   </div>
 
@@ -1066,9 +1066,9 @@
                   <div class="action-card exec-card">
                     <div class="action-card-header">
                       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--acc)" stroke-width="1.8"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                      <span class="exec-status-text">{action.data.count} doc{action.data.count !== 1 ? 's' : ''}</span>
+                      <span class="exec-status-text">{action.data.count} tài liệu</span>
                       <span class="exec-meta">{action.data.collection}</span>
-                      <span class="exec-route-label">document viewer</span>
+                      <span class="exec-route-label">trình xem tài liệu</span>
                     </div>
                   </div>
                 {:else if action.type === 'request_created'}
@@ -1083,21 +1083,21 @@
                 {:else if action.type === 'request_modified'}
                   <div class="action-card request-modified">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--acc)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                    <span class="action-label">{action.data.message || 'Request updated'}</span>
+                    <span class="action-label">{action.data.message || 'Đã cập nhật yêu cầu'}</span>
                   </div>
                 {:else if action.type === 'collection_created'}
                   <div class="action-card collection-created">
                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="var(--acc)" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-                    <span class="action-label">{action.data.name || 'Collection created'}</span>
+                    <span class="action-label">{action.data.name || 'Đã tạo collection'}</span>
                   </div>
                 {:else if action.type === 'collection_executed'}
                   <div class="action-card collection-report">
                     <div class="report-header">
                       <span class="report-title">Báo cáo Collection</span>
                       <span class="report-summary">
-                        <span class="report-pass">{(action.data.results ?? []).filter((r: any) => r.status && r.status < 400).length} passed</span>
-                        <span class="report-fail">{(action.data.results ?? []).length - (action.data.results ?? []).filter((r: any) => r.status && r.status < 400).length} failed</span>
-                        <span class="report-total">{(action.data.results ?? []).length} total</span>
+                        <span class="report-pass">{(action.data.results ?? []).filter((r: any) => r.status && r.status < 400).length} đạt</span>
+                        <span class="report-fail">{(action.data.results ?? []).length - (action.data.results ?? []).filter((r: any) => r.status && r.status < 400).length} lỗi</span>
+                        <span class="report-total">{(action.data.results ?? []).length} tổng</span>
                       </span>
                     </div>
                     {#if action.data.results}
@@ -1154,14 +1154,14 @@
                   {#if msg.error.type !== 'credits'}
                     <div class="ai-error-actions">
                       {#if msg.error.type === 'rate_limit'}
-                        <button class="ai-error-btn" onclick={retryLastMessage}>Retry</button>
+                        <button class="ai-error-btn" onclick={retryLastMessage}>Thử lại</button>
                       {:else if msg.error.type === 'cloud_auth'}
-                        <button class="ai-error-btn" onclick={openAccountSettings}>Open Account</button>
-                        <button class="ai-error-btn" onclick={retryLastMessage}>Retry</button>
+                        <button class="ai-error-btn" onclick={openAccountSettings}>Mở Tài khoản</button>
+                        <button class="ai-error-btn" onclick={retryLastMessage}>Thử lại</button>
                       {:else if msg.error.type === 'auth'}
-                        <button class="ai-error-btn" onclick={openAiSettings}>Open Settings</button>
+                        <button class="ai-error-btn" onclick={openAiSettings}>Mở Cài đặt</button>
                       {:else}
-                        <button class="ai-error-btn" onclick={retryLastMessage}>Retry</button>
+                        <button class="ai-error-btn" onclick={retryLastMessage}>Thử lại</button>
                       {/if}
                     </div>
                   {/if}
@@ -1241,20 +1241,20 @@
             <line x1="12" y1="17" x2="12.01" y2="17"/>
           </svg>
         </span>
-        <h3 id="auto-run-title">Enable auto-execute?</h3>
+        <h3 id="auto-run-title">Bật tự động thực thi?</h3>
       </header>
       <div class="auto-run-body">
-        <p>AI-suggested shell commands will run on the connected SSH server <strong>immediately, without asking you to approve each one</strong>.</p>
+        <p>Lệnh shell do AI đề xuất sẽ chạy trên server SSH đã kết nối <strong>ngay lập tức, không cần bạn duyệt từng lệnh</strong>.</p>
         <ul class="auto-run-list">
-          <li>You'll still see every command in the terminal as it runs</li>
-          <li>AI is told to refuse destructive ops, but mistakes can happen</li>
+          <li>Bạn vẫn thấy mọi lệnh trong terminal khi chúng chạy</li>
+          <li>AI được yêu cầu từ chối thao tác phá hủy, nhưng vẫn có thể xảy ra sai sót</li>
           <li>Chỉ dùng trên server bạn tin tưởng để có thể khôi phục nếu lệnh sai</li>
           <li>Bạn có thể tắt bất cứ lúc nào từ cùng nút bấm này</li>
         </ul>
       </div>
       <footer class="auto-run-footer">
         <button type="button" class="auto-run-btn auto-run-cancel" onclick={() => (sshAutoRunWarnShow = false)}>Hủy</button>
-        <button type="button" class="auto-run-btn auto-run-enable" onclick={confirmEnableAutoRun}>Enable auto-execute</button>
+        <button type="button" class="auto-run-btn auto-run-enable" onclick={confirmEnableAutoRun}>Bật tự động thực thi</button>
       </footer>
     </div>
   </div>

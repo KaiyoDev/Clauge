@@ -8,7 +8,7 @@
 
 <div class="resp-headers">
   {#if headers.length === 0}
-    <div class="resp-headers-empty">No headers</div>
+    <div class="resp-headers-empty">Không có header</div>
   {:else}
     <table class="resp-headers-table">
       <tbody>

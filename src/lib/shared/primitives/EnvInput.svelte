@@ -490,9 +490,9 @@
           onmousedown={(e) => { e.preventDefault(); createInline(acFilter); }}
         >
           <span class="env-ac-create-icon">+</span>
-          <span class="env-ac-name">Create {`{{${acFilter}}}`}</span>
+          <span class="env-ac-name">Tạo {`{{${acFilter}}}`}</span>
           <span class="env-ac-val">
-            {#if !$activeEnvId}new env "Default"{:else}in current env{/if}
+            {#if !$activeEnvId}môi trường mới "Default"{:else}trong môi trường hiện tại{/if}
           </span>
         </button>
       {/if}

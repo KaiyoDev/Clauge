@@ -58,7 +58,7 @@
     {:else}
       <div class="history-empty">
         <svg viewBox="0 0 24 24" width="36" height="36"><circle cx="12" cy="12" r="10" stroke="var(--t4)" fill="none" stroke-width="1.2"/><path d="M12 6v6l4 2" stroke="var(--t4)" fill="none" stroke-width="1.2" stroke-linecap="round"/></svg>
-        <span>Select an entry from history to view details</span>
+        <span>Chọn một mục từ lịch sử để xem chi tiết</span>
       </div>
     {/if}
   </div>

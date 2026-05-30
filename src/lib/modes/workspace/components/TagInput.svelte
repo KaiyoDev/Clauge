@@ -12,7 +12,7 @@
     onchange?: (tags: string[]) => void;
   }
 
-  let { value = $bindable([]), placeholder = 'Add tag…', onchange }: Props = $props();
+  let { value = $bindable([]), placeholder = 'Thêm tag…', onchange }: Props = $props();
 
   let draft = $state('');
 
