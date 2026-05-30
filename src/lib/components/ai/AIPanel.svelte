@@ -92,6 +92,7 @@
   let messages = $state<AIMessage[]>([]);
   let inputText = $state('');
   let isStreaming = $state(false);
+  // svelte-ignore non_reactive_update -- DOM handle (bind:this), chỉ dùng imperative, không đọc reactive
   let chatContainer: HTMLDivElement;
   let cleanup: (() => void) | null = null;
   let currentChatMode = $state('');

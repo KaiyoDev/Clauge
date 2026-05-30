@@ -1475,30 +1475,6 @@
         line-height: 1.55;
         margin: 0 0 22px;
     }
-    .acc-signin-features {
-        list-style: none;
-        padding: 0;
-        margin: 0 auto 24px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        text-align: left;
-        max-width: 280px;
-        font-size: 12.5px;
-        color: var(--t2);
-    }
-    .acc-signin-features li {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-    .acc-bullet {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: var(--acc);
-        flex-shrink: 0;
-    }
     .acc-signin-buttons {
         display: flex;
         flex-direction: column;
@@ -1883,9 +1859,6 @@
         color: var(--t3);
         line-height: 1.55;
         margin: 6px 0 0;
-    }
-    .acc-fine-quiet {
-        margin-top: 10px;
     }
 
     /* Linked accounts */

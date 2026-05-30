@@ -32,7 +32,9 @@
     onsaved,
   }: Props = $props();
 
+  // svelte-ignore state_referenced_locally -- chủ đích: khởi tạo một lần, resync qua $effect khi mở dialog
   let projectPath = $state(initialPath ?? '');
+  // svelte-ignore state_referenced_locally -- chủ đích: khởi tạo một lần, resync qua $effect khi mở dialog
   let projectUrl = $state(initialUrl ?? '');
   let saving = $state(false);
 

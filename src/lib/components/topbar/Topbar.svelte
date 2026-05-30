@@ -791,10 +791,6 @@
     color: var(--t1);
   }
 
-  .tab-add-wrap {
-    position: relative;
-    -webkit-app-region: no-drag;
-  }
   .tab-add {
     height: 34px;
     width: 32px;
@@ -816,51 +812,9 @@
     color: var(--t1);
   }
 
-  .sql-dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    margin-top: 4px;
-    background: var(--modal-bg, #101016);
-    border: 1px solid var(--b1);
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-    z-index: 100;
-    min-width: 180px;
-    padding: 4px;
-    animation: dropIn 0.12s ease;
-  }
   @keyframes dropIn {
     from { opacity: 0; transform: translateY(-4px); }
     to { opacity: 1; transform: none; }
-  }
-  .sql-dropdown-item {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border: none;
-    background: transparent;
-    color: var(--t1);
-    font-size: 12px;
-    font-family: var(--ui);
-    cursor: default;
-    border-radius: 5px;
-    transition: background 0.08s;
-  }
-  .sql-dropdown-item:hover {
-    background: var(--surface-hover);
-  }
-  .sql-dropdown-item svg {
-    width: 14px;
-    height: 14px;
-    stroke: var(--t2);
-    fill: none;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    flex-shrink: 0;
   }
 
   .drag-spacer {
@@ -875,30 +829,6 @@
     -webkit-app-region: no-drag;
     flex-shrink: 0;
   }
-  .sql-disconnect-btn {
-    width: 30px;
-    height: 30px;
-    border-radius: 6px;
-    border: 1px solid var(--b1);
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: default;
-    transition: border-color 0.15s;
-    flex-shrink: 0;
-    -webkit-app-region: no-drag;
-  }
-  .sql-disconnect-btn:hover { border-color: var(--err); }
-  .sql-disconnect-btn svg {
-    width: 14px;
-    height: 14px;
-    stroke: var(--t2);
-    fill: none;
-    stroke-width: 1.6;
-    stroke-linecap: round;
-  }
-  .sql-disconnect-btn:hover svg { stroke: var(--err); }
   .ai-toggle-btn {
     width: 30px;
     height: 30px;

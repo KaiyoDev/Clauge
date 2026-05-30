@@ -68,6 +68,7 @@
 
   let rightPanePct = $state(55);
   let dragging = $state(false);
+  // svelte-ignore non_reactive_update -- DOM handle (bind:this), chỉ dùng imperative, không đọc reactive
   let panesEl: HTMLDivElement;
 
   function onDividerDown(e: MouseEvent) {

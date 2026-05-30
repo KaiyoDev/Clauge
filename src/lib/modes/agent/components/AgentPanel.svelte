@@ -67,8 +67,11 @@
     RESIZE_DEBOUNCE_MS,
   } from '$lib/shared/constants/timings';
 
+  // svelte-ignore non_reactive_update -- DOM handle (bind:this), chỉ dùng imperative, không đọc reactive
   let terminalEl: HTMLDivElement;
+  // svelte-ignore non_reactive_update -- DOM handle (bind:this), chỉ dùng imperative, không đọc reactive
   let shellEl: HTMLDivElement;
+  // svelte-ignore non_reactive_update -- DOM handle (bind:this), chỉ dùng imperative, không đọc reactive
   let wrapperEl: HTMLDivElement;
 
   // Active terminal entry refs
@@ -91,6 +94,7 @@
   let termFindCaseSensitive = $state(false);
   let termFindRegex         = $state(false);
   let termFindWholeWord     = $state(false);
+  // svelte-ignore non_reactive_update -- DOM handle (bind:this), chỉ dùng imperative, không đọc reactive
   let termFindInputEl: HTMLInputElement | null = null;
 
   // Shell terminal find bar
@@ -102,6 +106,7 @@
   let shellFindCaseSensitive = $state(false);
   let shellFindRegex         = $state(false);
   let shellFindWholeWord     = $state(false);
+  // svelte-ignore non_reactive_update -- DOM handle (bind:this), chỉ dùng imperative, không đọc reactive
   let shellFindInputEl: HTMLInputElement | null = null;
 
   const FIND_DECORATIONS = {

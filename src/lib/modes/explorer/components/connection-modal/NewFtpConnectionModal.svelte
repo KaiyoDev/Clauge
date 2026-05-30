@@ -147,16 +147,6 @@
     text-overflow: ellipsis;
   }
   .inp:focus { border-color: var(--acc); }
-  select.inp {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    padding-right: 28px;
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none' stroke='%23b0b0c8' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 5 6 8 9 5'/></svg>");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 10px 10px;
-  }
   .inp[type="number"]::-webkit-inner-spin-button,
   .inp[type="number"]::-webkit-outer-spin-button {
     -webkit-appearance: none;
@@ -166,16 +156,6 @@
   .inp[type="number"] {
     appearance: textfield;
     -moz-appearance: textfield;
-  }
-  .note {
-    font-size: 11px;
-    color: var(--t3);
-    background: var(--surface-hover);
-    border: 1px solid var(--b1);
-    border-radius: 5px;
-    padding: 8px 10px;
-    margin: 0;
-    line-height: 1.4;
   }
   .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
   .btn {

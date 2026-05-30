@@ -880,10 +880,6 @@
     font-size: 15px; font-weight: 600; color: var(--t1); font-family: var(--ui);
     margin-bottom: 8px;
   }
-  .nn-confirm-msg {
-    font-size: 13px; color: var(--t2); font-family: var(--ui); line-height: 1.5;
-    margin-bottom: 20px;
-  }
   .nn-confirm-actions { display: flex; justify-content: flex-end; gap: 8px; }
   .nn-confirm-btn {
     padding: 7px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
@@ -893,8 +889,6 @@
   .nn-confirm-btn:hover { background: var(--c); color: var(--t1); }
   .nn-confirm-btn.primary { background: var(--acc); color: #fff; border-color: transparent; }
   .nn-confirm-btn.primary:hover { opacity: 0.9; }
-  .nn-confirm-btn.danger { background: var(--err); color: #fff; border-color: transparent; }
-  .nn-confirm-btn.danger:hover { opacity: 0.9; }
 
   .nn-rename-input {
     width: 100%; padding: 8px 12px; border-radius: 8px; margin-bottom: 16px;

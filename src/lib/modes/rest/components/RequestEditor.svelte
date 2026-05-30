@@ -272,19 +272,6 @@
     flex-direction: column;
     overflow: hidden;
   }
-  .ph-empty {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;
-  }
-  .ph-empty-msg {
-    color: var(--t3);
-    font-size: 12px;
-    font-family: var(--mono);
-    font-style: italic;
-  }
   .editor {
     flex: 1;
     background: transparent;

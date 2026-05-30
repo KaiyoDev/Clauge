@@ -17,6 +17,7 @@
   }: Props = $props();
 
   let inputEl: HTMLInputElement | undefined = $state();
+  // svelte-ignore state_referenced_locally -- chủ đích: khởi tạo một lần từ prop, sau đó là state nội bộ của input
   let inputValue = $state(initialValue);
   let done = false;
 

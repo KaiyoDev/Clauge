@@ -151,7 +151,6 @@
   }
   .cv-new:hover { opacity: 0.9; }
   .cv-sub { margin: 8px 0 0; font-size: 11.5px; color: var(--t3); font-family: var(--ui); line-height: 1.55; max-width: 720px; }
-  .cv-sub strong { color: var(--t2); font-weight: 600; }
 
   .cv-body { flex: 1; overflow-y: auto; min-height: 0; padding: 18px 22px 28px; }
 

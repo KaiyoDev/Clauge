@@ -96,15 +96,6 @@
     font-weight: 600;
   }
 
-  /* Optional helper text under a section label. */
-  .stg-section-help {
-    margin: -8px 0 14px;
-    font-size: 12px;
-    color: var(--t3);
-    font-family: var(--ui);
-    line-height: 1.5;
-  }
-
   /* -- Field row -- */
   .stg-field {
     display: flex;
@@ -122,56 +113,6 @@
     white-space: nowrap;
   }
 
-  .stg-field-col {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .stg-slider-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 6px;
-  }
-  .stg-slider-value {
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--acc);
-    font-family: var(--mono);
-  }
-  .stg-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
-    height: 4px;
-    background: var(--b1);
-    border-radius: 2px;
-    outline: none;
-    cursor: default;
-  }
-  .stg-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--acc);
-    border: 2px solid var(--t1);
-    cursor: default;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-    transition: transform 0.1s;
-  }
-  .stg-slider::-webkit-slider-thumb:hover {
-    transform: scale(1.15);
-  }
-  .stg-zoom-marks {
-    display: flex;
-    justify-content: space-between;
-    font-size: 10px;
-    color: var(--t4);
-    font-family: var(--ui);
-    margin-bottom: 4px;
-  }
-
   /* -- Inputs -- */
   .stg-input {
     background: var(--surface-hover);
@@ -185,8 +126,6 @@
     width: 140px;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
-
-  .stg-input-lg { flex: 1; min-width: 0; }
 
   .stg-input:focus {
     border-color: var(--acc);
@@ -583,14 +522,6 @@
     font-family: var(--ui);
     line-height: 1.5;
     margin: 0;
-  }
-  .about-section-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: var(--t4);
-    font-family: var(--ui);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
   }
   .about-tech-grid {
     display: flex;
@@ -1115,74 +1046,6 @@
     border-bottom-color: var(--acc);
   }
 
-  /* -- Clauge AI recent activity list -- */
-  .cai-history {
-    margin-top: 16px;
-    padding: 14px 16px;
-    border: 1px solid var(--b1);
-    border-radius: 10px;
-    background: var(--surface-hover);
-    font-family: var(--ui);
-  }
-  .cai-history-head {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 10px;
-  }
-  .cai-history-title {
-    margin: 0;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--t1);
-    letter-spacing: -0.01em;
-  }
-  .cai-history-sub {
-    font-size: 11px;
-    color: var(--t3);
-  }
-  .cai-history-empty {
-    margin: 0;
-    font-size: 12px;
-    color: var(--t3);
-    line-height: 1.55;
-  }
-  .cai-history-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-  }
-  .cai-history-row {
-    display: grid;
-    grid-template-columns: 110px 1fr auto;
-    gap: 12px;
-    align-items: center;
-    padding: 8px 4px;
-    border-bottom: 1px solid color-mix(in srgb, var(--b1) 60%, transparent);
-    font-size: 12px;
-  }
-  .cai-history-row:last-child { border-bottom: none; }
-  .cai-history-when {
-    color: var(--t3);
-    font-family: var(--mono, ui-monospace);
-    font-variant-numeric: tabular-nums;
-  }
-  .cai-history-op {
-    color: var(--t2);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .cai-history-cost {
-    color: var(--acc);
-    font-weight: 600;
-    font-variant-numeric: tabular-nums;
-  }
-
   .agent-settings-pane {
     display: flex;
     flex-direction: column;
@@ -1453,13 +1316,6 @@
   }
 
   /* -- AI Summary -- */
-  .ai-summary-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-  }
-  .ai-summary-header .stg-section-label { margin-bottom: 0; }
   .ai-summary-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -1573,12 +1429,6 @@
     gap: 6px;
     flex-shrink: 0;
   }
-  .agent-field-desc {
-    font-size: 10.5px;
-    color: var(--t4);
-    font-family: var(--ui);
-    margin-bottom: 6px;
-  }
   .agent-plugin-views {
     display: flex;
     gap: 8px;
@@ -1594,9 +1444,6 @@
     flex-direction: column;
     height: 100%;
     min-height: 0;
-  }
-  .stg-content:has(> .agent-plugins-pane) {
-    overflow: hidden;
   }
   .agent-plugins-pane .plugin-provider-tabs,
   .agent-plugins-pane .agent-plugin-views,
@@ -1699,12 +1546,6 @@
   .agent-ctx-textarea:focus {
     border-color: var(--acc);
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc) 12%, transparent);
-  }
-
-  .agent-key-hint {
-    font-size: 10px;
-    color: var(--t4);
-    font-family: var(--mono);
   }
 
   @media (max-width: 900px) {

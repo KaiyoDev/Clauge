@@ -648,7 +648,6 @@
   .ns-probe-ok { color: var(--ok, #2ee08a); }
   .ns-probe-err { color: var(--warn, #f4c150); }
   .ns-label { font-size: 12px; font-weight: 600; color: var(--t2); text-transform: uppercase; font-family: var(--ui); }
-  .ns-label-text { font-size: 13px; color: var(--t1); font-family: var(--ui); }
   .ns-optional { font-size: 10px; color: var(--t3); font-weight: normal; text-transform: none; }
   .ns-input {
     width: 100%; background: var(--e); border: 1px solid var(--b1); border-radius: 6px;
@@ -781,12 +780,6 @@
     font-family: var(--ui);
     line-height: 1.4;
   }
-  .ns-toggle-row {
-    display: flex; align-items: center; justify-content: space-between; margin-top: 4px;
-  }
-  .ns-toggle-info { display: flex; flex-direction: column; gap: 2px; }
-  .ns-toggle-text { font-size: 12px; color: var(--t2); font-family: var(--ui); }
-  .ns-toggle-hint { font-size: 10px; color: var(--t4); font-family: var(--ui); }
   .ns-toggle {
     width: 36px; height: 20px; border-radius: 10px; border: 1px solid var(--b1);
     background: var(--surface-hover); cursor: pointer; position: relative;

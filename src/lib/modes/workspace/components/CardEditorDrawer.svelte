@@ -86,14 +86,18 @@
   let { card, workspace = null, onclose, onsave }: Props = $props();
 
   // ── Editable mirrors (auto-saved) ────────────────────────────────
+  // svelte-ignore state_referenced_locally -- chủ đích: mirror khởi tạo từ card prop, sau đó edit local + auto-save
   let title = $state(card.title);
+  // svelte-ignore state_referenced_locally
   let description = $state(card.description);
+  // svelte-ignore state_referenced_locally
   let priority = $state<string | null>(card.priority);
   let tags = $state<string[]>((() => {
     try { return JSON.parse(card.tags) as string[]; } catch { return []; }
   })());
 
   // ── Claim + thread state (loaded on mount, refreshed on event) ──
+  // svelte-ignore state_referenced_locally -- chủ đích: snapshot ban đầu từ card, sau đó cập nhật qua event
   let claim = $state<CardClaimState>({
     claimedSessionId: card.claimedSessionId,
     claimedCoworkerId: card.claimedCoworkerId,
@@ -1263,52 +1267,6 @@
     border-radius: 6px;
     border: 1px solid;
   }
-  /* Slim active-coworker chip — single 24px line just above the
-     chat input. Avatar + name · role + an End link. Way less visual
-     weight than the two-line banner; the bubbles in the thread
-     already tell the user who's chatting. */
-  .cd-claim-slim {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 8px;
-    border-radius: 5px;
-    background: color-mix(in srgb, var(--acc) 7%, transparent);
-    border: 1px solid color-mix(in srgb, var(--acc) 22%, transparent);
-    font-family: var(--ui);
-    font-size: 11px;
-    color: var(--t2);
-    line-height: 1.4;
-  }
-  .cd-claim-slim-text {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .cd-claim-slim-text strong { color: var(--acc); font-weight: 600; }
-  .cd-claim-slim-text code {
-    font-family: var(--mono);
-    background: var(--surface-hover);
-    padding: 1px 5px;
-    border-radius: 3px;
-    font-size: 10px;
-  }
-  .cd-claim-slim-end {
-    border: none;
-    background: transparent;
-    color: var(--t3);
-    font-family: var(--ui);
-    font-size: 10.5px;
-    padding: 0 6px;
-    cursor: pointer;
-  }
-  .cd-claim-slim-end:hover { color: var(--err, #f87171); }
-  .cd-claim-mine {
-    border-color: color-mix(in srgb, var(--acc) 32%, transparent);
-    background: color-mix(in srgb, var(--acc) 7%, transparent);
-  }
   .cd-claim-conflict {
     border-color: color-mix(in srgb, var(--err, #f87171) 35%, transparent);
     background: color-mix(in srgb, var(--err, #f87171) 8%, transparent);
@@ -1328,13 +1286,6 @@
     font-size: 12px;
     font-weight: 600;
     color: var(--t1);
-  }
-  .cd-claim-title code {
-    font-family: var(--mono);
-    background: var(--surface-card);
-    padding: 1px 5px;
-    border-radius: 3px;
-    font-size: 11px;
   }
   .cd-claim-sub {
     font-family: var(--ui);
@@ -1358,12 +1309,6 @@
   }
   .cd-claim-btn:hover:not(:disabled) { color: var(--t1); border-color: var(--acc); }
   .cd-claim-btn:disabled { opacity: 0.45; }
-  .cd-claim-btn-primary {
-    border: none;
-    background: var(--acc);
-    color: #fff;
-  }
-  .cd-claim-btn-primary:hover:not(:disabled) { opacity: 0.9; color: #fff; }
   .cd-claim-btn-warn:hover { color: var(--err, #f87171); border-color: var(--err, #f87171); }
 
   .cd-chat-row {
@@ -1384,11 +1329,6 @@
     line-height: 1.45;
   }
   .cd-chat-warn-ico { color: var(--err, #f87171); font-size: 13px; line-height: 1; flex-shrink: 0; }
-  .cd-hint-active {
-    color: var(--acc);
-    font-weight: 500;
-  }
-  .cd-hint-active strong { color: var(--acc); }
   /* When @ is detected, the Send button morphs into accent so the
      routing change is visible. */
   .cd-chat-send-mention {

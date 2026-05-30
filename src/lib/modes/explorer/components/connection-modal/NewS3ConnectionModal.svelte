@@ -231,16 +231,6 @@
     background-position: right 10px center;
     background-size: 10px 10px;
   }
-  .inp[type="number"]::-webkit-inner-spin-button,
-  .inp[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    appearance: none;
-    margin: 0;
-  }
-  .inp[type="number"] {
-    appearance: textfield;
-    -moz-appearance: textfield;
-  }
   .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
   .btn {
     padding: 7px 14px;

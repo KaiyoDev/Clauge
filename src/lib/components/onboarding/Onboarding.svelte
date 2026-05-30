@@ -447,19 +447,6 @@
         opacity: 0.5;
     }
 
-    .ob-soon {
-        position: absolute;
-        right: 14px;
-        font-size: 10px;
-        font-weight: 600;
-        color: var(--t4);
-        background: var(--b1);
-        padding: 2px 6px;
-        border-radius: 4px;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-    }
-
     .ob-waiting {
         display: flex;
         flex-direction: column;
@@ -570,19 +557,6 @@
     }
     .ob-btn-skip:active {
         transform: scale(0.98);
-    }
-
-    .ob-skip-hint {
-        margin: 4px 0 0;
-        font-size: 11px;
-        line-height: 1.5;
-        color: var(--t4);
-        font-family: var(--ui);
-        text-align: center;
-    }
-    .ob-skip-hint strong {
-        color: var(--t3);
-        font-weight: 600;
     }
 
     @keyframes fadeUp {

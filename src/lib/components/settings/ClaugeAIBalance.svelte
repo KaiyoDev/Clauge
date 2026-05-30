@@ -203,15 +203,4 @@
   .cai-btn-primary:hover {
     opacity: 0.88;
   }
-
-  .cai-btn-ghost {
-    background: transparent;
-    color: var(--t2);
-  }
-
-  .cai-btn-ghost:hover {
-    background: var(--surface-hover);
-    border-color: var(--b2);
-    color: var(--t1);
-  }
 </style>

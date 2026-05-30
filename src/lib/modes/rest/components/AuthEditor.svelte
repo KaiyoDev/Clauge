@@ -20,6 +20,7 @@
     onchange: (authType: string, authData: string) => void;
   } = $props();
 
+  // svelte-ignore state_referenced_locally -- chủ đích: khởi tạo một lần, resync qua $effect khi authType đổi
   let localType = $state(authType);
   let data: AuthData = $state({});
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;

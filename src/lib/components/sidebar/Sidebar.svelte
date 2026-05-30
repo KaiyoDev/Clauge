@@ -613,7 +613,6 @@
     flex-shrink: 0;
   }
   .pm-sync-label { font-weight: 500; }
-  .pm-sync-time { color: var(--t3); font-size: 10px; }
   .pm-external {
     width: 10px !important; height: 10px !important;
     stroke: var(--t3) !important;

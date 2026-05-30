@@ -31,6 +31,7 @@
   import { SSH_EVENT } from '$lib/shared/constants/events';
   import { RESIZE_DEBOUNCE_MS, SSH_CAPTURE_TIMEOUT_MS } from '$lib/shared/constants/timings';
 
+  // svelte-ignore non_reactive_update -- DOM handle (bind:this), chỉ dùng imperative, không đọc reactive
   let terminalEl: HTMLDivElement;
 
   // Per-tab xterm entry. Keyed by tab.key (== profile.id-based key).
@@ -103,6 +104,7 @@
   let findCaseSensitive = $state(false);
   let findRegex         = $state(false);
   let findWholeWord     = $state(false);
+  // svelte-ignore non_reactive_update -- DOM handle (bind:this), chỉ dùng imperative, không đọc reactive
   let findInputEl: HTMLInputElement;
 
   const FIND_DECORATIONS = {
