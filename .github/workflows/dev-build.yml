@@ -1,0 +1,96 @@
+name: Dev Build
+
+# Build dev nhanh cho test nội bộ — chỉ Windows x64 + Linux x64 (bỏ macOS
+# universal vì lâu nhất). Không tạo Release public, chỉ upload Artifact
+# để tải về test.
+#
+# Trigger:
+#   • Push tag v*-vi*-dev* (vd. v3.0.3-vi-local-dev)
+#   • Push lên branch clauge-viet-local
+#   • Workflow dispatch (chạy tay từ tab Actions)
+
+on:
+  push:
+    tags:
+      - 'v*-vi*-dev*'
+    branches:
+      - 'clauge-viet-local'
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'windows-latest'
+            label: 'windows-x64'
+          - platform: 'ubuntu-22.04'
+            label: 'linux-x64'
+
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libsoup-3.0-dev \
+            libdbus-1-dev \
+            libsecret-1-dev \
+            patchelf \
+            pkg-config \
+            xdg-utils
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+          # Cache key bao gồm OS + branch để dev build không đụng cache
+          # với release build chính thức.
+          shared-key: 'dev-${{ matrix.label }}'
+
+      - name: Install frontend dependencies
+        run: bun install
+
+      - name: Build Tauri (debug)
+        # Chạy trực tiếp `bun tauri build --debug` thay vì tauri-action
+        # để tránh bug top-level await crash exit 13. Build debug nhanh hơn
+        # release ~30% và đủ cho test chức năng.
+        run: bun tauri build --debug
+
+      - name: Upload Windows artifacts
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: clauge-viet-${{ matrix.label }}-debug
+          path: |
+            src-tauri/target/debug/bundle/msi/*.msi
+            src-tauri/target/debug/bundle/nsis/*.exe
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload Linux artifacts
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: clauge-viet-${{ matrix.label }}-debug
+          path: |
+            src-tauri/target/debug/bundle/deb/*.deb
+            src-tauri/target/debug/bundle/appimage/*.AppImage
+          if-no-files-found: warn
+          retention-days: 14

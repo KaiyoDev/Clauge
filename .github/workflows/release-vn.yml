@@ -8,12 +8,13 @@ on:
   push:
     tags:
       - 'v*-vi*'
+      - '!v*-vi*-dev*'
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Tag để build (vd. v3.0.2-vi.1)'
+        description: 'Tag để build (vd. v3.0.3-vi.1)'
         required: true
-        default: 'v3.0.2-vi.1'
+        default: 'v3.0.3-vi.1'
 
 jobs:
   build:
