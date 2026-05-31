@@ -1,7 +1,9 @@
 name: Dev Build
 
-# Build dev nhanh cho test nội bộ — CHỈ Windows x64. Không tạo Release
-# public, chỉ upload Artifact để tải về test.
+# Build dev cho test nội bộ — CHỈ Windows x64. Build RELEASE (không có
+# cmd debug đen, file gọn ~25MB, app mượt) nhưng upload thành Artifact
+# thay vì tạo Release public. Khi muốn release chính thức cho người dùng
+# cuối, dùng workflow `release-vn.yml` (push tag v*-vi*).
 #
 # Trigger:
 #   • Push tag v*-vi*-dev* (vd. v3.0.3-vi-local-dev)
@@ -39,18 +41,17 @@ jobs:
       - name: Install frontend dependencies
         run: bun install
 
-      - name: Build Tauri (debug)
-        # Chạy trực tiếp `bun tauri build --debug` thay vì tauri-action
-        # để tránh bug top-level await crash exit 13. Build debug nhanh hơn
-        # release ~30% và đủ cho test chức năng.
-        run: bun tauri build --debug
+      - name: Build Tauri (release)
+        # Release build — không có cmd console đen, file ~25MB, app mượt.
+        # Đủ cho test trải nghiệm.
+        run: bun tauri build
 
       - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: clauge-viet-windows-x64-debug
+          name: clauge-viet-windows-x64
           path: |
-            src-tauri/target/debug/bundle/msi/*.msi
-            src-tauri/target/debug/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: warn
           retention-days: 14
