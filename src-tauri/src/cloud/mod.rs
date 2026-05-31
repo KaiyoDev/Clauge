@@ -1,12 +1,7 @@
-pub mod ai;
-pub mod auth;
-pub mod billing;
-pub mod client;
-pub mod commands;
-pub mod config;
-pub mod credentials_probe;
-pub mod domains;
-pub mod models;
-pub mod pro_state;
+// Bản local thuần (Clauge Việt): module cloud đã được gỡ bỏ hoàn toàn.
+// Chỉ giữ một stub `scheduler::bump` no-op để các call site `crate::cloud::
+// scheduler::bump(kind)` rải khắp các mode (rest, sql, nosql, ssh, agent,
+// explorer, workspace) vẫn biên dịch mà không cần sửa hàng loạt. Không có
+// bất kỳ lệnh gọi mạng nào — dữ liệu của người dùng luôn ở trên máy.
+
 pub mod scheduler;
-pub mod sync;

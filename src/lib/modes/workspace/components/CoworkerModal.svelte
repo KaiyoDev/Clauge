@@ -12,7 +12,6 @@
     workspaceCoworkerCreate,
     workspaceCoworkerUpdate,
     workspaceCoworkerDelete,
-    workspaceCoworkerList,
   } from '../commands';
   import { currentUserActor } from '../attribution';
   import { loadCoworkers } from '../stores';
@@ -20,7 +19,6 @@
   import { showToast } from '$lib/shared/primitives/toast';
   import { errorToast, friendlyError } from '$lib/utils/errors';
   import CoworkerAvatar from './CoworkerAvatar.svelte';
-  import { cloudPlan, upgradeModalOpen } from '$lib/stores/cloud';
 
   interface Props {
     show: boolean;
@@ -40,7 +38,6 @@
   let provider = $state('claude');
   let saving = $state(false);
   let confirmingDelete = $state(false);
-  let showProRequired = $state(false);
 
   const PROVIDER_OPTIONS = [
     { id: 'claude', label: 'Claude', color: '#d4a96a' },
@@ -92,7 +89,6 @@
       avatarStyle  = existing?.avatarStyle ?? 'bottts';
       provider     = existing?.provider ?? 'claude';
       confirmingDelete = false;
-      showProRequired = false;
     }
   });
 
@@ -110,14 +106,6 @@
 
   async function save() {
     if (!canSave) return;
-    if (!isEdit && $cloudPlan !== 'pro') {
-      const all = await workspaceCoworkerList();
-      const activeCount = all.filter((c) => c.disabledAt == null).length;
-      if (activeCount >= 3) {
-        showProRequired = true;
-        return;
-      }
-    }
     saving = true;
     try {
       const seedToSave = avatarSeed.trim() || name.trim();
@@ -275,16 +263,6 @@
         </div>
       </div>
 
-      {#if showProRequired}
-        <div class="cm-pro-gate">
-          <span class="cm-pro-gate-text">Gói Free hỗ trợ tối đa 3 đồng nghiệp.</span>
-          <button
-            class="cm-btn-primary"
-            onclick={() => { upgradeModalOpen.set(true); showProRequired = false; show = false; }}
-          >Nâng cấp Pro</button>
-          <button class="cm-btn-secondary" onclick={() => (showProRequired = false)}>Hủy</button>
-        </div>
-      {:else}
       <div class="cm-foot">
         {#if isEdit}
           {#if confirmingDelete}
@@ -301,7 +279,6 @@
           {saving ? 'Đang lưu…' : isEdit ? 'Lưu' : 'Tạo đồng nghiệp'}
         </button>
       </div>
-      {/if}
     </div>
   </div>
 {/if}
@@ -494,20 +471,6 @@
   .cm-confirm-text {
     font-family: var(--ui);
     font-size: 11.5px;
-    color: var(--t2);
-  }
-  .cm-pro-gate {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 12px 18px;
-    border-top: 1px solid var(--b1);
-    background: color-mix(in srgb, var(--acc) 6%, transparent);
-  }
-  .cm-pro-gate-text {
-    flex: 1;
-    font-family: var(--ui);
-    font-size: 12px;
     color: var(--t2);
   }
 </style>

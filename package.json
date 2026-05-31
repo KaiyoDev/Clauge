@@ -1,13 +1,13 @@
 {
   "name": "clauge",
   "private": true,
-  "version": "3.0.2",
-  "description": "Clauge — An AI-powered cross-platform desktop super-app for developers",
-  "author": "Anshuman <support@clauge.in>",
+  "version": "3.0.3",
+  "description": "Clauge Việt — Công cụ lập trình của người Việt. Local-first, Privacy-first, miễn phí mãi mãi.",
+  "author": "KaiyoDev (fork) — bản gốc Anshuman <support@clauge.in>",
   "license": "LicenseRef-PolyForm-Noncommercial-1.0.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ansxuman/Clauge"
+    "url": "https://github.com/KaiyoDev/Clauge"
   },
   "type": "module",
   "scripts": {

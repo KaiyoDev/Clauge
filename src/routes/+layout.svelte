@@ -17,8 +17,6 @@
     import Toast from "$lib/shared/primitives/Toast.svelte";
     import ContextMenu from "$lib/shared/primitives/ContextMenu.svelte";
     import EnvManagerModal from "$lib/components/env/EnvManagerModal.svelte";
-    import UpgradeModal from "$lib/components/cloud/UpgradeModal.svelte";
-    import WelcomeProModal from "$lib/components/cloud/WelcomeProModal.svelte";
     import {
         loadAgentSessions,
         loadAgentContexts,
@@ -78,32 +76,7 @@
         loadAppearance,
         appearance,
     } from "$lib/stores/settings";
-    import {
-        setConnected,
-        setDisconnected,
-        hasSyncedOnce,
-        markSynced,
-        showSyncRestorePrompt,
-        setLastSyncedForKinds,
-        proState,
-        cloudPlan,
-        cloudSub,
-        upgradeModalOpen,
-        welcomeProModalOpen,
-        welcomeProPlanHint,
-        postCheckoutVerifying,
-    } from "$lib/stores/cloud";
-    import {
-        cloudGetStatus,
-        cloudLogout,
-        cloudCheckRemoteExists,
-        cloudSyncPushNow,
-        cloudGetConflicts,
-        cloudPullIfRemoteNewer,
-        proStateCurrent,
-    } from "$lib/commands/cloud";
     import { listen } from "@tauri-apps/api/event";
-    import { cloudConflicts } from "$lib/stores/cloud";
     import { activeModal, aiPanelOpen, mode } from "$lib/stores/app";
     import {
         agentSessionKey,
@@ -142,7 +115,7 @@
         teardownGlobalShortcuts,
     } from "$lib/utils/shortcuts";
     import { isLinux } from "$lib/utils/platform";
-    import { applyTheme, getThemes } from "$lib/utils/theme";
+    import { applyTheme } from "$lib/utils/theme";
     import ShortcutsOverlay from "$lib/shared/primitives/ShortcutsOverlay.svelte";
     import SaveRequestDialog from "$lib/shared/primitives/SaveRequestDialog.svelte";
     import Onboarding from "$lib/components/onboarding/Onboarding.svelte";
@@ -172,10 +145,6 @@
     let _syncIntervalRemovedInPart2: null = null;
     let usageLimitsInterval: ReturnType<typeof setInterval> | null = null;
     let updateCheckInterval: ReturnType<typeof setInterval> | null = null;
-    let deepLinkUnlisten: (() => void) | null = null;
-    // Tracks the last dispatched OAuth token to prevent double-firing
-    // (getCurrent() and onOpenUrl can both return the same startup URL).
-    let lastDispatchedToken = "";
 
     let showNewSessionModal = $state(false);
     let showEditSessionModal = $state(false);
@@ -628,7 +597,6 @@
             WORKSPACE_EVENT.EDIT_WORKSPACE,
             handleEditWorkspace,
         );
-        deepLinkUnlisten?.();
         // Periodic sync removed in Part 2 — Rust scheduler handles auto-push now.
         if (usageLimitsInterval) clearInterval(usageLimitsInterval);
         if (updateCheckInterval) clearInterval(updateCheckInterval);
@@ -648,19 +616,6 @@
         );
     }
 
-
-    // When a Pro subscription lapses, fall back from any premium theme to
-    // dark-solid so the user isn't stuck on a theme they can't access.
-    $effect(() => {
-        if ($cloudPlan !== "pro") {
-            const cfg = get(appearance);
-            const current = getThemes().find((t) => t.id === cfg.theme);
-            if (current?.premium) {
-                applyTheme("dark-solid", cfg.accentColor || DEFAULT_ACCENT_COLOR);
-                appearance.set({ ...cfg, theme: "dark-solid" });
-            }
-        }
-    });
 
     // Disable macOS autocorrect/autocapitalize on all inputs
     function disableAutocorrect(el: Element) {
@@ -707,31 +662,6 @@
             WORKSPACE_EVENT.EDIT_WORKSPACE,
             handleEditWorkspace,
         );
-
-        // ProState authority subscription. Rust's ProStateManager emits this
-        // event on every Pro/credit/subscription change (sign-in, refresh,
-        // sign-out, post-checkout poll, SSE balance tick, etc.). The
-        // back-compat `cloudPlan`/`cloudCredits`/`cloudSub` derived stores
-        // follow automatically. Replaces the old `clauge_ai:balance` listener
-        // and the inline applyEntitlements logic.
-        listen<{ state: import("$lib/stores/cloud").ProState; trigger: string }>(
-            "cloud:pro-state",
-            (e) => proState.set(e.payload.state),
-        );
-
-        // Account-deleted: Rust emits this after a successful DELETE
-        // /api/auth/me + cleanup. We close any open Settings tab so the
-        // user lands back on whatever they were doing before, in the
-        // signed-out state (cloudConnected = false, set by setDisconnected
-        // in AccountTabContent's deleteAccount success path). Local data
-        // is intentionally preserved — they can re-sign-in with any
-        // provider and start fresh, or keep using the app offline.
-        listen("cloud:account-deleted", () => {
-            const settingsTab = get(tabs).find((t) => t.mode === "settings");
-            if (settingsTab) {
-                closeTab(settingsTab.id);
-            }
-        });
 
         // Apply to existing and future inputs/textareas
         document
@@ -826,306 +756,10 @@
             console.warn("MCP status refresh failed:", e);
         }
 
-        // ── Deep-link handling (centralized) ────────────────────────────────────
-        // On Linux, onOpenUrl() only fires when the single-instance plugin
-        // forwards a URL from a second process (app already running). For cold
-        // starts — where the OS launches the app with the URL as a CLI arg —
-        // getCurrent() is the only way to retrieve it. Both paths are needed.
-        //
-        // The installed .desktop Exec line is often missing %u (Tauri's bundler
-        // doesn't add it). register() creates a user-local handler at
-        // ~/.local/share/applications/clauge-handler.desktop with the correct
-        // Exec="<binary>" %u, and sets it as the xdg default for clauge://.
-        // This must run on every startup so the path stays current (e.g. after
-        // an update). No-op on macOS/Windows per plugin design.
-        try {
-            const { register, getCurrent, onOpenUrl } =
-                await import("@tauri-apps/plugin-deep-link");
-
-            if (isLinux()) await register("clauge").catch(() => {});
-
-            // Fire cloud_get_status; the Rust ProStateManager applies the
-            // entitlements + emits cloud:pro-state which our subscription
-            // picks up and writes into the proState store. We only handle
-            // the identity-side stores (user / providers / activeProvider /
-            // last-synced) here — the manager owns plan/credits/subscription.
-            async function applyCloudStatus(): Promise<{
-                connected: boolean;
-                plan: string;
-                hasSub: boolean;
-                interval: string | null;
-                isLifetime: boolean;
-            }> {
-                try {
-                    const status = await cloudGetStatus();
-                    if (!status.connected || !status.user) {
-                        return {
-                            connected: false,
-                            plan: "free",
-                            hasSub: false,
-                            interval: null,
-                            isLifetime: false,
-                        };
-                    }
-                    setConnected(
-                        status.user,
-                        status.providers,
-                        status.activeProvider,
-                    );
-                    setLastSyncedForKinds(status.lastSynced);
-                    const sub = status.entitlements?.subscription ?? null;
-                    return {
-                        connected: true,
-                        plan: status.plan,
-                        hasSub: !!sub,
-                        interval: sub?.interval ?? null,
-                        isLifetime: sub?.is_lifetime === true,
-                    };
-                } catch (e) {
-                    console.warn("[Cloud] status fetch failed:", e);
-                    return {
-                        connected: false,
-                        plan: "free",
-                        hasSub: false,
-                        interval: null,
-                        isLifetime: false,
-                    };
-                }
-            }
-
-            // True iff the live subscription matches the tier the user just
-            // purchased. Drives the post-checkout poll's exit condition.
-            function statusMatchesHint(
-                hint: "monthly" | "yearly" | "lifetime" | null,
-                state: {
-                    plan: string;
-                    hasSub: boolean;
-                    interval: string | null;
-                    isLifetime: boolean;
-                },
-            ): boolean {
-                if (state.plan !== "pro") return false;
-                if (!state.hasSub) return false;
-                if (hint === "lifetime") return state.isLifetime;
-                if (hint === "monthly")
-                    return !state.isLifetime && state.interval === "monthly";
-                if (hint === "yearly")
-                    return !state.isLifetime && state.interval === "yearly";
-                // No hint — any Pro subscription is acceptable.
-                return true;
-            }
-
-            // Poll /api/auth/me until the webhook has updated D1 (or we time
-            // out). Backoff is tight up front since webhooks usually land in
-            // ~1-3s, then widens. Total budget ~20s. While polling,
-            // `postCheckoutVerifying` is true so the WelcomeProModal shows a
-            // loading state and disables close.
-            async function pollPostCheckoutStatus(
-                hint: "monthly" | "yearly" | "lifetime" | null,
-            ): Promise<void> {
-                const delays = [500, 1000, 1500, 2000, 2500, 3500, 4500, 5000];
-                // Immediate first attempt (no wait) — webhook may already be done.
-                let state = await applyCloudStatus();
-                if (statusMatchesHint(hint, state)) {
-                    postCheckoutVerifying.set(false);
-                    return;
-                }
-                for (const ms of delays) {
-                    await new Promise((r) => setTimeout(r, ms));
-                    state = await applyCloudStatus();
-                    if (statusMatchesHint(hint, state)) {
-                        postCheckoutVerifying.set(false);
-                        return;
-                    }
-                }
-                // Timed out. Drop the verifying flag so the celebration UI
-                // shows anyway — the user did pay, AccountTab refresh on
-                // next mount will eventually catch up.
-                postCheckoutVerifying.set(false);
-            }
-
-            async function dispatchDeepLink(urls: string[]) {
-                for (const url of urls) {
-                    try {
-                        const u = new URL(url);
-                        if (u.protocol !== "clauge:") continue;
-
-                        if (u.hostname === "oauth-callback") {
-                            const params = u.searchParams;
-                            const provider =
-                                (params.get("provider") as
-                                    | "github"
-                                    | "google") || "github";
-                            const code = params.get("code");
-                            if (!code || code === lastDispatchedToken)
-                                continue;
-                            lastDispatchedToken = code;
-                            window.dispatchEvent(
-                                new CustomEvent(APP_EVENT.OAUTH_CALLBACK, {
-                                    detail: { provider, code },
-                                }),
-                            );
-                            continue;
-                        }
-
-                        if (u.hostname === "upgrade") {
-                            // Don't show the UpgradeModal to a Pro user —
-                            // every in-app entry point already gates on
-                            // !isPro, but the deep-link is the one path
-                            // that bypassed that gate. Pro users get sent
-                            // to Settings → Account so they can manage
-                            // their existing subscription instead.
-                            if (get(cloudPlan) === "pro") {
-                                openSettingsTab("account");
-                            } else {
-                                upgradeModalOpen.set(true);
-                            }
-                            continue;
-                        }
-
-                        if (u.hostname === "checkout-success") {
-                            // Stash the URL-hint tier first so the modal's
-                            // loading + celebration content can use it
-                            // independently of cloudSub being fresh.
-                            const planParam = u.searchParams.get("plan");
-                            const hint:
-                                | "monthly"
-                                | "yearly"
-                                | "lifetime"
-                                | null =
-                                planParam === "monthly" ||
-                                planParam === "yearly" ||
-                                planParam === "lifetime"
-                                    ? planParam
-                                    : null;
-                            if (hint) welcomeProPlanHint.set(hint);
-
-                            // Open the modal immediately in "Verifying" state
-                            // so the user never sees stale free UI / a
-                            // GetPro CTA flash between Polar redirect and
-                            // webhook delivery.
-                            upgradeModalOpen.set(false);
-                            postCheckoutVerifying.set(true);
-                            welcomeProModalOpen.set(true);
-
-                            // Poll until cloudSub reflects the purchased tier
-                            // (webhook landed), then drop the verifying flag
-                            // so the modal swaps to celebration content.
-                            // Background-runs; user can't dismiss while
-                            // verifying (WelcomeProModal disables close).
-                            pollPostCheckoutStatus(hint).catch((e) => {
-                                console.warn(
-                                    "[post-checkout] poll failed",
-                                    e,
-                                );
-                                postCheckoutVerifying.set(false);
-                            });
-                            continue;
-                        }
-                    } catch {
-                        console.warn("deep link parse failed:", url);
-                    }
-                }
-            }
-
-            // Cold-start: URL is in process args, not in any event.
-            const startupUrls = await getCurrent();
-            if (startupUrls?.length) dispatchDeepLink(startupUrls);
-
-            // Already-running: single-instance plugin forwards the second-instance args.
-            deepLinkUnlisten = await onOpenUrl(dispatchDeepLink);
-        } catch {
-            // Deep link plugin not available in dev mode — safe to ignore.
-        }
+        // ── Deep-link: bản local thuần đã gỡ OAuth/cloud. Không còn xử lý
+        //    clauge:// (oauth-callback / upgrade / checkout-success). ────────
 
         // No default tab — user creates tabs by clicking "+" or opening a request
-
-        // Optimistic boot: hydrate proState from the Rust ProStateManager's
-        // in-memory snapshot. The manager loaded its state from the SQLite
-        // cloud:* keys during app::setup() before any cloud_get_status fired,
-        // so this is synchronous from the user's perspective — Pro-gated UI
-        // (sidebar, AI panel, AccountTab) renders the last-known state
-        // instantly. The subsequent cloud_get_status reconciles with the
-        // server and the manager emits cloud:pro-state to update us.
-        try {
-            const initial = await proStateCurrent();
-            proState.set(initial);
-        } catch (e) {
-            console.warn("[Cloud] proState hydrate failed:", e);
-        }
-
-        // Cloud sync: pull status, decide first-sign-in flow. Auto-push is driven
-        // by the Rust scheduler (debounced 5s after any mutation), no JS interval.
-        // The ProStateManager handles entitlement application + transition hooks
-        // server-side; we only handle the identity-side stores here.
-        try {
-            const status = await cloudGetStatus();
-            if (status.connected && status.user) {
-                setConnected(
-                    status.user,
-                    status.providers,
-                    status.activeProvider,
-                );
-                setLastSyncedForKinds(status.lastSynced);
-
-                const localEmpty =
-                    get(collections).length === 0 &&
-                    get(sqlConnections).length === 0 &&
-                    get(nosqlConnections).length === 0;
-
-                if (localEmpty && !get(hasSyncedOnce)) {
-                    // First boot of a fresh device on an existing account.
-                    try {
-                        const remoteHas = await cloudCheckRemoteExists();
-                        if (remoteHas) showSyncRestorePrompt.set(true);
-                        else markSynced();
-                    } catch (e) {
-                        // Don't markSynced — a transient network blip
-                        // shouldn't permanently dismiss the restore option.
-                        console.warn("[Cloud] remote check failed:", e);
-                    }
-                } else if (!get(hasSyncedOnce)) {
-                    // Local has data but we've never synced — fire a one-shot push so
-                    // the server starts in lockstep with this device.
-                    markSynced();
-                    cloudSyncPushNow().catch((e) =>
-                        console.warn("[Cloud] initial push failed:", e),
-                    );
-                }
-            } else {
-                // Server says we're not authenticated. The snapshots we
-                // hydrated optimistically above are stale (session expired
-                // with no refresh path, account deleted elsewhere, keyring
-                // wiped, etc.). Clear in-memory state immediately so the
-                // sidebar / AI panel don't keep showing Pro UI for a user
-                // who isn't actually signed in, and tell Rust to wipe the
-                // on-disk snapshots + keyring so the next boot doesn't
-                // repeat the lie.
-                setDisconnected();
-                cloudLogout().catch((e) =>
-                    console.warn("[Cloud] snapshot wipe failed:", e),
-                );
-            }
-        } catch (e) {
-            // Network blip or transient error — leave the optimistic
-            // hydration in place. We don't know if the user is truly
-            // unauthenticated, and downgrading them on every failed
-            // fetch would defeat the cold-start optimization.
-            console.warn("[Cloud] status check failed:", e);
-        }
-
-        // ── Cloud conflict subscription ───────────────────────────────────
-        // Hydrate once, then keep the store in sync with the Rust-side
-        // scheduler's `cloud:conflicts-changed` events.
-        try {
-            const initial = await cloudGetConflicts();
-            cloudConflicts.set(initial);
-        } catch (e) {
-            console.warn("[Cloud] initial conflicts load failed:", e);
-        }
-        listen<string[]>("cloud:conflicts-changed", (event) => {
-            cloudConflicts.set(event.payload ?? []);
-        }).catch((e) => console.warn("[Cloud] conflict listener failed:", e));
 
         // ── REST: refresh on MCP-driven mutations ─────────────────────
         // Existing Tauri commands don't emit events because the frontend
@@ -1141,20 +775,6 @@
                 console.warn("[REST] refresh-on-change failed:", e);
             }
         }).catch((e) => console.warn("[REST] change listener failed:", e));
-
-        // ── Pull-on-focus ────────────────────────────────────────────────
-        // When the user Cmd-Tabs back to Clauge, run a lightweight remote-
-        // state check and silently pull any kinds where the server has
-        // moved on AND we don't have unpushed local changes. Debounced to
-        // ≥5 minutes so rapid back-and-forth doesn't spam the Worker.
-        let lastFocusPull = 0;
-        window.addEventListener("focus", () => {
-            if (Date.now() - lastFocusPull < 5 * 60_000) return;
-            lastFocusPull = Date.now();
-            cloudPullIfRemoteNewer().catch((e) =>
-                console.warn("[Cloud] pull-on-focus:", e),
-            );
-        });
 
         // ── Auto-move workspace cards when their PR merges ──────────────
         // Same focus-debounce pattern. Walks loaded boards, checks each
@@ -1342,8 +962,6 @@
     bind:session={editSessionTarget}
 />
 <UsageDashboard bind:show={showUsageDashboard} />
-<UpgradeModal />
-<WelcomeProModal />
 
 <style>
     .app-shell {

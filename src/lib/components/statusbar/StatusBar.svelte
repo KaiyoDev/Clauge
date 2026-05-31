@@ -5,7 +5,6 @@
   import { agentGitBranchName, agentGitFiles, agentGitAhead, agentGitBehind, activeAgentSession, agentUsageLimits, agentUsageAuthStatus, agentShellOpen, agentSessionKey, agentCodexToken, agentFooterProvider } from '$lib/modes/agent/stores';
   import { openSettingsTab } from '$lib/shared/stores/tabs';
   import AgentGitPanel from '$lib/modes/agent/components/AgentGitPanel.svelte';
-  import GetProButton from '$lib/components/sidebar/GetProButton.svelte';
   import { USAGE_DANGER, USAGE_WARN } from '$lib/shared/constants/colors';
   import { mcpStatus } from '$lib/modes/workspace/stores';
 
@@ -153,7 +152,6 @@
       <span>MCP{$mcpStatus.running ? ` · :${$mcpStatus.port}` : ' · tắt'}</span>
     </div>
     {#if appVersion}<div class="si">Clauge v{appVersion}</div>{/if}
-    <div class="si"><GetProButton /></div>
   </div>
 </footer>
 {:else}
@@ -173,7 +171,6 @@
       </div>
     {/if}
     {#if appVersion}<div class="si">Clauge v{appVersion}</div>{/if}
-    <div class="si"><GetProButton /></div>
   </div>
 </footer>
 {/if}

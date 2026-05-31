@@ -1,9 +1,6 @@
 <script lang="ts">
     import ConfirmDialog from "$lib/shared/primitives/ConfirmDialog.svelte";
-    import ClaugeAIBalance from "$lib/components/settings/ClaugeAIBalance.svelte";
     import { invoke } from "@tauri-apps/api/core";
-    import { cloudPlan, cloudSub, upgradeModalOpen } from "$lib/stores/cloud";
-    import AccountTabContent from "$lib/components/settings/AccountTabContent.svelte";
     import { getVersion } from "@tauri-apps/api/app";
     import {
         tabs as sharedTabs,
@@ -98,7 +95,6 @@
     // + Updater + ClickHouse). 'rest' holds REST-only knobs (timeout, redirects,
     // SSL verify, max body).
     type SettingsTab =
-        | "account"
         | "general"
         | "appearance"
         | "shortcuts"
@@ -136,17 +132,13 @@
         // Map sub-key → activeTab + (optional) agentSubTab. Mirrors the
         // legacy `activeModal === 'settings:*'` mapping but flattened
         // (the 'settings:' prefix is implicit now).
-        if (key === "account") activeTab = "account";
-        else if (key === "general") activeTab = "general";
+        if (key === "general") activeTab = "general";
         else if (key === "appearance") activeTab = "appearance";
         else if (key === "shortcuts") activeTab = "shortcuts";
         else if (key === "ai") activeTab = "ai";
         else if (key === "ai:byok") {
             activeTab = "ai";
             aiTopTab = "byok";
-        } else if (key === "ai:clauge") {
-            activeTab = "ai";
-            aiTopTab = "clauge";
         }
         else if (key === "rest") activeTab = "rest";
         else if (key === "agent") activeTab = "agent";
@@ -443,156 +435,10 @@
         }
     }
 
-    // AI Assistance state
-    let aiTopTab = $state<"clauge" | "byok">("clauge");
+    // AI Assistance state — bản local thuần chỉ còn BYOK.
+    let aiTopTab = $state<"byok">("byok");
     let aiSubTab = $state<"config" | "usage">("config");
 
-    // Clauge AI usage history — fetched from /api/ai/usage via cloud_ai_usage.
-    // Worker returns the most recent entries first; we render the last ~30.
-    type CloudAiUsageEntry = {
-        occurred_at: string;
-        operation: string;
-        clauge_credits: number;
-        cost_usd_micros: number;
-        request_id: string;
-        mode: string | null;
-    };
-    let cloudAiUsage = $state<CloudAiUsageEntry[]>([]);
-    let cloudAiUsageLoading = $state(false);
-    // Cursor for the next page (oldest visible row's occurred_at). When
-    // null we've hit the end of history.
-    let cloudAiUsageNextBefore = $state<string | null>(null);
-    let cloudAiUsageLoadingMore = $state(false);
-
-    const CLOUD_AI_USAGE_PAGE = 30;
-
-    async function loadCloudAiUsage() {
-        cloudAiUsageLoading = true;
-        try {
-            const r = await invoke<{
-                entries: CloudAiUsageEntry[];
-                next_before: string | null;
-            }>("cloud_ai_usage", { limit: CLOUD_AI_USAGE_PAGE });
-            cloudAiUsage = r.entries ?? [];
-            cloudAiUsageNextBefore = r.next_before;
-        } catch {
-            cloudAiUsage = [];
-            cloudAiUsageNextBefore = null;
-        } finally {
-            cloudAiUsageLoading = false;
-        }
-    }
-
-    // Append the next page when the user scrolls near the bottom of the
-    // activity table. Cursor is the oldest row's occurred_at returned by
-    // the previous response.
-    async function loadMoreCloudAiUsage() {
-        if (cloudAiUsageLoadingMore) return;
-        if (!cloudAiUsageNextBefore) return;
-        cloudAiUsageLoadingMore = true;
-        try {
-            const r = await invoke<{
-                entries: CloudAiUsageEntry[];
-                next_before: string | null;
-            }>("cloud_ai_usage", {
-                limit: CLOUD_AI_USAGE_PAGE,
-                before: cloudAiUsageNextBefore,
-            });
-            if (r.entries?.length) {
-                cloudAiUsage = [...cloudAiUsage, ...r.entries];
-            }
-            cloudAiUsageNextBefore = r.next_before;
-        } catch {
-            // Silent — keep cursor, user can scroll again to retry.
-        } finally {
-            cloudAiUsageLoadingMore = false;
-        }
-    }
-
-    // Fires from the activity table's scroll listener. Trigger ~120px
-    // before the bottom so the next page is already loading by the time
-    // the user reaches it (no perceptible pause).
-    function handleActivityScroll(e: Event) {
-        const el = e.currentTarget as HTMLElement;
-        if (
-            el.scrollHeight - el.scrollTop - el.clientHeight < 120 &&
-            cloudAiUsageNextBefore
-        ) {
-            loadMoreCloudAiUsage();
-        }
-    }
-
-    function fmtUsageTime(iso: string): string {
-        try {
-            // The worker writes `occurred_at` via SQLite's CURRENT_TIMESTAMP,
-            // which returns "YYYY-MM-DD HH:MM:SS" in UTC but WITHOUT any
-            // timezone marker. `new Date(naiveString)` treats it as LOCAL,
-            // so non-UTC users saw times shifted by their offset. Normalise
-            // the SQLite shape to a proper UTC ISO before parsing; leave
-            // already-tagged strings (T+Z, T+offset) alone.
-            const isNaiveSqlite = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(
-                iso,
-            );
-            const utcIso = isNaiveSqlite ? iso.replace(" ", "T") + "Z" : iso;
-            const d = new Date(utcIso);
-            return d.toLocaleString(undefined, {
-                month: "short",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-            });
-        } catch {
-            return iso;
-        }
-    }
-
-    // Distinct color per mode for the per-mode breakdown bars and the
-    // MODE column in the activity table. Only the modes that actually
-    // host the AI panel (rest / sql / nosql / ssh / explorer) get colors;
-    // anything else falls back to muted grey.
-    function modeColor(mode: string | null | undefined): string {
-        switch (mode) {
-            case "sql":
-                return "#8b7bf5";
-            case "rest":
-                return "#f06b9e";
-            case "nosql":
-                return "#4ec9ff";
-            case "ssh":
-                return "#2dd4bf";
-            case "explorer":
-                return "#f59e0b";
-            default:
-                return "var(--t3, #888)";
-        }
-    }
-    function capitalizeMode(s: string): string {
-        if (!s) return "—";
-        if (s === "sql" || s === "rest" || s === "ssh") return s.toUpperCase();
-        if (s === "nosql") return "NoSQL";
-        return s[0].toUpperCase() + s.slice(1);
-    }
-    // Per-mode credit totals derived from the loaded usage entries. Sorted
-    // descending so the heaviest mode comes first in the bar chart.
-    type ModeBreakdown = { mode: string; credits: number; percent: number };
-    let cloudAiByMode = $derived.by<ModeBreakdown[]>(() => {
-        if (cloudAiUsage.length === 0) return [];
-        const totals = new Map<string, number>();
-        let grand = 0;
-        for (const e of cloudAiUsage) {
-            const m = e.mode ?? "other";
-            totals.set(m, (totals.get(m) ?? 0) + e.clauge_credits);
-            grand += e.clauge_credits;
-        }
-        if (grand === 0) return [];
-        return Array.from(totals.entries())
-            .map(([mode, credits]) => ({
-                mode,
-                credits,
-                percent: Math.round((credits / grand) * 100),
-            }))
-            .sort((a, b) => b.credits - a.credits);
-    });
     let aiProvider = $state<string>("claude");
     let aiApiKey = $state("");
     let showAiKey = $state(false);
@@ -621,38 +467,6 @@
             (p) => !!$settings[p.keySettingName]?.trim(),
         ),
     );
-
-    // --- Clauge AI balance (worker-tracked managed-AI credits) ---
-    let cloudCreditsLocal = $state<{
-        remaining: number;
-        allowance: number;
-        resets_at: string | null;
-    } | null>(null);
-    let cloudSubLocal = $state<{
-        status: string;
-        cancel_at_period_end: boolean;
-    } | null>(null);
-
-    async function loadCloudBalance() {
-        try {
-            const bal = await invoke<{
-                remaining: number;
-                allowance: number;
-                resetsAt: string | null;
-            }>("cloud_ai_balance");
-            cloudCreditsLocal = {
-                remaining: bal.remaining,
-                allowance: bal.allowance,
-                resets_at: bal.resetsAt,
-            };
-        } catch {
-            cloudCreditsLocal = null;
-        }
-    }
-
-    function handleUpgradeClick() {
-        upgradeModalOpen.set(true);
-    }
 
     // --- Appearance ---
     let currentTheme = $derived($appearance.theme || "dark-glass");
@@ -698,12 +512,6 @@
         | { kind: "header"; label: string };
 
     const tabs: TabsItem[] = [
-        {
-            kind: "tab",
-            key: "account",
-            label: "Tài khoản",
-            icon: '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>',
-        },
         {
             kind: "tab",
             key: "general",
@@ -847,36 +655,11 @@
         }
     }
 
-    // Theme preview state for free users. When non-null, a pro theme is
-    // being previewed DOM-only (not persisted). previewOriginalTheme is
-    // the saved theme we revert to on cancel / close / tab-leave.
-    let previewThemeId = $state<string | null>(null);
-    let previewOriginalTheme = $state<string | null>(null);
-
-    // What the picker should highlight as active — the previewed theme
-    // if one is being tried, else the actually-saved theme.
-    let displayTheme = $derived(previewThemeId ?? currentTheme);
+    // Bản local thuần: mọi theme đều mở khóa, không còn preview/Pro-gate.
+    // What the picker should highlight as active — the actually-saved theme.
+    let displayTheme = $derived(currentTheme);
 
     async function handleThemeChange(themeId: string) {
-        const themeDef = getTheme(themeId);
-        const isPremium = !!themeDef?.premium;
-        const isFreeUser = $cloudPlan !== "pro";
-
-        if (isPremium && isFreeUser) {
-            // Enter / swap preview mode. Apply DOM-only — do NOT persist.
-            if (previewOriginalTheme === null) {
-                previewOriginalTheme = currentTheme;
-            }
-            previewThemeId = themeId;
-            applyTheme(themeId, accentColor);
-            return;
-        }
-
-        // Non-premium pick OR pro user: drop any active preview and persist.
-        if (previewThemeId !== null) {
-            previewThemeId = null;
-            previewOriginalTheme = null;
-        }
         applyTheme(themeId, accentColor);
         const config: AppearanceConfig = {
             theme: themeId,
@@ -885,50 +668,6 @@
         appearance.set(config);
         await saveAppearance(config);
     }
-
-    // User clicked Cancel in the preview banner — revert to their saved
-    // theme and exit preview.
-    function cancelThemePreview() {
-        if (previewOriginalTheme === null) return;
-        applyTheme(previewOriginalTheme, accentColor);
-        previewThemeId = null;
-        previewOriginalTheme = null;
-    }
-
-    // User clicked Upgrade in the preview banner — open the upgrade
-    // modal. The plan-flip $effect below handles auto-finalize if the
-    // upgrade succeeds; if they dismiss the modal we keep the preview
-    // active so they can see it and choose Cancel.
-    function upgradeFromThemePreview() {
-        upgradeModalOpen.set(true);
-    }
-
-    // Auto-revert preview when the user navigates away from Appearance or
-    // closes the Settings modal entirely — otherwise they'd return to a
-    // pro theme they never actually own.
-    $effect(() => {
-        if (previewThemeId === null) return;
-        if (!show || activeTab !== "appearance") {
-            cancelThemePreview();
-        }
-    });
-
-    // If the user successfully upgrades while a preview is showing, save
-    // the previewed theme as their real choice and exit preview mode.
-    $effect(() => {
-        if (previewThemeId === null) return;
-        if ($cloudPlan === "pro") {
-            const themeId = previewThemeId;
-            previewThemeId = null;
-            previewOriginalTheme = null;
-            const config: AppearanceConfig = {
-                theme: themeId,
-                accentColor: accentColor,
-            };
-            appearance.set(config);
-            saveAppearance(config).catch(() => {});
-        }
-    });
 
     async function handleAccentChange(color: string) {
         document.documentElement.style.setProperty("--acc", color);
@@ -1053,8 +792,6 @@
         if (activeTab === "ai" && show && !aiSettingsLoaded) {
             aiSettingsLoaded = true;
             loadAiSettings();
-            loadCloudBalance();
-            loadCloudAiUsage();
         }
         if (!show) {
             aiSettingsLoaded = false;
@@ -1459,9 +1196,7 @@
 
             <!-- Content pane -->
             <div class="stg-content">
-                {#if activeTab === "account"}
-                    <AccountTabContent />
-                {:else if activeTab === "general"}
+                {#if activeTab === "general"}
                     <div class="stg-card-stack">
                         <!-- Proxy card -->
                         <section class="stg-card">
@@ -2105,8 +1840,6 @@
                                 <button
                                     class="theme-card"
                                     class:active={displayTheme === theme.id}
-                                    class:locked={theme.premium &&
-                                        $cloudPlan !== "pro"}
                                     onclick={() => handleThemeChange(theme.id)}
                                 >
                                     <div class="theme-preview">
@@ -2127,46 +1860,9 @@
                                                 theme.description}</span
                                         >
                                     </div>
-                                    {#if theme.premium}
-                                        <span class="pro-badge">PRO</span>
-                                    {/if}
                                 </button>
                             {/each}
                         </div>
-
-                        {#if previewThemeId}
-                            {@const previewName =
-                                getTheme(previewThemeId)?.name ?? "Giao diện"}
-                            <div class="theme-preview-banner" role="alert">
-                                <div class="theme-preview-info">
-                                    <span class="theme-preview-eyebrow"
-                                        >ĐANG XEM TRƯỚC</span
-                                    >
-                                    <strong class="theme-preview-name"
-                                        >{previewName}</strong
-                                    >
-                                    <p class="theme-preview-sub">
-                                        Đây là giao diện cao cấp. Nâng cấp để
-                                        giữ lại, hoặc hủy để quay về giao diện
-                                        hiện tại.
-                                    </p>
-                                </div>
-                                <div class="theme-preview-actions">
-                                    <button
-                                        class="theme-preview-btn"
-                                        onclick={cancelThemePreview}
-                                    >
-                                        Hủy
-                                    </button>
-                                    <button
-                                        class="theme-preview-btn theme-preview-btn-primary"
-                                        onclick={upgradeFromThemePreview}
-                                    >
-                                        Nâng cấp lên Pro
-                                    </button>
-                                </div>
-                            </div>
-                        {/if}
                     </div>
 
                     <div class="stg-section">
@@ -2217,314 +1913,7 @@
                         </div>
                     </div>
                 {:else if activeTab === "ai"}
-                    <!-- Top-level split: Clauge AI (managed credits + history)
-                         vs BYOK (your own keys + per-mode/per-model stats). -->
-                    <div class="ai-toptabs">
-                        <button
-                            class="ai-toptab"
-                            class:active={aiTopTab === "clauge"}
-                            onclick={() => (aiTopTab = "clauge")}
-                        >
-                            Clauge AI
-                        </button>
-                        <button
-                            class="ai-toptab"
-                            class:active={aiTopTab === "byok"}
-                            onclick={() => (aiTopTab = "byok")}
-                        >
-                            BYOK
-                        </button>
-                    </div>
-
-                    {#if aiTopTab === "clauge"}
-                        {#if $cloudPlan !== "pro"}
-                            <!-- Free user: upsell card lives here, full data
-                                 panels only appear after upgrade. -->
-                            <ClaugeAIBalance
-                                plan={$cloudPlan ?? "free"}
-                                credits={cloudCreditsLocal}
-                                subscription={cloudSubLocal}
-                                onUpgradeClick={handleUpgradeClick}
-                            />
-                        {:else}
-                            {@const remaining =
-                                cloudCreditsLocal?.remaining ?? 0}
-                            {@const allowance =
-                                cloudCreditsLocal?.allowance ?? 0}
-                            {@const used = Math.max(0, allowance - remaining)}
-                            {@const pctRemaining =
-                                allowance > 0
-                                    ? Math.min(
-                                          100,
-                                          Math.round(
-                                              (remaining / allowance) * 100,
-                                          ),
-                                      )
-                                    : 0}
-                            {@const intervalLabel =
-                                $cloudSub?.interval === "yearly"
-                                    ? "Hàng năm"
-                                    : "Hàng tháng"}
-                            {@const periodLabel =
-                                $cloudSub?.interval === "yearly"
-                                    ? "năm nay"
-                                    : "tháng này"}
-                            <div class="cai2-pane">
-                                <!-- Card 1: Credits hero -->
-                                <section class="cai2-card">
-                                    <header class="cai2-head">
-                                        <span
-                                            class="cai2-icon"
-                                            aria-hidden="true"
-                                        >
-                                            <svg
-                                                viewBox="0 0 24 24"
-                                                width="14"
-                                                height="14"
-                                                fill="currentColor"
-                                            >
-                                                <path
-                                                    d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"
-                                                />
-                                            </svg>
-                                        </span>
-                                        <div class="cai2-titles">
-                                            <h3 class="cai2-title">Tín dụng</h3>
-                                            <p class="cai2-sub">
-                                                Phân bổ {intervalLabel}{#if cloudCreditsLocal?.resets_at}
-                                                    <span class="cai2-dot"
-                                                        >·</span
-                                                    >
-                                                    đặt lại {new Date(
-                                                        cloudCreditsLocal.resets_at,
-                                                    ).toLocaleDateString(
-                                                        undefined,
-                                                        {
-                                                            month: "short",
-                                                            day: "numeric",
-                                                            year: "numeric",
-                                                        },
-                                                    )}
-                                                {/if}
-                                            </p>
-                                        </div>
-                                        {#if cloudSubLocal?.status}
-                                            <span class="cai2-status">
-                                                {cloudSubLocal.cancel_at_period_end
-                                                    ? "Đang hủy"
-                                                    : "Hoạt động"}
-                                            </span>
-                                        {/if}
-                                    </header>
-
-                                    <div class="cai2-hero">
-                                        <span class="cai2-hero-val"
-                                            >{remaining.toLocaleString()}</span
-                                        >
-                                        <span class="cai2-hero-tot"
-                                            >/ {allowance.toLocaleString()} còn lại</span
-                                        >
-                                    </div>
-                                    <div class="cai2-bar-wrap">
-                                        <div
-                                            class="cai2-bar"
-                                            style="width: {pctRemaining}%"
-                                        ></div>
-                                    </div>
-                                    <p class="cai2-meta">
-                                        {used.toLocaleString()} tín dụng đã dùng {periodLabel}
-                                    </p>
-                                </section>
-
-                                <!-- Card 2: Credits by mode -->
-                                {#if cloudAiByMode.length > 0}
-                                    <section class="cai2-card">
-                                        <header class="cai2-head">
-                                            <span
-                                                class="cai2-icon"
-                                                aria-hidden="true"
-                                            >
-                                                <svg
-                                                    viewBox="0 0 24 24"
-                                                    width="14"
-                                                    height="14"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    stroke-width="2"
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                >
-                                                    <line
-                                                        x1="18"
-                                                        y1="20"
-                                                        x2="18"
-                                                        y2="10"
-                                                    /><line
-                                                        x1="12"
-                                                        y1="20"
-                                                        x2="12"
-                                                        y2="4"
-                                                    /><line
-                                                        x1="6"
-                                                        y1="20"
-                                                        x2="6"
-                                                        y2="14"
-                                                    />
-                                                </svg>
-                                            </span>
-                                            <div class="cai2-titles">
-                                                <h3 class="cai2-title">
-                                                    Tín dụng theo chế độ
-                                                </h3>
-                                                <p class="cai2-sub">
-                                                    Phân tích mức sử dụng trên
-                                                    các chế độ {periodLabel}.
-                                                </p>
-                                            </div>
-                                        </header>
-                                        <ul class="cai2-mode-list">
-                                            {#each cloudAiByMode as m (m.mode)}
-                                                <li class="cai2-mode-row">
-                                                    <span
-                                                        class="cai2-mode-name"
-                                                    >
-                                                        <span
-                                                            class="cai2-mode-dot"
-                                                            style="background: {modeColor(
-                                                                m.mode,
-                                                            )}"
-                                                        ></span>
-                                                        {capitalizeMode(m.mode)}
-                                                    </span>
-                                                    <div
-                                                        class="cai2-mode-bar-wrap"
-                                                    >
-                                                        <div
-                                                            class="cai2-mode-bar"
-                                                            style="width: {m.percent}%; background: {modeColor(
-                                                                m.mode,
-                                                            )}"
-                                                        ></div>
-                                                    </div>
-                                                    <span class="cai2-mode-val"
-                                                        >{m.credits.toLocaleString()}
-                                                        cr</span
-                                                    >
-                                                    <span class="cai2-mode-pct"
-                                                        >{m.percent}%</span
-                                                    >
-                                                </li>
-                                            {/each}
-                                        </ul>
-                                    </section>
-                                {/if}
-
-                                <!-- Card 3: Recent activity table -->
-                                <section class="cai2-card cai2-card-activity">
-                                    <header class="cai2-head">
-                                        <span
-                                            class="cai2-icon"
-                                            aria-hidden="true"
-                                        >
-                                            <svg
-                                                viewBox="0 0 24 24"
-                                                width="14"
-                                                height="14"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                stroke-width="2"
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                            >
-                                                <circle
-                                                    cx="12"
-                                                    cy="12"
-                                                    r="10"
-                                                /><polyline
-                                                    points="12 6 12 12 16 14"
-                                                />
-                                            </svg>
-                                        </span>
-                                        <div class="cai2-titles">
-                                            <h3 class="cai2-title">
-                                                Hoạt động gần đây
-                                            </h3>
-                                        </div>
-                                        <span class="cai2-sub-right">
-                                            {cloudAiUsage.length}
-                                            {cloudAiUsage.length === 1
-                                                ? "yêu cầu"
-                                                : "yêu cầu"}
-                                            {#if cloudAiUsageNextBefore}đã tải ·
-                                                cuộn để xem thêm{/if}
-                                        </span>
-                                    </header>
-                                    {#if cloudAiUsageLoading && cloudAiUsage.length === 0}
-                                        <p class="cai2-empty">Đang tải…</p>
-                                    {:else if cloudAiUsage.length === 0}
-                                        <p class="cai2-empty">
-                                            Chưa có yêu cầu Clauge AI nào. Bắt
-                                            đầu trò chuyện từ bất kỳ chế độ nào
-                                            với Clauge AI được chọn trong panel.
-                                        </p>
-                                    {:else}
-                                        <div
-                                            class="cai2-table"
-                                            onscroll={handleActivityScroll}
-                                        >
-                                            <div class="cai2-tr cai2-th">
-                                                <span>THỜI GIAN</span>
-                                                <span>LOẠI</span>
-                                                <span>CHẾ ĐỘ</span>
-                                                <span class="cai2-th-right"
-                                                    >TÍN DỤNG</span
-                                                >
-                                            </div>
-                                            {#each cloudAiUsage as e (e.request_id)}
-                                                <div class="cai2-tr">
-                                                    <span class="cai2-td-time"
-                                                        >{fmtUsageTime(
-                                                            e.occurred_at,
-                                                        )}</span
-                                                    >
-                                                    <span class="cai2-td-op"
-                                                        >{e.operation}</span
-                                                    >
-                                                    <span
-                                                        class="cai2-td-mode"
-                                                        style="color: {modeColor(
-                                                            e.mode,
-                                                        )}"
-                                                    >
-                                                        {e.mode
-                                                            ? capitalizeMode(
-                                                                  e.mode,
-                                                              )
-                                                            : "—"}
-                                                    </span>
-                                                    <span class="cai2-td-cost"
-                                                        >−{e.clauge_credits.toLocaleString()}
-                                                        cr</span
-                                                    >
-                                                </div>
-                                            {/each}
-                                            {#if cloudAiUsageLoadingMore}
-                                                <div class="cai2-loading-more">
-                                                    Đang tải thêm…
-                                                </div>
-                                            {:else if !cloudAiUsageNextBefore && cloudAiUsage.length >= CLOUD_AI_USAGE_PAGE}
-                                                <div
-                                                    class="cai2-loading-more cai2-end"
-                                                >
-                                                    Hết lịch sử
-                                                </div>
-                                            {/if}
-                                        </div>
-                                    {/if}
-                                </section>
-                            </div>
-                        {/if}
-                    {:else if aiTopTab === "byok"}
+                    {#if aiTopTab === "byok"}
                         <!-- AI sub-tabs -->
                         <div class="ai-subtabs">
                             <button
@@ -5184,14 +4573,15 @@
                     <div class="stg-card-stack stg-about">
                         <section class="stg-card stg-card-bare about-identity">
                             <div class="about-header">
-                                <span class="about-app-name">Clauge</span>
+                                <span class="about-app-name">Clauge Việt</span>
                                 <span class="about-version"
                                     >v{appVersion || "—"}</span
                                 >
                             </div>
                             <p class="about-desc">
-                                Siêu ứng dụng desktop đa nền tảng tích hợp AI
-                                dành cho lập trình viên. Một vỏ, nhiều công cụ.
+                                Công cụ lập trình của người Việt — Local-first •
+                                Privacy-first • Miễn phí mãi mãi. Một vỏ, mọi
+                                công cụ dev.
                             </p>
                         </section>
 
@@ -5425,7 +4815,7 @@
                                     </a>
                                     <a
                                         class="about-link-btn"
-                                        href="https://clauge.in/"
+                                        href="https://github.com/KaiyoDev/Clauge"
                                         target="_blank"
                                         rel="noopener"
                                         title="Website"

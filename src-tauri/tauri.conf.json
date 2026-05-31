@@ -1,8 +1,8 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
-  "productName": "Clauge",
-  "version": "3.0.2",
-  "identifier": "com.clauge.desktop",
+  "productName": "Clauge Viet",
+  "version": "3.0.3-vi-local",
+  "identifier": "com.kaiyodev.clauge",
   "build": {
     "frontendDist": "../build",
     "devUrl": "http://localhost:5173",
@@ -13,7 +13,7 @@
     "macOSPrivateApi": true,
     "windows": [
       {
-        "title": "Clauge",
+        "title": "Clauge Việt",
         "width": 1280,
         "height": 800,
         "minWidth": 900,
@@ -28,6 +28,7 @@
   },
   "bundle": {
     "active": true,
+    "copyright": "© 2026 KaiyoDev - Phiên bản Local thuần Việt Nam - Miễn phí hoàn toàn",
     "targets": ["app", "dmg", "nsis", "deb", "rpm", "appimage"],
     "createUpdaterArtifacts": false,
     "icon": [
@@ -41,13 +42,13 @@
       "deb": {
         "desktopTemplate": "Clauge.desktop",
         "files": {
-          "/usr/share/metainfo/com.clauge.desktop.metainfo.xml": "com.clauge.desktop.metainfo.xml"
+          "/usr/share/metainfo/com.kaiyodev.clauge.metainfo.xml": "com.clauge.desktop.metainfo.xml"
         }
       },
       "rpm": {
         "desktopTemplate": "Clauge.desktop",
         "files": {
-          "/usr/share/metainfo/com.clauge.desktop.metainfo.xml": "com.clauge.desktop.metainfo.xml"
+          "/usr/share/metainfo/com.kaiyodev.clauge.metainfo.xml": "com.clauge.desktop.metainfo.xml"
         }
       }
     }

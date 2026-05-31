@@ -1,5 +1,12 @@
-import { invoke } from '@tauri-apps/api/core';
-import type { CloudUser, CloudProviderLink, Provider } from '$lib/stores/cloud';
+// ─────────────────────────────────────────────────────────────────────────────
+// Bản local thuần (Clauge Việt): backend Cloud đã được gỡ bỏ hoàn toàn.
+//
+// File này chỉ còn là shim offline — giữ nguyên chữ ký các hàm cũ để call site
+// không vỡ, nhưng KHÔNG còn bất kỳ lệnh gọi mạng nào ra clauge.in. Mọi hàm trả
+// về trạng thái "ngắt kết nối / không có dữ liệu đám mây".
+// ─────────────────────────────────────────────────────────────────────────────
+
+import type { CloudUser, CloudProviderLink, Provider, ProState } from '$lib/stores/cloud';
 
 export interface CloudEntitlements {
   plan: string;
@@ -29,9 +36,6 @@ export interface CloudStatus {
   entitlements?: CloudEntitlements;
 }
 
-export const cloudGetStatus = () =>
-  invoke<CloudStatus>('cloud_get_status');
-
 export interface MissingCredentials {
   ssh: string[];
   sql: string[];
@@ -39,71 +43,61 @@ export interface MissingCredentials {
   explorer: string[];
 }
 
-export const cloudProbeMissingCredentials = () =>
-  invoke<MissingCredentials>('cloud_probe_missing_credentials');
+const DISCONNECTED: CloudStatus = {
+  connected: false,
+  activeProvider: null,
+  user: null,
+  providers: [],
+  plan: 'pro', // mọi tính năng đã mở khóa
+  lastSynced: {},
+};
 
-export const cloudGithubLoginUrl = () =>
-  invoke<string>('cloud_github_login_url');
+export const cloudGetStatus = async (): Promise<CloudStatus> => DISCONNECTED;
 
-export const cloudGoogleLoginUrl = () =>
-  invoke<string>('cloud_google_login_url');
+export const cloudProbeMissingCredentials = async (): Promise<MissingCredentials> => ({
+  ssh: [],
+  sql: [],
+  nosql: [],
+  explorer: [],
+});
 
-export const cloudExchangeCode = (provider: Provider, code: string) =>
-  invoke<CloudStatus>('cloud_exchange_code', { provider, code });
+export const cloudGithubLoginUrl = async (): Promise<string> => '';
+export const cloudGoogleLoginUrl = async (): Promise<string> => '';
 
-export const cloudLinkProvider = (provider: Provider, code: string) =>
-  invoke<CloudStatus>('cloud_link_provider', { provider, code });
+export const cloudExchangeCode = async (
+  _provider: Provider,
+  _code: string,
+): Promise<CloudStatus> => DISCONNECTED;
 
-export const cloudUnlinkProvider = (provider: Provider) =>
-  invoke<CloudStatus>('cloud_unlink_provider', { provider });
+export const cloudLinkProvider = async (
+  _provider: Provider,
+  _code: string,
+): Promise<CloudStatus> => DISCONNECTED;
 
-export const cloudUpdateProfile = (fields: {
+export const cloudUnlinkProvider = async (_provider: Provider): Promise<CloudStatus> =>
+  DISCONNECTED;
+
+export const cloudUpdateProfile = async (_fields: {
   displayName?: string;
   firstName?: string;
   lastName?: string;
-}) => invoke<CloudStatus>('cloud_update_profile', {
-  displayName: fields.displayName,
-  firstName: fields.firstName,
-  lastName: fields.lastName,
+}): Promise<CloudStatus> => DISCONNECTED;
+
+export const cloudCheckRemoteExists = async (): Promise<boolean> => false;
+export const cloudSyncPushNow = async (): Promise<string[]> => [];
+export const cloudSyncRestore = async (): Promise<string[]> => [];
+export const cloudGetConflicts = async (): Promise<string[]> => [];
+export const cloudResolveKeepLocal = async (): Promise<void> => {};
+export const cloudResolveUseRemote = async (): Promise<void> => {};
+export const cloudPullIfRemoteNewer = async (): Promise<string[]> => [];
+export const cloudLocalHasData = async (): Promise<boolean> => false;
+export const cloudLogout = async (): Promise<void> => {};
+export const cloudWipeRemote = async (): Promise<void> => {};
+export const cloudDeleteAccount = async (_confirmationSlug: string): Promise<void> => {};
+
+/** Trạng thái Pro vĩnh viễn (local thuần — mọi tính năng đã mở khóa). */
+export const proStateCurrent = async (): Promise<ProState> => ({
+  plan: 'pro',
+  credits: null,
+  subscription: null,
 });
-
-export const cloudCheckRemoteExists = () =>
-  invoke<boolean>('cloud_check_remote_exists');
-
-export const cloudSyncPushNow = () =>
-  invoke<string[]>('cloud_sync_push_now');
-
-export const cloudSyncRestore = () =>
-  invoke<string[]>('cloud_sync_restore');
-
-export const cloudGetConflicts = () =>
-  invoke<string[]>('cloud_get_conflicts');
-
-export const cloudResolveKeepLocal = () =>
-  invoke<void>('cloud_resolve_keep_local');
-
-export const cloudResolveUseRemote = () =>
-  invoke<void>('cloud_resolve_use_remote');
-
-export const cloudPullIfRemoteNewer = () =>
-  invoke<string[]>('cloud_pull_if_remote_newer');
-
-export const cloudLocalHasData = () =>
-  invoke<boolean>('cloud_local_has_data');
-
-export const cloudLogout = () =>
-  invoke<void>('cloud_logout');
-
-export const cloudWipeRemote = () =>
-  invoke<void>('cloud_wipe_remote');
-
-export const cloudDeleteAccount = (confirmationSlug: string) =>
-  invoke<void>('cloud_delete_account', { confirmationSlug });
-
-import type { ProState } from '$lib/stores/cloud';
-
-/** Read the current in-memory ProState from Rust. Called once at boot before
- *  the `cloud:pro-state` event subscription is set up — gives the frontend
- *  the latest known state immediately without waiting for a state-change
- *  event that may not fire on the boot path. */
-export const proStateCurrent = () => invoke<ProState>('pro_state_current');

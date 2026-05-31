@@ -6,7 +6,6 @@
   import { loadCollections } from '$lib/modes/rest/stores';
   import { activeTabId, draftRequests, openSettingsTab } from '$lib/shared/stores/tabs';
   import { sendChatMessage, generateSessionId } from '$lib/services/ai-chat';
-  import { cloudGetActiveToken } from '$lib/commands/ai';
   import { REST_SYSTEM_PROMPT, REST_TOOLS } from '$lib/modes/rest/ai/prompt';
   import { SQL_SYSTEM_PROMPT, SQL_TOOLS } from '$lib/modes/sql/ai/prompt';
   import { NOSQL_SYSTEM_PROMPT, NOSQL_TOOLS } from '$lib/modes/nosql/ai/prompt';
@@ -30,7 +29,6 @@
   import { aiEvent } from '$lib/shared/constants/events';
   import { COPY_FEEDBACK_MS } from '$lib/shared/constants/timings';
   import AIConfigSelector from './AIConfigSelector.svelte';
-  import { cloudPlan, upgradeModalOpen } from '$lib/stores/cloud';
 
   marked.setOptions({ breaks: true, gfm: true });
 
@@ -270,25 +268,15 @@
     }
   });
 
-  // The active provider — Clauge AI (managed) or any BYOK provider id from
-  // the PROVIDERS catalogue. Stored in flat settings under `ai_provider`.
-  // Default matches AIConfigSelector and sendMessage: Pro users land on
-  // 'clauge' (managed, no key needed) when they've never picked a
-  // provider explicitly; free users land on 'claude' (BYOK). Without
-  // this Pro-aware default, a Pro user with no saved ai_provider and
-  // no BYOK key sees the "Configure in Settings" gate even though
-  // their credits would route fine through Clauge AI.
+  // Nhà cung cấp AI đang dùng — một id BYOK từ danh mục PROVIDERS, lưu phẳng
+  // trong settings dưới khóa `ai_provider`. Mặc định là 'claude'.
   let activeProvider = $derived<string>(
-    $settings['ai_provider'] || ($cloudPlan === 'pro' ? 'clauge' : 'claude')
+    $settings['ai_provider'] || 'claude'
   );
 
-  // Panel is usable when:
-  //   - Clauge AI is active and user is Pro (managed → no key needed), or
-  //   - A BYOK provider is active and that provider has its key configured.
+  // Panel is usable when the active BYOK provider has its key configured.
   let hasApiKey = $derived(
-    activeProvider === 'clauge'
-      ? $cloudPlan === 'pro'
-      : !!$settings[`ai_api_key_${activeProvider}`]?.trim()
+    !!$settings[`ai_api_key_${activeProvider}`]?.trim()
   );
 
   const modeColors: Record<AppMode, string> = {
@@ -511,28 +499,11 @@
     // (e.g. backend not yet ready on cold boot) can't block the send.
     invoke('telemetry_bump', { key: 'ai.chat' }).catch(() => {});
 
-    // Resolve provider + api key. Clauge AI is just another provider — but
-    // its "api key" is the user's cloud bearer token (fetched at send time)
-    // and it needs an X-Provider header so the worker can pick the right
-    // JWKS to validate the token against.
-    // Default matches AIConfigSelector: Pro → 'clauge', Free → 'claude'.
-    const provider = $settings['ai_provider'] ||
-      (get(cloudPlan) === 'pro' ? 'clauge' : 'claude');
+    // Resolve provider + api key (BYOK — gọi thẳng nhà cung cấp, không qua
+    // máy chủ trung gian). Mặc định 'claude'.
+    const provider = $settings['ai_provider'] || 'claude';
     let apiKey = $settings[`ai_api_key_${provider}`] || '';
     let extraHeaders: Record<string, string> | undefined;
-    if (provider === 'clauge') {
-      if (get(cloudPlan) !== 'pro') {
-        upgradeModalOpen.set(true);
-        return;
-      }
-      const tok = await cloudGetActiveToken();
-      if (!tok) {
-        showToast('Đăng nhập Clauge để dùng AI quản lý sẵn', 'error');
-        return;
-      }
-      apiKey = tok[0];
-      extraHeaders = { 'X-Provider': tok[1] };
-    }
 
     // Add user message
     messages.push({
@@ -747,15 +718,7 @@
           if (errLower.includes('rate limit') || errLower.includes('429') || errLower.includes('too many')) {
             mapped = { type: 'rate_limit', message: 'Bị giới hạn tốc độ. Chờ một lát rồi thử lại.' };
           } else if (errLower.includes('invalid api key') || errLower.includes('401') || errLower.includes('unauthorized') || errLower.includes('sign in required')) {
-            // Clauge AI has no API key — auth is the user's cloud session
-            // token, which rotates (Google id_tokens expire after ~1h). A
-            // 401 here means "session expired, refresh by signing in", not
-            // "your stored key is wrong". Different message + action.
-            if (provider === 'clauge') {
-              mapped = { type: 'cloud_auth', message: 'Phiên Clauge của bạn đã hết hạn. Mở Cài đặt → Tài khoản và đăng nhập lại, rồi thử lại.' };
-            } else {
-              mapped = { type: 'auth', message: 'API key không hợp lệ. Kiểm tra lại key trong Cài đặt.' };
-            }
+            mapped = { type: 'auth', message: 'API key không hợp lệ. Kiểm tra lại key trong Cài đặt.' };
           } else if (errLower.includes('connection failed') || errLower.includes('network') || errLower.includes('timed out') || errLower.includes('timeout') || errLower.includes('econnref') || errLower.includes('dns')) {
             mapped = { type: 'generic', message: 'Sự cố mạng. Kiểm tra kết nối rồi thử lại.' };
           } else if (errLower.includes('500') || errLower.includes('502') || errLower.includes('503') || errLower.includes('504') || errLower.includes('service unavailable') || errLower.includes('internal server')) {

@@ -51,11 +51,3 @@ export async function aiChat(
     extraHeaders,
   });
 }
-
-/// Returns [token, providerSlug] for the currently signed-in cloud user,
-/// or null if not signed in. The token is the Bearer used with the Clauge
-/// worker; providerSlug ("github" | "google") tells the worker which JWKS
-/// to validate against.
-export async function cloudGetActiveToken(): Promise<[string, string] | null> {
-  return invoke('cloud_get_active_token');
-}

@@ -1,17 +1,9 @@
 <script lang="ts">
-  import { cloudPlan, upgradeModalOpen } from '$lib/stores/cloud';
   import { settings, setSetting } from '$lib/stores/settings';
   import { PROVIDERS, type ProviderId } from '$lib/shared/ai/providers';
 
-  const CLAUGE = 'clauge';
-
-  const isPro = $derived($cloudPlan === 'pro');
-  // Pro users default to Clauge AI (the thing they paid for) when they
-  // haven't explicitly chosen a provider. Free users default to 'claude'.
-  const current = $derived<string>(
-    $settings['ai_provider'] || (isPro ? CLAUGE : 'claude'),
-  );
-  const isCurrentClauge = $derived(current === CLAUGE);
+  // Bản local thuần: chỉ dùng BYOK (tự nhập API key). Provider mặc định là Claude.
+  const current = $derived<string>($settings['ai_provider'] || 'claude');
 
   // Only show BYOK providers the user has actually configured. Keeps the
   // popover tight; unconfigured noise belongs in Settings, not here.
@@ -21,9 +13,7 @@
 
   // Resolve metadata for the currently-selected provider (for the pill label).
   const currentLabel = $derived(
-    current === CLAUGE
-      ? 'Clauge AI'
-      : (PROVIDERS.find((p) => p.providerId === current)?.providerLabel ?? 'Claude'),
+    PROVIDERS.find((p) => p.providerId === current)?.providerLabel ?? 'Claude',
   );
 
   let open = $state(false);
@@ -35,11 +25,6 @@
   }
 
   function selectProvider(id: string) {
-    if (id === CLAUGE && !isPro) {
-      open = false;
-      upgradeModalOpen.set(true);
-      return;
-    }
     setSetting('ai_provider', id);
     open = false;
   }
@@ -78,7 +63,6 @@
   bind:this={anchorEl}
   type="button"
   class="acs-pill"
-  class:is-clauge={current === CLAUGE}
   class:is-open={open}
   onclick={toggle}
   aria-haspopup="listbox"
@@ -111,45 +95,7 @@
     role="listbox"
     aria-label="Chọn nhà cung cấp AI"
   >
-    <!-- Clauge AI — pinned at top. Always shown; gated by Pro. -->
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="acs-row is-clauge"
-      class:is-selected={isCurrentClauge}
-      role="option"
-      tabindex="0"
-      aria-selected={isCurrentClauge}
-      onclick={() => selectProvider(CLAUGE)}
-      onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectProvider(CLAUGE); } }}
-    >
-      <span class="acs-row-dot acs-row-dot-clauge" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="9" height="9" fill="currentColor">
-          <path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6L12 2z" />
-        </svg>
-      </span>
-      <span class="acs-row-text">
-        <span class="acs-row-name">Clauge AI</span>
-        <span class="acs-row-sub">
-          {#if isPro}Quản lý sẵn · không cần API key{:else}Yêu cầu Pro{/if}
-        </span>
-      </span>
-      {#if !isPro}
-        <span class="acs-pro-badge">PRO</span>
-      {:else if isCurrentClauge}
-        <span class="acs-check" aria-hidden="true">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        </span>
-      {/if}
-    </div>
-
     {#if configured.length > 0}
-      <div class="acs-sep" aria-hidden="true">
-        <span>Nhà cung cấp của bạn</span>
-      </div>
-
       {#each configured as p (p.providerId)}
         {@const isSel = current === p.providerId}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -177,6 +123,10 @@
           {/if}
         </div>
       {/each}
+    {:else}
+      <div class="acs-empty">
+        Chưa cấu hình nhà cung cấp AI nào. Vào <strong>Cài đặt → AI Providers</strong> để nhập API key.
+      </div>
     {/if}
   </div>
 {/if}
@@ -347,5 +297,17 @@
     flex: 1;
     height: 1px;
     background: var(--b1, #2a2a2a);
+  }
+
+  .acs-empty {
+    padding: 12px 12px;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--t3, #888);
+    font-family: var(--ui);
+  }
+  .acs-empty strong {
+    color: var(--t2, #aaa);
+    font-weight: 600;
   }
 </style>

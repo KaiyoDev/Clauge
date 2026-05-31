@@ -1,31 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
   <id>com.clauge.desktop</id>
-  <name>Clauge</name>
-  <summary>An AI-powered cross-platform desktop super-app for developers</summary>
+  <name>Clauge Việt</name>
+  <summary>Công cụ lập trình của người Việt — Local-first, Privacy-first, miễn phí mãi mãi</summary>
   <description>
     <p>
-      Clauge is an all-in-one developer desktop app. It brings your entire development
-      workflow into one place — so you can focus on building instead of switching between tools.
+      Clauge Việt là công cụ lập trình tất-cả-trong-một dành cho dev Việt Nam. Nó gộp
+      toàn bộ workflow phát triển vào một cửa sổ — để bạn tập trung xây dựng thay vì
+      nhảy qua lại giữa các công cụ.
     </p>
     <p>
-      Designed to grow with you, Clauge continuously expands its capabilities to cover
-      more of what developers need, all from a single unified interface.
+      Triết lý cốt lõi: toàn bộ dữ liệu mặc định lưu trên máy bạn (local-first),
+      không thu thập dữ liệu cá nhân, miễn phí mãi mãi. Đăng nhập là tùy chọn và chỉ
+      dùng để đồng bộ giữa nhiều máy.
     </p>
-    <p>Features include:</p>
+    <p>Tính năng:</p>
     <ul>
-      <li>Claude AI agent with context-aware sessions</li>
-      <li>REST API client with collections and environments</li>
-      <li>SQL and NoSQL database explorer and query runner</li>
-      <li>SSH terminal with profile management</li>
-      <li>Remote file explorer (SFTP, FTP, S3, Azure Blob)</li>
+      <li>Coding agent với phiên gắn ngữ cảnh</li>
+      <li>REST API client với collection và môi trường</li>
+      <li>Trình duyệt và truy vấn CSDL SQL và NoSQL</li>
+      <li>Terminal SSH với quản lý profile</li>
+      <li>Trình duyệt tệp từ xa (SFTP, FTP, S3, Azure Blob)</li>
     </ul>
   </description>
 
   <launchable type="desktop-id">Clauge.desktop</launchable>
 
-  <url type="homepage">https://clauge.in</url>
-  <url type="bugtracker">https://github.com/ansxuman/Clauge/issues</url>
+  <url type="homepage">https://github.com/KaiyoDev/Clauge</url>
+  <url type="bugtracker">https://github.com/KaiyoDev/Clauge/issues</url>
 
   <categories>
     <category>Development</category>

@@ -1,6 +1,6 @@
 [Desktop Entry]
 Categories=Development;Utility;
-Comment=Clauge — An AI-powered cross-platform desktop super-app for developers
+Comment=Clauge Việt — Công cụ lập trình của người Việt, Local-first, Privacy-first, miễn phí mãi mãi
 Exec={{exec}} %u
 StartupWMClass={{exec}}
 Icon={{icon}}

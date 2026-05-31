@@ -2044,27 +2044,14 @@ pub struct CoworkerInput {
 #[tauri::command]
 pub async fn workspace_coworker_create(
     pool: State<'_, SqlitePool>,
-    pro_state: State<'_, crate::cloud::pro_state::ProStateManager>,
     input: CoworkerInput,
 ) -> Result<WorkspaceCoworker, String> {
     let name = input.name.trim();
     if name.is_empty() {
         return Err("Coworker name is required".into());
     }
-    // Single source of truth: the in-memory ProStateManager. Replaces the
-    // SQLite read + the `is_pro_hint` workaround that was needed when the
-    // gate raced against an in-flight `cloud_auth` write. The manager is
-    // updated atomically on every plan change so this read is never stale.
-    if !pro_state.is_pro() {
-        let active_count = coworker_repo::count_active(pool.inner())
-            .await
-            .unwrap_or(0);
-        if active_count >= 3 {
-            return Err(
-                "Free plan supports up to 3 coworkers. Upgrade to Pro for unlimited.".into(),
-            );
-        }
-    }
+    // Bản local thuần: không còn giới hạn coworker. Mọi coworker được tạo
+    // luôn ở trạng thái active.
     let id = uuid::Uuid::new_v4().to_string();
     let now = now_rfc3339();
     let avatar_seed = input

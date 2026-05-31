@@ -3,21 +3,6 @@
   import { mode, navOpen, aiPanelOpen, activeModal } from '$lib/stores/app';
   import { getCurrentWindow } from '@tauri-apps/api/window';
   import { isMac, isLinux } from '$lib/utils/platform';
-  import { cloudConnected, cloudConflicts, syncing, setSyncing, setDisconnected, showSyncRestorePrompt, markSynced } from '$lib/stores/cloud';
-  import ConflictResolverModal from '$lib/components/cloud/ConflictResolverModal.svelte';
-
-  let conflictResolverOpen = $state(false);
-
-  function openConflictResolver() {
-    profileMenuOpen = false;
-    conflictResolverOpen = true;
-  }
-  import { cloudSyncPushNow, cloudSyncRestore, cloudLogout } from '$lib/commands/cloud';
-  import { loadCollections } from '$lib/modes/rest/stores';
-  import { loadEnvironments } from '$lib/modes/rest/stores';
-  import { loadConnections as loadSqlConnections, loadSqlScripts } from '$lib/modes/sql/stores';
-  import { loadNoSqlConnections } from '$lib/modes/nosql/stores';
-  import { friendlyError } from '$lib/utils/errors';
   import SidebarButton from './SidebarButton.svelte';
   import Avatar from './Avatar.svelte';
   import type { AppMode } from '$lib/stores/app';
@@ -152,66 +137,7 @@
       return d.toLocaleDateString();
     } catch { return ''; }
   }
-
-  async function handleSyncNow() {
-    if ($syncing) return;
-    setSyncing(true);
-    try {
-      const pushed = await cloudSyncPushNow();
-      if (pushed.length) {
-        markSynced();
-        showToast('Đã đồng bộ', 'success');
-      } else {
-        showToast('Đã đồng bộ rồi', 'info');
-      }
-    } catch (e) {
-      showToast(friendlyError(e), 'error');
-    } finally {
-      setSyncing(false);
-    }
-  }
-
-  // Handle the "cloud data found on first connect" prompt — pulls all
-  // domains, marks synced, then fires the post-restore "re-enter your
-  // secrets" banner (which subsumes the success toast when relevant).
-  async function handleFirstConnectRestore() {
-    showSyncRestorePrompt.set(false);
-    setSyncing(true);
-    try {
-      await cloudSyncRestore();
-      await Promise.all([
-        loadCollections(),
-        loadEnvironments(),
-        loadSqlConnections(),
-        loadNoSqlConnections(),
-        loadSqlScripts(),
-      ]);
-      markSynced();
-      const { announceRestoreCompletion } = await import('$lib/stores/missingCredentials');
-      const shown = await announceRestoreCompletion();
-      if (!shown) showToast('Đã khôi phục từ đám mây', 'success');
-    } catch (e: any) {
-      showToast(friendlyError(e), 'error');
-    } finally {
-      setSyncing(false);
-    }
-  }
-
-  function handleFirstConnectSkip() {
-    showSyncRestorePrompt.set(false);
-    markSynced(); // Don't ask again
-  }
-
-  async function handleLogout() {
-    profileMenuOpen = false;
-    try {
-      await cloudLogout();
-      setDisconnected();
-      showToast('Đã đăng xuất', 'info');
-    } catch (e) {
-      showToast(friendlyError(e), 'error');
-    }
-  }
+  void formatSyncTime; // giữ lại để tương thích, không còn dùng trong UI local
 
   async function openExternal(url: string) {
     try {
@@ -225,11 +151,9 @@
   function handleProfileAction(action: string) {
     profileMenuOpen = false;
     switch (action) {
-      case 'sync': openSettingsTab('account'); break;
-      case 'settings': openSettingsTab('account'); break;
+      case 'settings': openSettingsTab('general'); break;
       case 'check-updates': handleCheckForUpdates(); break;
-      case 'whats-new': openExternal('https://clauge.in/changelog.html'); break;
-      case 'report': openExternal('https://github.com/ansxuman/Clauge/issues/new/choose'); break;
+      case 'report': openExternal('https://github.com/KaiyoDev/Clauge/issues/new/choose'); break;
       case 'about': openSettingsTab('about'); break;
     }
   }
@@ -301,35 +225,10 @@
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <div class="profile-menu" onclick={(e: MouseEvent) => e.stopPropagation()}>
-          {#if $cloudConnected}
-            <div class="pm-sync-status">
-              <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/><path d="M7.5 12l3 3 6-6"/></svg>
-              <span class="pm-sync-label">Đã đồng bộ tất cả dữ liệu</span>
-            </div>
-            {#if $cloudConflicts.length > 0}
-              <!-- Conflict-mode replacement for the Sync Now row. Same
-                   position, different label + accent treatment so the
-                   user reaches resolution from the same place. -->
-              <button class="pm-item pm-action-required" onclick={openConflictResolver}>
-                <svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9"  x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                Cần xử lý ({$cloudConflicts.length})
-              </button>
-            {:else}
-              <button class="pm-item" onclick={() => { handleSyncNow(); }}>
-                <svg class:pm-spinning={$syncing} viewBox="0 0 24 24"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-                {$syncing ? 'Đang đồng bộ...' : 'Đồng bộ ngay'}
-              </button>
-            {/if}
-            <button class="pm-item" onclick={() => handleProfileAction('sync')}>
-              <svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 11-12 0 6 6 0 0112 0z"/><path d="M3 21v-2a4 4 0 014-4h10a4 4 0 014 4v2"/></svg>
-              Tài khoản
-            </button>
-          {:else}
-            <button class="pm-item" onclick={() => handleProfileAction('sync')}>
-              <svg class="gh-icon" viewBox="0 0 24 24"><path d="M18 8a6 6 0 11-12 0 6 6 0 0112 0z"/><path d="M3 21v-2a4 4 0 014-4h10a4 4 0 014 4v2"/></svg>
-              Đăng nhập để đồng bộ
-            </button>
-          {/if}
+          <div class="pm-sync-status">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/><path d="M7.5 12l3 3 6-6"/></svg>
+            <span class="pm-sync-label">Bản local — dữ liệu nằm trên máy bạn</span>
+          </div>
           <div class="pm-sep"></div>
 
           <button class="pm-item" onclick={() => handleProfileAction('settings')}>
@@ -341,53 +240,16 @@
             {checkingForUpdates ? 'Đang kiểm tra...' : 'Kiểm tra cập nhật'}
           </button>
           <div class="pm-sep"></div>
-          <button class="pm-item" onclick={() => handleProfileAction('whats-new')}>
-            <svg viewBox="0 0 24 24"><path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26z"/></svg>
-            Có gì mới
-            <svg class="pm-external" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-          </button>
           <button class="pm-item" onclick={() => handleProfileAction('report')}>
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
             Báo lỗi
             <svg class="pm-external" viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
           </button>
-          {#if $cloudConnected}
-            <div class="pm-sep"></div>
-            <button class="pm-item pm-logout" onclick={handleLogout}>
-              <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-              Đăng xuất
-            </button>
-          {/if}
         </div>
       {/if}
     </div>
   </div>
 </aside>
-
-<ConflictResolverModal bind:show={conflictResolverOpen} />
-
-<!-- First-connect restore prompt: when existing cloud data found.
-     Overlay click is NOT bound to skip — a misclick outside the modal
-     used to call markSynced() which permanently dismissed the prompt
-     (`hasSyncedOnce` is persisted to localStorage). The user has to
-     click Skip explicitly. -->
-{#if $showSyncRestorePrompt}
-  <div class="sync-confirm-overlay">
-    <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div class="sync-confirm" onclick={(e) => e.stopPropagation()}>
-      <div class="sync-confirm-icon">
-        <svg viewBox="0 0 24 24" width="28" height="28"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      </div>
-      <div class="sync-confirm-title">Tìm thấy bản sao lưu trên đám mây</div>
-      <div class="sync-confirm-desc">Tài khoản của bạn có dữ liệu được lưu trên đám mây. Việc khôi phục sẽ thay thế các collection REST, kết nối SQL/NoSQL, agent, profile SSH, đường dẫn explorer và coworker workspace trên thiết bị này bằng bản sao đám mây.</div>
-      <div class="sync-confirm-actions">
-        <button class="sync-confirm-btn" onclick={handleFirstConnectSkip}>Bỏ qua</button>
-        <button class="sync-confirm-btn primary" onclick={handleFirstConnectRestore}>Khôi phục</button>
-      </div>
-    </div>
-  </div>
-{/if}
 
 <style>
   /* ── Sync Confirm Dialog ── */

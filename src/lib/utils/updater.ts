@@ -14,9 +14,8 @@ export interface UpdateNoticeInfo {
   infoOnly?: boolean;
 }
 
-// User-facing changelog page (with download buttons). Preferred over the
-// GitHub releases UI for non-developer users.
-const CHANGELOG_URL = 'https://clauge.in/changelog';
+// User-facing changelog page — bản local trỏ về releases trên GitHub.
+const CHANGELOG_URL = 'https://github.com/KaiyoDev/Clauge/releases';
 
 // All users now follow the stable channel. The previous Settings → About
 // "Receive pre-release updates" toggle was removed; any user who had

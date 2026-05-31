@@ -135,44 +135,8 @@ pub fn run() {
             app.manage(shared::ai::types::PendingFrontendTools::default());
             app.manage(shared::updater::state::PendingUpdate::default());
 
-            // ── Cloud auth + sync scheduler ──────────────────────────
-            // Holds provider tokens (loaded from OS keyring) and the per-kind
-            // dirty set used by auto-sync. Spawned once, lives for app lifetime.
-            app.manage(cloud::auth::AuthState::default());
-            app.manage(cloud::scheduler::Scheduler::default());
-            // Single in-memory authority for Pro state. Hydrated below.
-            app.manage(cloud::pro_state::ProStateManager::default());
-
-            // Load tokens from keyring (+ one-time migration from legacy
-            // settings.github_token row). If a token resolves to a logged-in
-            // session, enable the scheduler so subsequent mutations push.
-            // Also hydrate the ProStateManager from on-disk snapshots so the
-            // frontend's `is_pro` checks against the manager don't briefly
-            // return free on cold boot before cloud_get_status resolves.
-            {
-                let pool_for_auth = app.state::<sqlx::SqlitePool>().inner().clone();
-                let auth_state = app.state::<cloud::auth::AuthState>();
-                let pro_state = app.state::<cloud::pro_state::ProStateManager>();
-                if let Err(e) = tauri::async_runtime::block_on(async {
-                    cloud::auth::load_from_keyring(&auth_state, &pool_for_auth).await
-                }) {
-                    log::warn!("[cloud] load_from_keyring: {}", e);
-                }
-                tauri::async_runtime::block_on(
-                    pro_state.hydrate_from_snapshot(&pool_for_auth),
-                );
-                if auth_state.is_connected() {
-                    app.state::<cloud::scheduler::Scheduler>().enable();
-                }
-            }
-
-            cloud::scheduler::spawn(app.handle().clone());
-
-            // Telemetry scheduler — sleeps 30s after boot, then flushes
-            // once per 24h. Fire-and-forget; failures back off to 1h.
-            // Counters live in static AtomicU64s, so the hot path
-            // (`telemetry::bump`) has no dependency on this spawn.
-            telemetry::spawn_scheduler(app.handle().clone());
+            // ── Bản local thuần: cloud auth + sync scheduler đã được gỡ. ──
+            // Telemetry cũng bị tắt — không có lệnh gọi mạng nào ra ngoài.
 
             // Register every mode's AI tools into the shared dispatch registry.
             // Adding a new tool to a mode = one new function + one entry in
@@ -338,32 +302,7 @@ pub fn run() {
             appearance::vibrancy::get_appearance,
             appearance::vibrancy::set_appearance,
             appearance::vibrancy::get_available_themes,
-            cloud::commands::cloud_get_status,
-            cloud::commands::cloud_github_login_url,
-            cloud::commands::cloud_google_login_url,
-            cloud::commands::cloud_exchange_code,
-            cloud::commands::cloud_link_provider,
-            cloud::commands::cloud_unlink_provider,
-            cloud::commands::cloud_update_profile,
-            cloud::commands::cloud_check_remote_exists,
-            cloud::commands::cloud_sync_push_now,
-            cloud::commands::cloud_sync_restore,
-            cloud::commands::cloud_get_conflicts,
-            cloud::commands::cloud_resolve_keep_local,
-            cloud::commands::cloud_resolve_use_remote,
-            cloud::commands::cloud_pull_if_remote_newer,
-            cloud::commands::cloud_local_has_data,
-            cloud::commands::cloud_logout,
-            cloud::commands::cloud_wipe_remote,
-            cloud::commands::cloud_delete_account,
-            cloud::commands::cloud_get_pricing,
-            cloud::commands::cloud_create_checkout,
-            cloud::commands::cloud_open_portal,
-            cloud::commands::cloud_ai_balance,
-            cloud::commands::cloud_ai_usage,
-            cloud::commands::cloud_get_active_token,
-            cloud::pro_state::pro_state_current,
-            cloud::credentials_probe::cloud_probe_missing_credentials,
+            // ── Cloud commands đã được gỡ bỏ (bản local thuần). ──
             modes::rest::import_export::export_collection,
             modes::rest::import_export::export_all_collections,
             modes::rest::import_export::import_clauge,

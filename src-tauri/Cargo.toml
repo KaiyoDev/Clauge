@@ -1,10 +1,10 @@
 [package]
 name = "app"
-version = "3.0.2"
-description = "Clauge — An AI-powered cross-platform desktop super-app for developers"
-authors = ["Anshuman <support@clauge.in>"]
+version = "3.0.3"
+description = "Clauge Việt — Công cụ lập trình của người Việt. Local-first, Privacy-first, miễn phí mãi mãi."
+authors = ["KaiyoDev", "Anshuman <support@clauge.in> (bản gốc)"]
 license = "LicenseRef-PolyForm-Noncommercial-1.0.0"
-repository = "https://github.com/ansxuman/Clauge"
+repository = "https://github.com/KaiyoDev/Clauge"
 edition = "2021"
 rust-version = "1.77.2"
 

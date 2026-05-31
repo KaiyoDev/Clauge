@@ -1,10 +1,9 @@
 <script lang="ts">
-    import { onMount, onDestroy } from "svelte";
+    import { onMount } from "svelte";
     import { settings, setSetting } from "$lib/stores/settings";
     import { get } from "svelte/store";
     import { getCurrentWindow } from "@tauri-apps/api/window";
     import { isMac, isLinux } from "$lib/utils/platform";
-    import { APP_EVENT } from "$lib/shared/constants/events";
 
     const showCustomChrome = isMac() || isLinux();
 
@@ -28,73 +27,6 @@
         show = false;
     }
 
-    async function handleOAuthCallback(e: Event) {
-        if (get(settings)["onboarding_complete"]) return;
-        const detail = (
-            e as CustomEvent<{ provider: "github" | "google"; code: string }>
-        ).detail;
-        if (!detail?.code || !detail?.provider) return;
-        ghConnecting = true;
-        try {
-            const { cloudExchangeCode, cloudCheckRemoteExists } =
-                await import("$lib/commands/cloud");
-            const {
-                setConnected,
-                markSynced,
-                showSyncRestorePrompt,
-                setLastSyncedForKinds,
-            } = await import("$lib/stores/cloud");
-            const { showToast } = await import("$lib/shared/primitives/toast");
-            const status = await cloudExchangeCode(
-                detail.provider,
-                detail.code,
-            );
-            if (status.user) {
-                setConnected(
-                    status.user,
-                    status.providers,
-                    status.activeProvider,
-                    status.plan,
-                );
-                setLastSyncedForKinds(status.lastSynced);
-                showToast(
-                    `Đã kết nối với tên ${status.user.displayName || status.user.slug}`,
-                    "success",
-                );
-            }
-            const { collections } = await import("$lib/modes/rest/stores");
-            const { connections: sqlConns } =
-                await import("$lib/modes/sql/stores");
-            const { nosqlConnections } =
-                await import("$lib/modes/nosql/stores");
-            const localEmpty =
-                get(collections).length === 0 &&
-                get(sqlConns).length === 0 &&
-                get(nosqlConnections).length === 0;
-            if (localEmpty) {
-                try {
-                    const remoteHas = await cloudCheckRemoteExists();
-                    if (remoteHas) showSyncRestorePrompt.set(true);
-                    else markSynced();
-                } catch (e) {
-                    // Leave hasSyncedOnce unset so the next boot retries —
-                    // marking on a transient failure permanently dismissed
-                    // the prompt and was a real footgun.
-                    console.warn("[Cloud] remote check failed:", e);
-                }
-            } else {
-                markSynced();
-            }
-            await finish();
-        } catch (e: any) {
-            const { showToast } = await import("$lib/shared/primitives/toast");
-            const { friendlyError } = await import("$lib/utils/errors");
-            showToast(friendlyError(e), "error");
-        } finally {
-            ghConnecting = false;
-        }
-    }
-
     onMount(() => {
         if (!get(settings)["onboarding_complete"]) {
             show = true;
@@ -102,14 +34,6 @@
                 mounted = true;
             }, 50);
         }
-        window.addEventListener(APP_EVENT.OAUTH_CALLBACK, handleOAuthCallback);
-    });
-
-    onDestroy(() => {
-        window.removeEventListener(
-            APP_EVENT.OAUTH_CALLBACK,
-            handleOAuthCallback,
-        );
     });
 
     $effect(() => {
@@ -128,27 +52,15 @@
         }
     }
 
-    async function handleConnect(provider: "github" | "google") {
-        ghConnecting = true;
-        try {
-            const { cloudGithubLoginUrl, cloudGoogleLoginUrl } =
-                await import("$lib/commands/cloud");
-            const url =
-                provider === "github"
-                    ? await cloudGithubLoginUrl()
-                    : await cloudGoogleLoginUrl();
-            try {
-                const { openUrl } = await import("@tauri-apps/plugin-opener");
-                await openUrl(url);
-            } catch {
-                window.open(url, "_blank");
-            }
-        } catch (e: any) {
-            ghConnecting = false;
-            const { showToast } = await import("$lib/shared/primitives/toast");
-            const { friendlyError } = await import("$lib/utils/errors");
-            showToast(friendlyError(e), "error");
-        }
+    async function handleConnect(_provider: "github" | "google") {
+        // Bản local thuần: đã gỡ đăng nhập đám mây. Giữ nguyên giao diện nút
+        // nhưng thông báo nhẹ nhàng thay vì gọi backend đã bị gỡ — dữ liệu của
+        // bạn luôn nằm trên máy, không cần tài khoản.
+        const { showToast } = await import("$lib/shared/primitives/toast");
+        showToast(
+            "Bản local không cần đăng nhập — dữ liệu của bạn luôn nằm trên máy. Hãy bấm “Tiếp tục mà không đăng nhập”.",
+            "info",
+        );
     }
 
     const handleGitHubConnect = () => handleConnect("github");
@@ -197,8 +109,11 @@
                 width="72"
                 height="72"
             />
-            <h1 class="ob-title">Chào mừng đến với Clauge</h1>
-            <p class="ob-sub">Đăng nhập để bắt đầu</p>
+            <h1 class="ob-title">Chào mừng đến với Clauge Việt</h1>
+            <p class="ob-sub">
+                Đăng nhập để đồng bộ giữa nhiều máy, hoặc dùng ngay không cần
+                tài khoản — dữ liệu luôn nằm trên máy bạn
+            </p>
 
             <div class="ob-btns">
                 {#if ghConnecting}
@@ -261,18 +176,7 @@
                     </button>
 
                     <p class="ob-legal">
-                        Khi đăng nhập, bạn đồng ý với
-                        <a
-                            href="https://clauge.in/terms"
-                            target="_blank"
-                            rel="noopener noreferrer">Điều khoản dịch vụ</a
-                        >
-                        và
-                        <a
-                            href="https://clauge.in/privacy"
-                            target="_blank"
-                            rel="noopener noreferrer">Chính sách bảo mật</a
-                        > của chúng tôi.
+                        Bản Clauge Việt là phần mềm local, miễn phí, không thu thập dữ liệu cá nhân.
                     </p>
 
                     <!-- "or" divider — quiet, frames the skip option as a real

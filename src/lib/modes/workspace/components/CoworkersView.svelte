@@ -7,10 +7,8 @@
   // coworker is a named persona that drives an agent under the hood.
   // Tag them on cards instead of generic @claude.
 
-  import { onMount, onDestroy } from 'svelte';
-  import { listen, type UnlistenFn } from '@tauri-apps/api/event';
+  import { onMount } from 'svelte';
   import { coworkers, loadCoworkers } from '../stores';
-  import { upgradeModalOpen } from '$lib/stores/cloud';
   import CoworkerAvatar from './CoworkerAvatar.svelte';
   import CoworkerModal from './CoworkerModal.svelte';
   import type { WorkspaceCoworker } from '../types';
@@ -18,21 +16,8 @@
   let modalOpen = $state(false);
   let editing = $state<WorkspaceCoworker | null>(null);
 
-  // Re-fetch when the Rust ProStateManager applies the cap (sign-out,
-  // downgrade) or re-enables on upgrade. The events carry no per-coworker
-  // diff; cheapest correct option is to re-read the list. Without this,
-  // the user keeps seeing a stale "all 4 active" view after the hook ran.
-  let unlistenLapsed: UnlistenFn | null = null;
-  let unlistenUpgraded: UnlistenFn | null = null;
-
   onMount(async () => {
     await loadCoworkers();
-    unlistenLapsed = await listen('cloud:plan_lapsed', () => { loadCoworkers(); });
-    unlistenUpgraded = await listen('cloud:plan_upgraded', () => { loadCoworkers(); });
-  });
-  onDestroy(() => {
-    unlistenLapsed?.();
-    unlistenUpgraded?.();
   });
 
   function openNew() {
@@ -40,13 +25,6 @@
     modalOpen = true;
   }
   function openTile(cw: WorkspaceCoworker) {
-    // Soft-disabled coworkers belong to a previously-Pro account that
-    // downgraded. Clicking them should sell the upgrade, not let the
-    // user edit a personality that's about to be ignored anyway.
-    if (cw.disabledAt != null) {
-      upgradeModalOpen.set(true);
-      return;
-    }
     editing = cw;
     modalOpen = true;
   }
@@ -89,26 +67,14 @@
         </button>
 
         {#each $coworkers as cw (cw.id)}
-          {@const locked = cw.disabledAt != null}
           <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
           <button
             class="cv-tile"
-            class:cv-tile-locked={locked}
             onclick={() => openTile(cw)}
-            title={locked
-              ? `Đã khóa — nâng cấp lên Pro để bật lại @${cw.name}`
-              : `Chỉnh sửa @${cw.name}`}
+            title={`Chỉnh sửa @${cw.name}`}
           >
             <div class="cv-avatar-wrap">
               <CoworkerAvatar seed={cw.avatarSeed} style={cw.avatarStyle} size={64} ring />
-              {#if locked}
-                <span class="cv-pro-badge" aria-hidden="true">
-                  <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6L12 2z" />
-                  </svg>
-                  PRO
-                </span>
-              {/if}
             </div>
             <div class="cv-tile-name">
               @{cw.name}
@@ -116,9 +82,7 @@
             {#if cw.role}
               <div class="cv-tile-role">{cw.role}</div>
             {/if}
-            {#if locked}
-              <div class="cv-tile-locked-cta">Nâng cấp để bật lại</div>
-            {:else if cw.systemPrompt}
+            {#if cw.systemPrompt}
               <div class="cv-tile-prompt">{cw.systemPrompt}</div>
             {/if}
           </button>
