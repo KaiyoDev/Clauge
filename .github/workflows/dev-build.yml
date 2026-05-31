@@ -1,8 +1,7 @@
 name: Dev Build
 
-# Build dev nhanh cho test nội bộ — chỉ Windows x64 + Linux x64 (bỏ macOS
-# universal vì lâu nhất). Không tạo Release public, chỉ upload Artifact
-# để tải về test.
+# Build dev nhanh cho test nội bộ — CHỈ Windows x64. Không tạo Release
+# public, chỉ upload Artifact để tải về test.
 #
 # Trigger:
 #   • Push tag v*-vi*-dev* (vd. v3.0.3-vi-local-dev)
@@ -21,35 +20,10 @@ jobs:
   build:
     permissions:
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: 'windows-latest'
-            label: 'windows-x64'
-          - platform: 'ubuntu-22.04'
-            label: 'linux-x64'
+    runs-on: windows-latest
 
-    runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install Linux system dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libssl-dev \
-            libgtk-3-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            libsoup-3.0-dev \
-            libdbus-1-dev \
-            libsecret-1-dev \
-            patchelf \
-            pkg-config \
-            xdg-utils
 
       - uses: oven-sh/setup-bun@v2
 
@@ -60,9 +34,7 @@ jobs:
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
-          # Cache key bao gồm OS + branch để dev build không đụng cache
-          # với release build chính thức.
-          shared-key: 'dev-${{ matrix.label }}'
+          shared-key: 'dev-windows-x64'
 
       - name: Install frontend dependencies
         run: bun install
@@ -74,23 +46,11 @@ jobs:
         run: bun tauri build --debug
 
       - name: Upload Windows artifacts
-        if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: clauge-viet-${{ matrix.label }}-debug
+          name: clauge-viet-windows-x64-debug
           path: |
             src-tauri/target/debug/bundle/msi/*.msi
             src-tauri/target/debug/bundle/nsis/*.exe
-          if-no-files-found: warn
-          retention-days: 14
-
-      - name: Upload Linux artifacts
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: clauge-viet-${{ matrix.label }}-debug
-          path: |
-            src-tauri/target/debug/bundle/deb/*.deb
-            src-tauri/target/debug/bundle/appimage/*.AppImage
           if-no-files-found: warn
           retention-days: 14

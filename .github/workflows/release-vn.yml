@@ -1,8 +1,7 @@
 name: Release VN
 
-# Build và publish release cho fork Việt hóa.
-# Khác với publish.yml gốc: không yêu cầu Apple cert hay Tauri signing key,
-# chỉ build cho user thường (Windows x64, macOS universal, Linux x64).
+# Build và publish release cho fork Việt hóa — CHỈ Windows x64.
+# Không yêu cầu Apple cert hay Tauri signing key.
 
 on:
   push:
@@ -20,83 +19,48 @@ jobs:
   build:
     permissions:
       contents: write
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: 'windows-latest'
-            args: ''
-            label: 'Windows x64'
-          - platform: 'macos-latest'
-            args: '--target universal-apple-darwin'
-            rust-targets: 'aarch64-apple-darwin,x86_64-apple-darwin'
-            label: 'macOS Universal'
-          - platform: 'ubuntu-22.04'
-            args: ''
-            label: 'Linux x64'
+    runs-on: windows-latest
 
-    runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.tag || github.ref }}
 
-      - name: Install Linux system dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            libssl-dev \
-            libgtk-3-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev \
-            libsoup-3.0-dev \
-            libdbus-1-dev \
-            libsecret-1-dev \
-            patchelf \
-            pkg-config \
-            xdg-utils
-
       - uses: oven-sh/setup-bun@v2
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.rust-targets || '' }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          shared-key: 'release-windows-x64'
 
       - name: Install frontend dependencies
         run: bun install
 
-      - name: Build & upload Tauri release
-        uses: tauri-apps/tauri-action@v0.5.21
+      - name: Build Tauri (release)
+        run: bun tauri build
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.event.inputs.tag || github.ref_name }}
-          releaseName: 'Clauge Việt ${{ github.event.inputs.tag || github.ref_name }}'
-          releaseBody: |
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: 'Clauge Việt ${{ github.event.inputs.tag || github.ref_name }}'
+          body: |
             ## Clauge Việt — Bản Local thuần
 
             Công cụ lập trình của người Việt — Local-first • Privacy-first • Miễn phí mãi mãi.
 
-            Đã build sẵn binary cho ${{ matrix.label }}.
+            **Tải bản Windows ở phần Assets bên dưới:**
+            - `.msi` — installer chuẩn (khuyến nghị triển khai admin)
+            - `.exe` (NSIS) — installer gọn nhẹ (khuyến nghị cá nhân)
 
-            **Tải bản phù hợp ở phần Assets bên dưới:**
-            - Windows: `.msi` hoặc `.exe` (NSIS)
-            - macOS: `.dmg` (universal — chạy trên cả Intel & Apple Silicon)
-            - Linux: `.deb` hoặc `.AppImage`
-
-            ⚠️ **Bản này không ký số (unsigned)** — Windows SmartScreen / macOS Gatekeeper có thể cảnh báo. Đây là bình thường với fork cá nhân.
-
-            - **Windows**: nhấn "More info" → "Run anyway"
-            - **macOS**: chuột phải file `.app` → Open → Open lần nữa, hoặc chạy `xattr -cr "/Applications/Clauge Viet.app"`
-            - **Linux**: cấp quyền chạy `chmod +x *.AppImage`
+            ⚠️ **Bản này không ký số (unsigned)** — Windows SmartScreen có thể cảnh báo.
+            Cách bỏ qua: nhấn **"More info" → "Run anyway"**.
 
             ## Triết lý
 
@@ -108,6 +72,8 @@ jobs:
             ## Build từ source
 
             Xem [README.md](https://github.com/${{ github.repository }}/blob/main/README.md).
-          releaseDraft: false
+          draft: false
           prerelease: false
-          args: ${{ matrix.args }}
+          files: |
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*.exe
