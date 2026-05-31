@@ -73,14 +73,16 @@ jobs:
         run: bun install
 
       - name: Build & upload Tauri release
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v0.5.21
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.event.inputs.tag || github.ref_name }}
-          releaseName: 'Clauge ${{ github.event.inputs.tag || github.ref_name }} — Bản Việt hóa'
+          releaseName: 'Clauge Việt ${{ github.event.inputs.tag || github.ref_name }}'
           releaseBody: |
-            ## Bản Việt hóa của Clauge
+            ## Clauge Việt — Bản Local thuần
+
+            Công cụ lập trình của người Việt — Local-first • Privacy-first • Miễn phí mãi mãi.
 
             Đã build sẵn binary cho ${{ matrix.label }}.
 
@@ -92,16 +94,19 @@ jobs:
             ⚠️ **Bản này không ký số (unsigned)** — Windows SmartScreen / macOS Gatekeeper có thể cảnh báo. Đây là bình thường với fork cá nhân.
 
             - **Windows**: nhấn "More info" → "Run anyway"
-            - **macOS**: chuột phải file `.app` → Open → Open lần nữa, hoặc chạy `xattr -cr /Applications/Clauge.app`
+            - **macOS**: chuột phải file `.app` → Open → Open lần nữa, hoặc chạy `xattr -cr "/Applications/Clauge Viet.app"`
             - **Linux**: cấp quyền chạy `chmod +x *.AppImage`
+
+            ## Triết lý
+
+            - Toàn bộ dữ liệu mặc định lưu trên máy bạn (local-first)
+            - Không thu thập dữ liệu cá nhân, không telemetry
+            - Không Pro, không upsell, không quảng cáo
+            - Không có đăng nhập đám mây — không phụ thuộc server bên ngoài
 
             ## Build từ source
 
-            Xem [README.vi.md](https://github.com/${{ github.repository }}/blob/main/README.vi.md).
-
-            ## Upstream
-
-            Fork từ https://github.com/ansxuman/Clauge
+            Xem [README.md](https://github.com/${{ github.repository }}/blob/main/README.md).
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
